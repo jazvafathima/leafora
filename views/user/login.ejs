@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora - Sign In</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
+
+  <!-- Google Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream:      '#f4efe4',
+            'cream-dark': '#ede6d6',
+            leaf:       '#2d5a27',
+            'leaf-mid': '#3d7a35',
+            'leaf-light':'#4e9e44',
+            'leaf-border':'#2d5a27',
+          },
+          fontFamily: {
+            display: ['Playfair Display', 'serif'],
+            body:    ['DM Sans', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* ── Base ───────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; }
+
+    /* ── Left image panel ───────────────── */
+    .image-panel {
+      position: relative;
+      width: 54%;
+      min-height: 100vh;
+      background: #3a5a2a;          /* fallback colour */
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    /* Swap src via EJS: <img src="<%= imageUrl %>"> */
+    .image-panel img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+    }
+
+    /* Dark gradient over image for text legibility */
+    .image-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        rgba(0,0,0,0.55) 0%,
+        rgba(0,0,0,0.10) 50%,
+        transparent 100%
+      );
+      pointer-events: none;
+    }
+
+    /* Placeholder shown when no image is supplied */
+    .img-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #3a5c2a 0%, #2d4a20 60%, #1e3314 100%);
+      gap: 14px;
+    }
+    .img-placeholder i  { color: rgba(255,255,255,0.25); }
+    .img-placeholder p  { color: rgba(255,255,255,0.35); font-size: 13px; letter-spacing: 0.08em; }
+
+    /* Tagline overlay — bottom-left */
+    .tagline {
+      position: absolute;
+      bottom: 36px;
+      left: 36px;
+      z-index: 10;
+      line-height: 1.08;
+    }
+    .tagline span {
+      display: block;
+      font-family: 'Playfair Display', serif;
+      font-weight: 900;
+      font-size: clamp(26px, 3.4vw, 46px);
+      color: #ffffff;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.45);
+    }
+
+    /* ── Right form panel ───────────────── */
+    .form-panel {
+      width: 46%;
+      min-height: 100vh;
+      
+      background: #f4efe4;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 48px 52px 32px 52px;
+      position: relative;
+    }
+
+    /* ── Logo ───────────────────────────── */
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 36px;
+    }
+    .logo-icon svg { width: 38px; height: 38px; }
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: #2d5a27;
+      letter-spacing: -0.3px;
+    }
+
+    /* ── Sign In heading ────────────────── */
+    .signin-heading {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #2d3a28;
+      margin-bottom: 22px;
+      letter-spacing: -0.2px;
+    }
+
+    /* ── Google button ──────────────────── */
+    .btn-google {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 11px 18px;
+      border: 1.5px solid #d0c9bc;
+      border-radius: 6px;
+      background: #ffffff;
+      font-size: 14px;
+      font-weight: 500;
+      color: #3a3a3a;
+      cursor: pointer;
+      transition: box-shadow 0.2s, border-color 0.2s;
+      text-decoration: none;
+    }
+    .btn-google:hover {
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      border-color: #b5aea0;
+    }
+    .google-svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* ── OR divider ─────────────────────── */
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 22px 0;
+      color: #8a8175;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+    }
+    .or-divider::before,
+    .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1.5px;
+      background: #c4bdb0;
+    }
+
+    /* ── Underline inputs ───────────────── */
+    .field-group {
+      margin-bottom: 22px;
+      position: relative;
+    }
+    .field-group label {
+      display: block;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: #6b6357;
+      margin-bottom: 5px;
+      letter-spacing: 0.03em;
+    }
+    .field-group input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid #2d5a27;
+      outline: none;
+      padding: 7px 32px 7px 0;
+      font-size: 14.5px;
+      color: #2d3a28;
+      font-family: 'DM Sans', sans-serif;
+      transition: border-color 0.2s;
+    }
+    .field-group input::placeholder { color: #bbb5aa; }
+    .field-group input:focus { border-bottom-color: #4e9e44; }
+
+    /* Eye toggle inside password field */
+    .eye-toggle {
+      position: absolute;
+      right: 0;
+      bottom: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #8a8175;
+      font-size: 14px;
+      padding: 0;
+      transition: color 0.2s;
+    }
+    .eye-toggle:hover { color: #2d5a27; }
+
+    /* Error text */
+    .field-error {
+      color: #c0392b;
+      font-size: 11.5px;
+      margin-top: 4px;
+    }
+
+    /* ── Buttons ────────────────────────── */
+    .btn-signin {
+      width: 100%;
+      padding: 13px;
+      background: #2d5a27;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      margin-bottom: 12px;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-signin:hover {
+      background: #3d7a35;
+      box-shadow: 0 4px 16px rgba(45,90,39,0.28);
+    }
+
+    .btn-register {
+      width: 100%;
+      padding: 12px;
+      background: transparent;
+      color: #2d5a27;
+      border: 1.5px solid #2d5a27;
+      border-radius: 6px;
+      font-size: 14.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      font-family: 'DM Sans', sans-serif;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+    .btn-register:hover {
+      background: #2d5a27;
+      color: #ffffff;
+    }
+
+    /* ── Forget password ────────────────── */
+    .forget-row {
+      text-align: right;
+      margin-top: 12px;
+    }
+    .forget-row a {
+      font-size: 13px;
+      font-weight: 500;
+      color: #2d5a27;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .forget-row a:hover { color: #4e9e44; text-decoration: underline; }
+
+    /* ── Flash error ────────────────────── */
+    .flash-error {
+      background: #fdf0ef;
+      border-left: 3px solid #c0392b;
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #c0392b;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── Footer ─────────────────────────── */
+    .panel-footer {
+      margin-top: auto;
+      padding-top: 28px;
+      text-align: right;
+      font-size: 11.5px;
+      color: #9a9285;
+    }
+    .panel-footer a {
+      color: #9a9285;
+      text-decoration: none;
+    }
+    .panel-footer a:hover { color: #2d5a27; text-decoration: underline; }
+
+    /* ── Responsive ─────────────────────── */
+    @media (max-width: 768px) {
+      body > .wrapper { flex-direction: column; }
+      .image-panel   { width: 100%; min-height: 260px; }
+      .form-panel    { width: 100%; padding: 36px 28px 28px 28px; }
+      .tagline span  { font-size: 24px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <%
+    /*
+      EJS locals expected from your Express route:
+        imageUrl  — (string|null)   e.g. '/images/hero-plant.jpg'
+        error     — (string|null)   general flash message
+        errors    — (object|{})     { email, password }
+        formData  — (object|{})     { email }
+    */
+    var imageUrl  = locals.imageUrl  || null;
+    var error     = locals.error     || null;
+    var errors    = locals.errors    || {};
+    var formData  = locals.formData  || {};
+  %>
+
+  <div class="wrapper" style="display:flex; min-height:100vh;">
+
+    <!-- ════════════════════════════════════
+         LEFT  —  Image Panel
+    ════════════════════════════════════ -->
+    <div class="image-panel">
+
+     
+        <img src="https://cdn.downtoearth.org.in/library/large/2022-09-15/0.08976900_1663241450_istock-1248915720-(1).jpg" alt="Leafora hero" />
+      
+     
+
+      <!-- Tagline overlay — bottom left -->
+      <div class="tagline">
+        <span>plants smiles</span>
+        <span>Grow laugher</span>
+        <span>Harvest love.</span>
+      </div>
+    </div>
+    <!-- /Left panel -->
+
+
+    <!-- ════════════════════════════════════
+         RIGHT  —  Form Panel
+    ════════════════════════════════════ -->
+    <div class="form-panel">
+
+      <!-- Logo -->
+      <div class="logo-row">
+        <div class="logo-icon">
+          <!-- Inline SVG leaf — matches screenshot logo -->
+          <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 34 C10 34 12 18 26 10 C26 10 38 8 38 8 C38 8 36 20 28 27 C20 34 10 34 10 34Z"
+                  fill="#2d5a27"/>
+            <path d="M14 30 C14 30 16 22 22 17"
+                  stroke="#f4efe4" stroke-width="1.6" stroke-linecap="round"/>
+            <!-- Small second leaf -->
+            <path d="M22 34 C22 34 21 26 27 20 C27 20 34 16 34 16 C34 16 33 24 28 28 C23 32 22 34 22 34Z"
+                  fill="#4e9e44" opacity="0.75"/>
+          </svg>
+        </div>
+        <span class="logo-text">Leafora</span>
+      </div>
+
+      <!-- Flash / General Error -->
+      <% if (error) { %>
+        <div class="flash-error">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <%= error %>
+        </div>
+      <% } %>
+
+      <!-- Heading -->
+      <h1 class="signin-heading">Sign In</h1>
+
+      <!-- Google button -->
+      <a href="/auth/google" class="btn-google">
+        <!-- Google 'G' SVG -->
+        <svg class="google-svg" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+          <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+          <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+          <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+        </svg>
+        Sign up with Google
+      </a>
+
+      <!-- OR divider -->
+      <div class="or-divider">OR</div>
+
+      <!-- Form -->
+      <form method="POST" action="/user/login" novalidate>
+
+    
+
+        <!-- Email -->
+        <div class="field-group">
+          <label for="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder=""
+            value="<%= formData.email || '' %>"
+            autocomplete="email"
+          />
+          <% if (errors.email) { %>
+            <p class="field-error"><i class="fa-solid fa-circle-exclamation fa-xs"></i> <%= errors.email %></p>
+          <% } %>
+        </div>
+
+        <!-- Password -->
+        <div class="field-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder=""
+            autocomplete="current-password"
+          />
+          <button type="button" class="eye-toggle" id="eyeToggle" aria-label="Toggle password">
+            <i class="fa-regular fa-eye" id="eyeIcon"></i>
+          </button>
+          <% if (errors.password) { %>
+            <p class="field-error"><i class="fa-solid fa-circle-exclamation fa-xs"></i> <%= errors.password %></p>
+          <% } %>
+        </div>
+
+        <!-- Sign In -->
+        <button type="submit" class="btn-signin">Sign In</button>
+
+        <!-- Register -->
+        <a href="/auth/register" class="btn-register">Register Now</a>
+
+        <!-- Forget Password -->
+        <div class="forget-row">
+          <a href="/auth/forgot-password">Forget Password?</a>
+        </div>
+
+      </form>
+
+      <!-- Footer -->
+      <div class="panel-footer">
+        <a href="/terms">leafora Terms &amp; Conditions</a>
+      </div>
+
+    </div>
+    <!-- /Right panel -->
+
+  </div><!-- /wrapper -->
+
+
+  <script>
+    // Password eye toggle
+    const pwInput  = document.getElementById('password');
+    const eyeToggle = document.getElementById('eyeToggle');
+    const eyeIcon  = document.getElementById('eyeIcon');
+
+    eyeToggle.addEventListener('click', function () {
+      const isHidden = pwInput.type === 'password';
+      pwInput.type   = isHidden ? 'text' : 'password';
+      eyeIcon.className = isHidden ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye';
+    });
+  </script>
+
+</body>
+</html>

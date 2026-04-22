@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Leafora - Admin Portal</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome CDN -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+  />
+
+  <!-- Google Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leafGreen: {
+              50:  '#f0faf0',
+              100: '#e6f5e6',
+              200: '#c8e6c8',
+              500: '#4a8c4a',
+              600: '#3a7a3a',
+              700: '#2d6a2d',
+              800: '#1e5c1e',
+            },
+            cream: '#f5f0e8',
+          },
+          fontFamily: {
+            nunito: ['Nunito', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body { font-family: 'Nunito', sans-serif; }
+
+    /* Subtle eye toggle button */
+    #togglePassword { cursor: pointer; }
+
+    /* Input focus ring override */
+    input:focus { outline: none; }
+
+    /* Smooth hover on button */
+    .login-btn { transition: background-color 0.2s ease, transform 0.1s ease; }
+    .login-btn:active { transform: scale(0.98); }
+  </style>
+</head>
+
+<body class="min-h-screen bg-[#e8eff4] flex flex-col items-center justify-center px-4">
+
+  <!-- ===================== LOGIN CARD ===================== -->
+  <div class="w-full max-w-[440px] bg-white rounded-2xl shadow-xl overflow-hidden">
+
+    <!-- ---- TOP BANNER: Logo + Empty Picture Space ---- -->
+    <div class="bg-cream px-8 pt-8 pb-6 flex flex-col items-center gap-4">
+
+     
+      <!-- Leafora Logo -->
+      <div class="flex items-center gap-2">
+        <!-- Leaf SVG Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"
+             class="w-9 h-9" fill="none">
+          <path d="M8 32 C10 20, 22 8, 36 6 C34 18, 22 28, 8 32Z"
+                fill="#2d6a2d" opacity="0.9"/>
+          <path d="M14 34 C16 24, 26 14, 36 6 C32 22, 22 30, 14 34Z"
+                fill="#4a8c4a" opacity="0.7"/>
+          <line x1="22" y1="19" x2="10" y2="33"
+                stroke="#1e5c1e" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span class="text-3xl font-bold text-leafGreen-800 tracking-tight">Leafora</span>
+      </div>
+
+    </div>
+
+    <!-- ---- FORM BODY ---- -->
+    <div class="px-10 py-8">
+
+      <!-- Portal Label -->
+      <p class="text-center text-sm text-gray-400 font-medium tracking-wide mb-6">
+        Admin Portal
+      </p>
+
+      <!-- Welcome Heading -->
+      <h1 class="text-2xl font-bold text-leafGreen-700 mb-1">Welcome back</h1>
+      <p class="text-sm text-gray-400 mb-8">Sign in to your admin account</p>
+
+      <!-- ---- FORM ---- -->
+      <form action="/admin/login" method="POST" class="space-y-5">
+
+        <!-- Email Field -->
+        <div class="flex flex-col gap-1.5">
+          <label for="email"
+                 class="text-sm font-semibold text-gray-600">
+            Email Address
+          </label>
+          <div class="relative">
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="admin@slick.com"
+              value="<%= typeof email !== 'undefined' ? email : '' %>"
+              autocomplete="email"
+              required
+              class="w-full px-4 py-3 rounded-lg border border-leafGreen-200
+                     text-sm text-gray-700 placeholder-gray-300
+                     focus:border-leafGreen-500 focus:ring-2 focus:ring-leafGreen-100
+                     transition duration-200"
+            />
+          </div>
+
+          <!-- Inline error (EJS) -->
+          <% if (typeof errors !== 'undefined' && errors.email) { %>
+            <p class="text-xs text-red-500 mt-0.5">
+              <i class="fa-solid fa-circle-exclamation mr-1"></i>
+              <%= errors.email %>
+            </p>
+          <% } %>
+        </div>
+
+        <!-- Password Field -->
+        <div class="flex flex-col gap-1.5">
+          <label for="password"
+                 class="text-sm font-semibold text-gray-600">
+            Password
+          </label>
+          <div class="relative">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+              class="w-full px-4 py-3 pr-11 rounded-lg border border-leafGreen-200
+                     text-sm text-gray-700 placeholder-gray-300
+                     focus:border-leafGreen-500 focus:ring-2 focus:ring-leafGreen-100
+                     transition duration-200"
+            />
+            <!-- Eye toggle button -->
+            <button
+              type="button"
+              id="togglePassword"
+              aria-label="Toggle password visibility"
+              class="absolute right-3 top-1/2 -translate-y-1/2
+                     text-leafGreen-500 hover:text-leafGreen-700 transition-colors"
+            >
+              <i id="eyeIcon" class="fa-regular fa-eye text-base"></i>
+            </button>
+          </div>
+
+          <!-- Inline error (EJS) -->
+          <% if (typeof errors !== 'undefined' && errors.password) { %>
+            <p class="text-xs text-red-500 mt-0.5">
+              <i class="fa-solid fa-circle-exclamation mr-1"></i>
+              <%= errors.password %>
+            </p>
+          <% } %>
+        </div>
+
+        <!-- Flash / General Error Message -->
+        <% if (typeof error !== 'undefined' && error) { %>
+          <div class="flex items-center gap-2 bg-red-50 border border-red-200
+                      text-red-600 text-sm rounded-lg px-4 py-3">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span><%= error %></span>
+          </div>
+        <% } %>
+
+        <!-- Login Button -->
+        <button
+          type="submit"
+          class="login-btn w-full py-3.5 rounded-lg bg-leafGreen-700
+                 hover:bg-leafGreen-800 text-white font-semibold text-sm
+                 tracking-wide shadow-md mt-2"
+        >
+          Login
+        </button>
+
+      </form>
+
+      <!-- Security Note -->
+      <p class="text-center text-xs text-gray-350 mt-6 text-gray-400">
+        <i class="fa-solid fa-shield-halved mr-1 text-leafGreen-300"></i>
+        Protected by enterprise-grade security
+      </p>
+
+    </div>
+  </div>
+  <!-- ===================== END CARD ===================== -->
+
+  <!-- Footer Help -->
+  <p class="mt-6 text-sm text-gray-400">
+    Need help?
+    <a href="/support"
+       class="text-leafGreen-600 font-semibold hover:text-leafGreen-800
+              hover:underline transition-colors ml-1">
+      Contact Support
+    </a>
+  </p>
+
+  <!-- ===================== JS: Password Toggle ===================== -->
+  <script>
+    const toggleBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const eyeIcon = document.getElementById('eyeIcon');
+
+    toggleBtn.addEventListener('click', function () {
+      const isHidden = passwordInput.type === 'password';
+      passwordInput.type = isHidden ? 'text' : 'password';
+      eyeIcon.className = isHidden
+        ? 'fa-regular fa-eye-slash text-base'
+        : 'fa-regular fa-eye text-base';
+    });
+  </script>
+
+</body>
+</html>>

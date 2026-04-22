@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora - Edit Profile</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leaf: {
+              50:  '#f0faf0',
+              100: '#dcf5dc',
+              600: '#1f7a1f',
+              700: '#185c18',
+              800: '#124512',
+              900: '#0b2f0b',
+            },
+            cream: '#f5f2eb',
+          },
+          fontFamily: {
+            display: ['"Playfair Display"', 'serif'],
+            body:    ['Poppins', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #f5f2eb; }
+
+    .field-label {
+      display: block;
+      font-size: 0.7rem;
+      color: #6b7280;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .field-input {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.8rem;
+      color: #374151;
+      font-family: 'Poppins', sans-serif;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field-input:focus {
+      border-color: #185c18;
+      box-shadow: 0 0 0 3px rgba(24,92,24,0.08);
+    }
+    .field-input.is-error { border-color: #dc2626; }
+    .field-input::placeholder { color: #9ca3af; font-size: 0.78rem; }
+    select.field-input { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 14px; padding-right: 32px; }
+    .field-error { color: #dc2626; font-size: 0.67rem; margin-top: 3px; display: flex; align-items: center; gap: 3px; }
+    .section-title { font-size: 0.72rem; font-weight: 600; color: #374151; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 16px; }
+    .avatar-wrap { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; background: #e5e7eb; border: 2px solid #d1d5db; display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer; position: relative; }
+    .avatar-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; border-radius: 50%; }
+    .avatar-wrap:hover .avatar-overlay { opacity: 1; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-cream">
+
+  <%# NAVBAR %>
+  <header class="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+
+      <a href="/" class="flex items-center gap-2">
+        <%# IMAGE SLOT: Logo /images/leafora-logo.png — 130x36px %>
+        <img src="/images/leafora-logo.png" alt="Leafora" class="h-8 w-auto" />
+        <span class="font-display text-lg font-bold text-leaf-900">Leafora</span>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+        <a href="/"         class="hover:text-leaf-700 transition-colors">Home</a>
+        <a href="/shop"     class="text-leaf-700 font-semibold border-b-2 border-leaf-600 pb-0.5">Shop</a>
+        <a href="/products" class="hover:text-leaf-700 transition-colors">Products</a>
+        <a href="/pages"    class="hover:text-leaf-700 transition-colors">Pages</a>
+      </nav>
+
+      <div class="flex items-center gap-3 text-gray-500">
+        <button class="hover:text-leaf-700 p-1 transition-colors"><i class="fa-solid fa-magnifying-glass text-sm"></i></button>
+        <button class="hover:text-leaf-700 p-1 transition-colors"><i class="fa-regular fa-user text-sm"></i></button>
+        <button class="hover:text-leaf-700 p-1 transition-colors"><i class="fa-regular fa-heart text-sm"></i></button>
+        <button class="hover:text-leaf-700 p-1 transition-colors relative">
+          <i class="fa-solid fa-basket-shopping text-sm"></i>
+          <span class="absolute -top-1 -right-1 bg-leaf-600 text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">2</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <%# PAGE TITLE %>
+  <div class="max-w-6xl mx-auto px-6 pt-6 pb-2">
+    <h1 class="text-base font-semibold text-gray-800">Edit Profile</h1>
+    <p class="text-xs text-gray-400 mt-0.5">Update your personal information</p>
+  </div>
+
+  <%# MAIN CARD %>
+  <main class="max-w-6xl mx-auto px-6 pb-10">
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+
+      <form id="editProfileForm" action="/user/profile/update" method="POST" enctype="multipart/form-data" novalidate>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+
+          <%# LEFT: Personal Details %>
+          <div class="p-6">
+            <p class="section-title">Personal Details</p>
+
+            <%# Avatar %>
+            <div class="flex items-center gap-4 mb-5">
+              <%# IMAGE SLOT: Avatar — user.avatar from session — 56x56px circle %>
+              <label for="avatarInput" class="cursor-pointer">
+                <div class="avatar-wrap">
+                  <% if (typeof user !== 'undefined' && user && user.avatar) { %>
+                    <img id="avatarPreview" src="<%= user.avatar %>" alt="Avatar" class="w-full h-full object-cover" />
+                  <% } else { %>
+                    <img id="avatarPreview" src="" alt="" class="w-full h-full object-cover hidden" />
+                    <div id="avatarPlaceholder" class="w-full h-full flex items-center justify-center">
+                      <i class="fa-regular fa-user text-gray-400 text-xl"></i>
+                    </div>
+                  <% } %>
+                  <div class="avatar-overlay">
+                    <i class="fa-solid fa-camera text-white text-xs"></i>
+                  </div>
+                </div>
+              </label>
+              <input type="file" id="avatarInput" name="avatar" accept="image/*" class="hidden" />
+
+              <div class="flex flex-col gap-1">
+                <label for="avatarInput" class="text-xs text-leaf-700 font-semibold cursor-pointer hover:text-leaf-800 flex items-center gap-1.5">
+                  <i class="fa-solid fa-camera text-xs"></i> Change Photo
+                </label>
+                <button type="button" onclick="removeAvatar()"
+                  class="text-[10px] text-red-500 font-medium text-left hover:text-red-600 transition-colors">
+                  Remove
+                </button>
+              </div>
+            </div>
+
+            <%# Full Name %>
+            <div class="mb-4">
+              <label for="fullName" class="field-label">Full Name</label>
+              <input type="text" id="fullName" name="fullName"
+                placeholder="Enter your full name"
+                value="<% if (typeof user !== 'undefined' && user) { %><%= user.firstName %> <%= user.lastName %><% } %>"
+                class="field-input <% if (typeof errors !== 'undefined' && errors && errors.fullName) { %>is-error<% } %>" />
+              <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.fullName) { %>
+                <p class="field-error">
+                  <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
+                  <%= errors.fullName %>
+                </p>
+              <% } %>
+            </div>
+
+            <%# Email %>
+            <div class="mb-4">
+              <label for="email" class="field-label">Email Address</label>
+              <input type="email" id="email" name="email"
+                placeholder="Enter your email"
+                value="<% if (typeof user !== 'undefined' && user) { %><%= user.email %><% } %>"
+                class="field-input <% if (typeof errors !== 'undefined' && errors && errors.email) { %>is-error<% } %>" />
+              <p class="text-[10px] text-gray-400 mt-1">
+                <i class="fa-solid fa-circle-info" style="font-size:9px"></i>
+                Email changes require OTP verification
+              </p>
+              <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.email) { %>
+                <p class="field-error">
+                  <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
+                  <%= errors.email %>
+                </p>
+              <% } %>
+            </div>
+
+            <%# Phone %>
+            <div class="mb-2">
+              <label for="phone" class="field-label">Phone Number</label>
+              <input type="tel" id="phone" name="phone"
+                placeholder="Enter your phone number"
+                value="<% if (typeof user !== 'undefined' && user && user.phone) { %><%= user.phone %><% } %>"
+                class="field-input <% if (typeof errors !== 'undefined' && errors && errors.phone) { %>is-error<% } %>" />
+              <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.phone) { %>
+                <p class="field-error">
+                  <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
+                  <%= errors.phone %>
+                </p>
+              <% } %>
+            </div>
+          </div>
+
+          <%# RIGHT: Account Details %>
+          <div class="p-6">
+            <p class="section-title">Account Details</p>
+
+            <%# Date of Birth %>
+            <div class="mb-4">
+              <label for="dob" class="field-label">Date of Birth</label>
+              <input type="date" id="dob" name="dob"
+                value="<% if (typeof user !== 'undefined' && user && user.dob) { %><%= user.dob %><% } %>"
+                class="field-input <% if (typeof errors !== 'undefined' && errors && errors.dob) { %>is-error<% } %>" />
+              <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.dob) { %>
+                <p class="field-error">
+                  <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
+                  <%= errors.dob %>
+                </p>
+              <% } %>
+            </div>
+
+            <%# Gender %>
+            <div class="mb-4">
+              <label for="gender" class="field-label">Gender</label>
+              <select id="gender" name="gender"
+                class="field-input <% if (typeof errors !== 'undefined' && errors && errors.gender) { %>is-error<% } %>">
+                <option value="">Male</option>
+                <option value="male"
+                  <% if (typeof user !== 'undefined' && user && user.gender === 'male') { %>selected<% } %>>
+                  Male
+                </option>
+                <option value="female"
+                  <% if (typeof user !== 'undefined' && user && user.gender === 'female') { %>selected<% } %>>
+                  Female
+                </option>
+                <option value="other"
+                  <% if (typeof user !== 'undefined' && user && user.gender === 'other') { %>selected<% } %>>
+                  Other
+                </option>
+                <option value="prefer_not"
+                  <% if (typeof user !== 'undefined' && user && user.gender === 'prefer_not') { %>selected<% } %>>
+                  Prefer not to say
+                </option>
+              </select>
+              <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.gender) { %>
+                <p class="field-error">
+                  <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
+                  <%= errors.gender %>
+                </p>
+              <% } %>
+            </div>
+
+            <%# Country / Region %>
+            <div class="mb-4">
+              <label for="country" class="field-label">Country / Region</label>
+              <select id="country" name="country"
+                class="field-input <% if (typeof errors !== 'undefined' && errors && errors.country) { %>is-error<% } %>">
+                <option value="">United States</option>
+                <option value="IN"
+                  <% if (typeof user !== 'undefined' && user && user.country === 'IN') { %>selected<% } %>>
+                  India
+                </option>
+                <option value="US"
+                  <% if (typeof user !== 'undefined' && user && user.country === 'US') { %>selected<% } %>>
+                  United States
+                </option>
+                <option value="GB"
+                  <% if (typeof user !== 'undefined' && user && user.country === 'GB') { %>selected<% } %>>
+                  United Kingdom
+                </option>
+                <option value="AU"
+                  <% if (typeof user !== 'undefined' && user && user.country === 'AU') { %>selected<% } %>>
+                  Australia
+                </option>
+                <option value="CA"
+                  <% if (typeof user !== 'undefined' && user && user.country === 'CA') { %>selected<% } %>>
+                  Canada
+                </option>
+              </select>
+              <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.country) { %>
+                <p class="field-error">
+                  <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
+                  <%= errors.country %>
+                </p>
+              <% } %>
+            </div>
+
+          </div>
+        </div>
+
+        <%# Action Buttons %>
+        <div class="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50 rounded-b-xl">
+          <a href="/user/profile"
+             class="text-sm text-gray-500 hover:text-gray-700 font-medium px-5 py-2 rounded-lg border border-gray-200 hover:border-gray-300 bg-white transition-colors">
+            Cancel
+          </a>
+          <button type="submit" id="saveBtn"
+            class="bg-leaf-700 hover:bg-leaf-800 text-white text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk text-xs"></i>
+            Save Changes
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </main>
+
+  <%# FOOTER %>
+  <footer class="bg-leaf-900 text-white">
+    <div class="max-w-6xl mx-auto px-6 pt-10 pb-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+
+        <div>
+          <h4 class="font-display text-base font-semibold mb-3">Leafora</h4>
+          <p class="text-gray-400 text-xs mb-3 leading-relaxed">Download the Leafora App Now</p>
+          <%# IMAGE SLOT: QR code — /images/qr-code.png — 88x88px %>
+          <div class="bg-white rounded-xl p-1.5 inline-flex items-center justify-center w-24 h-24 mb-3">
+            <i class="fa-solid fa-qrcode text-gray-400 text-4xl"></i>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <%# IMAGE SLOT: Google Play — /images/google-play-badge.png — 90x28px %>
+            <a href="#" class="inline-flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 text-white text-[10px] px-3 py-1.5 rounded-lg font-medium transition-colors w-max">
+              <i class="fa-brands fa-google-play text-xs"></i> Play Store
+            </a>
+            <%# IMAGE SLOT: App Store — /images/app-store-badge.png — 90x28px %>
+            <a href="#" class="inline-flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 text-white text-[10px] px-3 py-1.5 rounded-lg font-medium transition-colors w-max">
+              <i class="fa-brands fa-apple text-xs"></i> App Store
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-xs mb-3 text-white uppercase tracking-wide">Helpful Links</h4>
+          <ul class="space-y-2 text-gray-400 text-xs">
+            <li><a href="#" class="hover:text-white transition-colors">Plant Care Guide</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Shipping Policy</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Returns &amp; Refunds</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Track Order</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Locate Stores</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-xs mb-3 text-white uppercase tracking-wide">Information</h4>
+          <ul class="space-y-2 text-gray-400 text-xs">
+            <li><a href="#" class="hover:text-white transition-colors">Plant Blog</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Plant Care Tips</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">FAQs</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">About Us</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-xs mb-3 text-white uppercase tracking-wide">Contact Us</h4>
+          <ul class="space-y-2 text-gray-400 text-xs">
+            <li class="flex items-center gap-2">
+              <i class="fa-solid fa-phone text-gray-500" style="font-size:9px"></i>
+              +91 9000000000
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-envelope text-gray-500 mt-0.5" style="font-size:9px"></i>
+              Email Us: support@leafora.com
+            </li>
+            <li class="flex items-center gap-3 mt-2">
+              <a href="#" class="text-gray-400 hover:text-white text-base transition-colors"><i class="fa-brands fa-whatsapp"></i></a>
+              <a href="#" class="text-gray-400 hover:text-white text-base transition-colors"><i class="fa-brands fa-telegram"></i></a>
+              <a href="#" class="text-gray-400 hover:text-white text-base transition-colors"><i class="fa-regular fa-comment-dots"></i></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="border-t border-leaf-800 pt-5">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] text-gray-400 font-medium mr-1">Social</span>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-instagram text-sm"></i></a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-x-twitter text-sm"></i></a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-facebook text-sm"></i></a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-youtube text-sm"></i></a>
+          </div>
+          <%# IMAGE SLOT: Payment icons — /images/payment-icons.png — 220x18px %>
+          <div class="flex items-center gap-1.5 opacity-60">
+            <i class="fa-brands fa-cc-visa text-gray-300 text-lg"></i>
+            <i class="fa-brands fa-cc-mastercard text-gray-300 text-lg"></i>
+            <i class="fa-brands fa-cc-paypal text-gray-300 text-lg"></i>
+            <i class="fa-brands fa-cc-amex text-gray-300 text-lg"></i>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-gray-500">
+          <p>&copy; 2026 Leafora - All Rights Reserved.</p>
+          <div class="flex items-center gap-4">
+            <a href="#" class="hover:text-white transition-colors">Terms &amp; Conditions</a>
+            <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
+            <a href="#" class="hover:text-white transition-colors">Disclaimer</a>
+          </div>
+        </div>
+
+        <p class="text-center text-xs text-gray-600 mt-3 font-display italic">
+          Grow Green, Live Fresh &#127807;
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('avatarInput').addEventListener('change', function() {
+      var file = this.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var preview     = document.getElementById('avatarPreview');
+        var placeholder = document.getElementById('avatarPlaceholder');
+        if (preview) {
+          preview.src = e.target.result;
+          preview.classList.remove('hidden');
+        }
+        if (placeholder) placeholder.classList.add('hidden');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function removeAvatar() {
+      var preview     = document.getElementById('avatarPreview');
+      var placeholder = document.getElementById('avatarPlaceholder');
+      var input       = document.getElementById('avatarInput');
+      if (preview)     { preview.src = ''; preview.classList.add('hidden'); }
+      if (placeholder) { placeholder.classList.remove('hidden'); }
+      if (input)       { input.value = ''; }
+    }
+
+    document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+      var valid = true;
+      document.querySelectorAll('.client-err').forEach(function(el) { el.remove(); });
+      document.querySelectorAll('.field-input').forEach(function(el) { el.classList.remove('is-error'); });
+
+      function showErr(id, msg) {
+        var input = document.getElementById(id);
+        if (!input) return;
+        input.classList.add('is-error');
+        var p = document.createElement('p');
+        p.className = 'field-error client-err';
+        p.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> ' + msg;
+        input.parentElement.appendChild(p);
+        valid = false;
+      }
+
+      var fullName = document.getElementById('fullName').value.trim();
+      var email    = document.getElementById('email').value.trim();
+      var phone    = document.getElementById('phone').value.trim();
+
+      if (!fullName) showErr('fullName', 'Full name is required.');
+      else if (fullName.length < 2) showErr('fullName', 'Name must be at least 2 characters.');
+
+      if (!email) showErr('email', 'Email is required.');
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) showErr('email', 'Enter a valid email address.');
+
+      if (phone && !/^[+\d\s\-()]{7,15}$/.test(phone)) showErr('phone', 'Enter a valid phone number.');
+
+      if (!valid) {
+        e.preventDefault();
+      } else {
+        var btn = document.getElementById('saveBtn');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Saving...';
+        btn.disabled = true;
+      }
+    });
+  </script>
+
+</body>
+</html>

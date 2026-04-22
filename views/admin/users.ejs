@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Users - Admin</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+</head>
+
+<body class="bg-gray-100">
+
+<div class="flex h-screen">
+
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-md flex flex-col justify-between">
+    
+    <div>
+      <div class="p-6">
+        <h1 class="text-xl font-bold text-green-700">Satylo Fasion</h1>
+        <p class="text-sm text-gray-500 flex items-center gap-2 mt-1">
+          <i class="fa fa-user"></i> Admin Dashboard
+        </p>
+      </div>
+
+      <nav class="mt-4">
+        <ul class="space-y-2 px-4">
+
+          <li class="bg-gray-100 rounded-lg">
+            <a href="#" class="flex items-center gap-3 p-3 text-green-600 font-medium">
+              <i class="fa fa-table"></i> Dashboard
+            </a>
+          </li>
+
+          <li><a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-lg">
+            <i class="fa fa-users"></i> Users
+          </a></li>
+
+          <li><a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-lg">
+            <i class="fa fa-box"></i> Products
+          </a></li>
+
+          <li><a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-lg">
+            <i class="fa fa-list"></i> Categories
+          </a></li>
+
+          <li><a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-lg">
+            <i class="fa fa-tag"></i> Metal
+          </a></li>
+
+          <li><a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-lg">
+            <i class="fa fa-shopping-cart"></i> Orders
+          </a></li>
+
+          <li><a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-lg">
+            <i class="fa fa-credit-card"></i> Payments
+          </a></li>
+
+          <li><a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-lg">
+            <i class="fa fa-ticket"></i> Coupon
+          </a></li>
+
+          <li><a href="#" class="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-lg">
+            <i class="fa fa-download"></i> Sales Report
+          </a></li>
+
+        </ul>
+      </nav>
+    </div>
+
+    <div class="p-4">
+      <a href="#" class="flex items-center gap-2 text-red-500">
+        <i class="fa fa-sign-out-alt"></i> Logout
+      </a>
+    </div>
+
+  </aside>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-6">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+      <div>
+        <h2 class="text-2xl font-semibold">Users</h2>
+        <p class="text-gray-500 text-sm">Manage your users and their permissions</p>
+      </div>
+
+      <!-- Profile Image Placeholder -->
+      <div class="w-12 h-12 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
+        <!-- If image exists -->
+        <!-- <img src="/images/admin.jpg" class="w-full h-full object-cover"/> -->
+
+        <!-- Empty Placeholder -->
+        <i class="fa fa-user text-gray-600 text-xl"></i>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="bg-white p-4 rounded-lg shadow mb-4">
+      <input 
+        type="text" 
+        placeholder="Search users..." 
+        class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+      />
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+
+      <table class="w-full text-left border-collapse">
+        
+        <thead class="bg-gray-50 text-gray-600 text-sm">
+          <tr>
+            <th class="p-4">User</th>
+            <th class="p-4">Role</th>
+            <th class="p-4">Status</th>
+            <th class="p-4">Join Date</th>
+            <th class="p-4 text-center">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody class="text-sm">
+
+          <!-- Row -->
+          <tr class="border-t">
+            <td class="p-4">
+              <p class="font-medium">John Smith</p>
+              <p class="text-gray-500 text-xs">john.smith@example.com</p>
+            </td>
+            <td class="p-4">Customer</td>
+            <td class="p-4">
+              <span class="bg-green-100 text-green-600 px-3 py-1 rounded-full text-xs">active</span>
+            </td>
+            <td class="p-4">15/01/2024</td>
+            <td class="p-4 text-center space-x-3">
+              <i class="fa fa-pen text-green-600 cursor-pointer"></i>
+              <i class="fa fa-ban text-orange-500 cursor-pointer"></i>
+            </td>
+          </tr>
+
+          <tr class="border-t">
+            <td class="p-4">
+              <p class="font-medium">Emily Davis</p>
+              <p class="text-gray-500 text-xs">emily@example.com</p>
+            </td>
+            <td class="p-4">Customer</td>
+            <td class="p-4">
+              <span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs">blocked</span>
+            </td>
+            <td class="p-4">05/02/2024</td>
+            <td class="p-4 text-center space-x-3">
+              <i class="fa fa-pen text-green-600 cursor-pointer"></i>
+              <i class="fa fa-check text-green-500 cursor-pointer"></i>
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </main>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora - Profile</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leaf: {
+              50:  '#f0faf0',
+              100: '#dcf5dc',
+              600: '#1f7a1f',
+              700: '#185c18',
+              800: '#124512',
+              900: '#0b2f0b',
+            },
+            cream: '#f5f2eb',
+          },
+          fontFamily: {
+            display: ['"Playfair Display"', 'serif'],
+            body:    ['Poppins', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #f5f2eb; }
+
+    .tab-link {
+      padding: 10px 2px;
+      font-size: 0.82rem;
+      color: #6b7280;
+      border-bottom: 2px solid transparent;
+      border-left: none; border-right: none; border-top: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      background: none;
+    }
+    .tab-link:hover  { color: #185c18; }
+    .tab-link.active { color: #185c18; border-bottom-color: #185c18; font-weight: 600; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 11px 0;
+      font-size: 0.82rem;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-key { color: #6b7280; }
+    .info-val { color: #1f2937; font-weight: 500; text-align: right; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-cream">
+
+  <%# ═══ NAVBAR ═══ %>
+  <header class="bg-white border-b border-gray-100 sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+
+      <a href="/" class="flex items-center gap-2">
+        <%# IMAGE SLOT: Logo — /images/leafora-logo.png — 130x36px %>
+        <img src="/images/leafora-logo.png" alt="Leafora" class="h-8 w-auto" />
+        <span class="font-display text-lg font-bold text-leaf-900">Leafora</span>
+      </a>
+
+      <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+        <a href="/"          class="hover:text-leaf-700 transition-colors">Home</a>
+        <a href="/shop"      class="text-leaf-700 font-semibold border-b-2 border-leaf-600 pb-0.5">Shop</a>
+        <a href="/products"  class="hover:text-leaf-700 transition-colors">Products</a>
+        <a href="/pages"     class="hover:text-leaf-700 transition-colors">Pages</a>
+      </nav>
+
+      <div class="flex items-center gap-3 text-gray-500">
+        <button class="hover:text-leaf-700 p-1 transition-colors"><i class="fa-solid fa-magnifying-glass text-sm"></i></button>
+        <button class="hover:text-leaf-700 p-1 transition-colors"><i class="fa-regular fa-user text-sm"></i></button>
+        <button class="hover:text-leaf-700 p-1 transition-colors"><i class="fa-regular fa-heart text-sm"></i></button>
+        <button class="hover:text-leaf-700 p-1 transition-colors relative">
+          <i class="fa-solid fa-basket-shopping text-sm"></i>
+          <span class="absolute -top-1 -right-1 bg-leaf-600 text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold">2</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <%# ═══ MAIN ═══ %>
+  <main class="max-w-5xl mx-auto px-6 py-6">
+
+    <%# ── User Header Card ── %>
+    <div class="bg-white rounded-xl border border-gray-200 px-5 py-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+
+      <%# IMAGE SLOT: Avatar — user.avatar from session/DB — 64x64px circle %>
+      <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 bg-gray-100 flex items-center justify-center flex-shrink-0">
+        <% if (typeof user !== 'undefined' && user && user.avatar) { %>
+          <img src="<%= user.avatar %>" alt="Profile" class="w-full h-full object-cover" />
+        <% } else { %>
+          <i class="fa-regular fa-user text-gray-400 text-xl"></i>
+        <% } %>
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <h1 class="text-sm font-semibold text-gray-900">
+          <% if (typeof user !== 'undefined' && user) { %>
+            <%= user.firstName %> <%= user.lastName %>
+          <% } else { %>
+            Michael Anderson
+          <% } %>
+        </h1>
+        <p class="text-xs text-gray-500 flex items-center gap-1.5 mt-1">
+          <i class="fa-regular fa-envelope" style="font-size:10px;color:#9ca3af"></i>
+          <% if (typeof user !== 'undefined' && user) { %>
+            <%= user.email %>
+          <% } else { %>
+            michael.anderson@email.com
+          <% } %>
+        </p>
+        <p class="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
+          <i class="fa-solid fa-phone" style="font-size:9px;color:#9ca3af"></i>
+          <% if (typeof user !== 'undefined' && user && user.phone) { %>
+            <%= user.phone %>
+          <% } else { %>
+            +1 (555) 123-4567
+          <% } %>
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <a href="/user/profileEdit"
+           class="bg-leaf-700 hover:bg-leaf-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+          Edit Profile
+        </a>
+        <a href="/user/change-password"
+           class="border border-gray-300 hover:border-gray-400 bg-white text-gray-600 text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+          Change Password
+        </a>
+      </div>
+    </div>
+
+    <%# ── Tab Container ── %>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+
+      <div class="flex items-center gap-6 px-6 border-b border-gray-100 overflow-x-auto">
+        <button class="tab-link active" onclick="switchTab(event,'tabProfile')">Profile</button>
+        <button class="tab-link"        onclick="switchTab(event,'tabOrders')">My Orders</button>
+        <button class="tab-link"        onclick="switchTab(event,'tabWallet')">Wallet</button>
+        <button class="tab-link"        onclick="switchTab(event,'tabReferrals')">Referrals</button>
+      </div>
+
+      <%# ── TAB: Profile ── %>
+      <div id="tabProfile" class="tab-panel active p-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+          <div class="border border-gray-100 rounded-xl p-5">
+            <h2 class="text-sm font-semibold text-gray-800 mb-2">Personal Information</h2>
+
+            <div class="info-row">
+              <span class="info-key">Full Name</span>
+              <span class="info-val">
+                <% if (typeof user !== 'undefined' && user) { %>
+                  <%= user.firstName %> <%= user.lastName %>
+                <% } else { %>
+                  Michael Anderson
+                <% } %>
+              </span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-key">Email</span>
+              <span class="info-val">
+                <% if (typeof user !== 'undefined' && user) { %>
+                  <%= user.email %>
+                <% } else { %>
+                  michael.anderson@email.com
+                <% } %>
+              </span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-key">Phone Number</span>
+              <span class="info-val">
+                <% if (typeof user !== 'undefined' && user && user.phone) { %>
+                  <%= user.phone %>
+                <% } else { %>
+                  +1 (555) 123-4567
+                <% } %>
+              </span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-key">Member Since</span>
+              <span class="info-val">
+                <%
+                  var memberSince = 'March 15, 2023';
+                  if (typeof user !== 'undefined' && user && user.createdAt) {
+                    memberSince = new Date(user.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric', month: 'long', day: 'numeric'
+                    });
+                  }
+                %>
+                <%= memberSince %>
+              </span>
+            </div>
+          </div>
+
+          <div class="border border-gray-100 rounded-xl p-5 flex flex-col">
+            <h2 class="text-sm font-semibold text-gray-800 mb-3">Primary Address</h2>
+
+            <% if (typeof primaryAddress !== 'undefined' && primaryAddress) { %>
+              <p class="text-xs font-semibold text-gray-700 mb-1"><%= primaryAddress.label || 'Home Address' %></p>
+              <p class="text-xs text-gray-500 leading-5">
+                <%= primaryAddress.line1 %><br/>
+                <% if (primaryAddress.line2) { %><%= primaryAddress.line2 %><br/><% } %>
+                <%= primaryAddress.city %>, <%= primaryAddress.state %> <%= primaryAddress.zip %><br/>
+                <%= primaryAddress.country %>
+              </p>
+            <% } else { %>
+              <p class="text-xs font-semibold text-gray-700 mb-1">Home Address</p>
+              <p class="text-xs text-gray-500 leading-5">
+                123 Main Street<br/>
+                Apartment 4B<br/>
+                New York, NY 10001<br/>
+                United States
+              </p>
+            <% } %>
+
+            <div class="mt-auto pt-4">
+              <a href="/user/addresses"
+                 class="block w-full bg-leaf-700 hover:bg-leaf-800 text-white text-xs font-semibold py-2.5 rounded-lg text-center transition-colors">
+                Manage Addresses
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <%# ── TAB: My Orders ── %>
+      <div id="tabOrders" class="tab-panel p-5">
+        <% if (typeof orders !== 'undefined' && orders && orders.length > 0) { %>
+          <div class="space-y-3">
+            <% orders.forEach(function(order) { %>
+              <div class="flex items-center justify-between border border-gray-100 rounded-xl px-4 py-3">
+                <div>
+                  <p class="text-sm font-semibold text-gray-800">#<%= order._id %></p>
+                  <p class="text-xs text-gray-400 mt-0.5">
+                    <%= new Date(order.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}) %>
+                    &middot; <%= order.items ? order.items.length : 0 %> item(s)
+                  </p>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm font-semibold text-leaf-700">&#8377;<%= order.total %></span>
+                  <span class="text-[10px] font-semibold px-2.5 py-1 rounded-full
+                    <% if (order.status === 'Delivered') { %>bg-green-100 text-green-700
+                    <% } else if (order.status === 'Pending') { %>bg-yellow-100 text-yellow-700
+                    <% } else if (order.status === 'Cancelled') { %>bg-red-100 text-red-600
+                    <% } else { %>bg-blue-100 text-blue-700<% } %>">
+                    <%= order.status %>
+                  </span>
+                  <a href="/user/orders/<%= order._id %>" class="text-xs text-leaf-700 hover:underline font-medium">View</a>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div class="text-center py-14 text-gray-400">
+            <i class="fa-solid fa-box-open text-4xl mb-3 block"></i>
+            <p class="text-sm mb-4">No orders yet.</p>
+            <a href="/shop" class="inline-block bg-leaf-700 hover:bg-leaf-800 text-white text-xs font-semibold px-5 py-2.5 rounded-lg transition-colors">
+              Start Shopping
+            </a>
+          </div>
+        <% } %>
+      </div>
+
+      <%# ── TAB: Wallet ── %>
+      <div id="tabWallet" class="tab-panel p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div class="bg-leaf-50 border border-leaf-100 rounded-xl p-5">
+            <p class="text-xs text-gray-500 mb-1">Wallet Balance</p>
+            <p class="font-display text-3xl font-bold text-leaf-800">
+              &#8377;<% if (typeof user !== 'undefined' && user && user.walletBalance !== undefined) { %><%= user.walletBalance %><% } else { %>500<% } %>
+            </p>
+          </div>
+          <div class="border border-gray-100 rounded-xl p-5 flex items-center justify-center">
+            <a href="/user/wallet/add" class="bg-leaf-700 hover:bg-leaf-800 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">
+              <i class="fa-solid fa-plus mr-1.5 text-xs"></i>Add Money
+            </a>
+          </div>
+        </div>
+        <p class="text-center text-xs text-gray-400">Transaction history coming soon.</p>
+      </div>
+
+      <%# ── TAB: Referrals ── %>
+      <div id="tabReferrals" class="tab-panel p-5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+          <div class="bg-leaf-50 border border-leaf-100 rounded-xl p-5">
+            <p class="text-xs text-gray-500 mb-1">Total Referrals</p>
+            <p class="font-display text-3xl font-bold text-leaf-800">
+              <% if (typeof user !== 'undefined' && user && user.totalReferrals !== undefined) { %><%= user.totalReferrals %><% } else { %>12<% } %>
+            </p>
+          </div>
+          <div class="border border-gray-100 rounded-xl p-5">
+            <p class="text-xs text-gray-500 mb-1">Your Referral Code</p>
+            <p id="refCode" class="font-mono text-lg font-bold text-leaf-700 tracking-widest">
+              <% if (typeof user !== 'undefined' && user && user.referralCode) { %><%= user.referralCode %><% } else { %>LEAF-XXXX<% } %>
+            </p>
+            <button onclick="copyCode(this)" class="mt-2 text-xs text-leaf-700 hover:underline font-medium flex items-center gap-1">
+              <i class="fa-regular fa-copy text-xs"></i> Copy Code
+            </button>
+          </div>
+        </div>
+        <p class="text-center text-xs text-gray-400">Refer friends and earn wallet credits!</p>
+      </div>
+
+    </div>
+  </main>
+
+  <%# ═══ FOOTER ═══ %>
+  <footer class="bg-leaf-900 text-white mt-10">
+    <div class="max-w-5xl mx-auto px-6 pt-10 pb-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+
+        <div>
+          <h4 class="font-display text-base font-semibold mb-3">Leafora</h4>
+          <p class="text-gray-400 text-xs mb-3 leading-relaxed">Download the Leafora App Now</p>
+
+          <%# IMAGE SLOT: QR code — /images/qr-code.png — 88x88px %>
+          <div class="bg-white rounded-xl p-1.5 inline-flex items-center justify-center w-24 h-24 mb-3">
+            <i class="fa-solid fa-qrcode text-gray-400 text-4xl"></i>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <%# IMAGE SLOT: Google Play badge — /images/google-play-badge.png — 90x28px %>
+            <a href="#" class="inline-flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 text-white text-[10px] px-3 py-1.5 rounded-lg font-medium transition-colors w-max">
+              <i class="fa-brands fa-google-play text-xs"></i> Play Store
+            </a>
+            <%# IMAGE SLOT: App Store badge — /images/app-store-badge.png — 90x28px %>
+            <a href="#" class="inline-flex items-center gap-1.5 bg-gray-800 hover:bg-gray-700 text-white text-[10px] px-3 py-1.5 rounded-lg font-medium transition-colors w-max">
+              <i class="fa-brands fa-apple text-xs"></i> App Store
+            </a>
+          </div>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-xs mb-3 text-white uppercase tracking-wide">Helpful Links</h4>
+          <ul class="space-y-2 text-gray-400 text-xs">
+            <li><a href="#" class="hover:text-white transition-colors">Plant Care Guide</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Shipping Policy</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Returns &amp; Refunds</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Track Order</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Locate Stores</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-xs mb-3 text-white uppercase tracking-wide">Information</h4>
+          <ul class="space-y-2 text-gray-400 text-xs">
+            <li><a href="#" class="hover:text-white transition-colors">Plant Blog</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">Plant Care Tips</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">FAQs</a></li>
+            <li><a href="#" class="hover:text-white transition-colors">About Us</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-xs mb-3 text-white uppercase tracking-wide">Contact Us</h4>
+          <ul class="space-y-2 text-gray-400 text-xs">
+            <li class="flex items-center gap-2">
+              <i class="fa-solid fa-phone text-gray-500" style="font-size:9px"></i>
+              +91 9000000000
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fa-solid fa-envelope text-gray-500 mt-0.5" style="font-size:9px"></i>
+              Email Us: support@leafora.com
+            </li>
+            <li class="flex items-center gap-3 mt-2">
+              <a href="#" class="text-gray-400 hover:text-white text-base transition-colors"><i class="fa-brands fa-whatsapp"></i></a>
+              <a href="#" class="text-gray-400 hover:text-white text-base transition-colors"><i class="fa-brands fa-telegram"></i></a>
+              <a href="#" class="text-gray-400 hover:text-white text-base transition-colors"><i class="fa-regular fa-comment-dots"></i></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="border-t border-leaf-800 pt-5">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] text-gray-400 font-medium mr-1">Social</span>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-instagram text-sm"></i></a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-x-twitter text-sm"></i></a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-facebook text-sm"></i></a>
+            <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-youtube text-sm"></i></a>
+          </div>
+          <%# IMAGE SLOT: Payment icons — /images/payment-icons.png — 220x18px %>
+          <div class="flex items-center gap-1.5 opacity-60">
+            <i class="fa-brands fa-cc-visa text-gray-300 text-lg"></i>
+            <i class="fa-brands fa-cc-mastercard text-gray-300 text-lg"></i>
+            <i class="fa-brands fa-cc-paypal text-gray-300 text-lg"></i>
+            <i class="fa-brands fa-cc-amex text-gray-300 text-lg"></i>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] text-gray-500">
+          <p>&copy; 2026 Leafora - All Rights Reserved.</p>
+          <div class="flex items-center gap-4">
+            <a href="#" class="hover:text-white transition-colors">Terms &amp; Conditions</a>
+            <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
+            <a href="#" class="hover:text-white transition-colors">Disclaimer</a>
+          </div>
+        </div>
+
+        <p class="text-center text-xs text-gray-600 mt-3 font-display italic">
+          Grow Green, Live Fresh &#127807;
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    function switchTab(e, panelId) {
+      document.querySelectorAll('.tab-link').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+      e.currentTarget.classList.add('active');
+      document.getElementById(panelId).classList.add('active');
+    }
+
+    function copyCode(btn) {
+      var code = document.getElementById('refCode');
+      if (!code) return;
+      navigator.clipboard.writeText(code.textContent.trim()).then(function() {
+        btn.innerHTML = '<i class="fa-solid fa-check text-xs"></i> Copied!';
+        setTimeout(function() {
+          btn.innerHTML = '<i class="fa-regular fa-copy text-xs"></i> Copy Code';
+        }, 2000);
+      });
+    }
+  </script>
+
+</body>
+</html>

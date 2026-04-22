@@ -1,0 +1,75 @@
+
+
+const mongoose = require('mongoose');
+const bcrypt   = require('bcryptjs');
+
+const UserSchema = new mongoose.Schema(
+  {
+    firstName: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 50,
+    },
+    lastName: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 50,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    phone: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: 8,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+    // ── For future SSO (next steps) ─────────────────────────────────────
+    googleId:   { type: String, default: null },
+    facebookId: { type: String, default: null },
+
+    // ── For future forgot-password (next steps) ─────────────────────────
+    resetPasswordToken:   { type: String, default: null },
+    resetPasswordExpires: { type: Date,   default: null },
+  },
+  { timestamps: true }
+);
+
+// ─── Hash password before saving ─────────────────────────────────────────
+UserSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
+
+  const salt = await bcrypt.genSalt(12);
+  this.password = await bcrypt.hash(this.password, salt);
+});
+// ─── Instance method: compare password ───────────────────────────────────
+UserSchema.methods.comparePassword = async function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+// ─── Virtual: full name ───────────────────────────────────────────────────
+UserSchema.virtual('fullName').get(function () {
+  return `${this.firstName} ${this.lastName}`;
+});
+
+
+module.exports = mongoose.model('User', UserSchema);
