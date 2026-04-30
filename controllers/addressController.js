@@ -1,4 +1,4 @@
-const Address = require('../models/Address');
+const Address = require('../models/address');
 
 // ── GET ALL ADDRESSES ─────────────────────
 exports.getAddresses = async (req, res) => {
@@ -13,6 +13,39 @@ exports.getAddresses = async (req, res) => {
     res.send("Error loading addresses");
   }
 };
+
+// ── SHOW ADD ADDRESS PAGE ─────────────────
+// exports.getAddAddress = (req, res) => {
+//   res.render('user/addresses/addAddress');
+// };
+exports.getAddAddress = (req, res) => {
+  console.log("Add page hit"); // 🔥 debug
+  res.render('user/addresses/addAddress');
+};
+
+// Save Address
+exports.addAddress = async (req, res) => {
+  try {
+    const userId = req.session.user;
+
+    const newAddress = new Address({
+      user: userId,
+      name: req.body.name,
+      phone: req.body.phone,
+      city: req.body.city,
+      state: req.body.state,
+      pincode: req.body.pincode,
+      address: req.body.address
+    });
+
+    await newAddress.save();
+
+    res.redirect('/addresses'); // back to address list
+  } catch (err) {
+   
+  }
+};
+
 
 
 // ── ADD ADDRESS ───────────────────────────
@@ -34,7 +67,6 @@ exports.addAddress = async (req, res) => {
   }
 };
 
-
 // ── EDIT ADDRESS ──────────────────────────
 exports.editAddress = async (req, res) => {
   try {
@@ -42,7 +74,7 @@ exports.editAddress = async (req, res) => {
 
     await Address.findByIdAndUpdate(id, req.body);
 
-    res.redirect('/user/addresses');
+    res.redirect('/user/addresses'); // IMPORTANT FIX
   } catch (err) {
     console.log(err);
     res.send("Error editing address");

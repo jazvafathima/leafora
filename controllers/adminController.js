@@ -1,67 +1,86 @@
-const Admin = require('../models/Admin');
+const Admin = require('../models/admin');
 const bcrypt = require('bcrypt');
-const User = require('../models/User');
 
 exports.loadLogin = (req, res) => {
-    res.render('admin/login');
+  res.render('admin/login');
 };
 
-exports.login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
+// exports.login = async (req, res) => {
+//   try {
+//     const { email, password } = req.body;
 
-        const admin = await Admin.findOne({ email });
+//     const admin = await Admin.findOne({ email });
+//     if (!admin) {
+//       return res.render('admin/login', { error: 'Invalid email' });
+//     }
 
-        if (!admin) {
-            return res.json({
-                success: false,
-                message: "Invalid email"
-            });
-        }
+//     const isMatch = await bcrypt.compare(password, admin.password);
+//     if (!isMatch) {
+//       return res.render('admin/login', { error: 'Wrong password' });
+//     }
 
-        const isMatch = await bcrypt.compare(password, admin.password);
+//     // ✅ SESSION SET
+//     req.session.admin = admin._id;
 
-        if (!isMatch) {
-            return res.json({
-                success: false,
-                message: "Wrong password"
-            });
-        }
+//     res.redirect('/admin/dashboard');
+//   } catch (err) {
+//     console.log(err);
+//     res.send('Login error');
+//   }
+// };
 
-        res.json({ success: true });
+  exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-    } catch (err) {
-        console.log(err); // helpful for debugging
-        res.json({
-            success: false,
-            message: "Server error"
-        });
+    console.log("LOGIN HIT", email, password);
+
+    if (
+      email === process.env.ADMIN_EMAIL &&
+      password === process.env.ADMIN_PASSWORD
+    ) {
+      req.session.admin = true; // simple session
+
+      console.log("Login success");
+
+      return res.redirect('/admin/dashboard');
+    } else {
+      console.log("Invalid credentials");
+      return res.render('admin/login', { error: 'Invalid credentials' });
     }
+
+  } catch (err) {
+    console.log(err);
+    res.send('Login error');
+  }
 };
 
 
-// Block User
+
+// ✅ BLOCK USER
 exports.blockUser = async (req, res) => {
-    try {
-        const userId = req.params.id;
+  try {
+    await User.findByIdAndUpdate(req.params.id, {
+      isBlocked: true
+    });
 
-        await User.findByIdAndUpdate(userId, { isBlocked: true });
-
-        res.json({ success: true, message: "User blocked" });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
+    res.redirect('/admin/users');
+  } catch (err) {
+    console.log(err);
+    res.send("Error blocking user");
+  }
 };
 
-// Unblock User
+// ✅ UNBLOCK USER
 exports.unblockUser = async (req, res) => {
-    try {
-        const userId = req.params.id;
+  try {
+    await User.findByIdAndUpdate(req.params.id, {
+      isBlocked: false
+    });
 
-        await User.findByIdAndUpdate(userId, { isBlocked: false });
-
-        res.json({ success: true, message: "User unblocked" });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
+    res.redirect('/admin/users');
+  } catch (err) {
+    console.log(err);
+    res.send("Error unblocking user");
+  }
 };

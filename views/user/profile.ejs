@@ -140,6 +140,8 @@
       </div>
 
       <div class="flex items-center gap-2 flex-shrink-0">
+
+    
         <a href="/user/profileEdit"
            class="bg-leaf-700 hover:bg-leaf-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
           Edit Profile
@@ -147,6 +149,12 @@
         <a href="/user/change-password"
            class="border border-gray-300 hover:border-gray-400 bg-white text-gray-600 text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
           Change Password
+        </a>
+
+
+        <a href="/user/logout"
+           class="border border-gray-300 hover:border-gray-400 bg-white text-gray-600 text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+          logout
         </a>
       </div>
     </div>
@@ -220,23 +228,26 @@
           <div class="border border-gray-100 rounded-xl p-5 flex flex-col">
             <h2 class="text-sm font-semibold text-gray-800 mb-3">Primary Address</h2>
 
-            <% if (typeof primaryAddress !== 'undefined' && primaryAddress) { %>
-              <p class="text-xs font-semibold text-gray-700 mb-1"><%= primaryAddress.label || 'Home Address' %></p>
-              <p class="text-xs text-gray-500 leading-5">
-                <%= primaryAddress.line1 %><br/>
-                <% if (primaryAddress.line2) { %><%= primaryAddress.line2 %><br/><% } %>
-                <%= primaryAddress.city %>, <%= primaryAddress.state %> <%= primaryAddress.zip %><br/>
-                <%= primaryAddress.country %>
-              </p>
-            <% } else { %>
-              <p class="text-xs font-semibold text-gray-700 mb-1">Home Address</p>
-              <p class="text-xs text-gray-500 leading-5">
-                123 Main Street<br/>
-                Apartment 4B<br/>
-                New York, NY 10001<br/>
-                United States
-              </p>
-            <% } %>
+        
+<% if (defaultAddress) { %>
+  <div>
+    <p><strong><%= defaultAddress.name %></strong></p>
+    <p><%= defaultAddress.street %></p>
+    <p>
+      <%= defaultAddress.city %>, 
+      <%= defaultAddress.state %> - 
+      <%= defaultAddress.zip || defaultAddress.pincode %>
+    </p>
+    <p><%= defaultAddress.country %></p>
+    <p>📞 <%= defaultAddress.phone %></p>
+  </div>
+<% } else { %>
+  <p>No primary address set</p>
+<% } %>
+               
+
+            
+            
 
             <div class="mt-auto pt-4">
               <a href="/user/addresses"

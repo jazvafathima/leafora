@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora - Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sidebar: '#1a5c1a',
+            brand:   '#1f7a1f',
+            accent:  '#16a34a',
+          },
+          fontFamily: { body: ['Poppins','sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #60b660; }
+
+    /* ── Sidebar ── */
+    .sidebar { background: #fafaf9; width: 180px; min-height: 100vh; flex-shrink: 0; }
+    .sidebar-brand { padding: 18px 16px 14px; border-bottom: 1px solid rgba(40, 73, 39, 0.12); }
+    .sidebar-brand p { color: #050c06; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.02em; }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 16px; font-size: 0.78rem;
+      color: rgba(18, 11, 11, 0.75);
+      text-decoration: none; transition: all 0.15s;
+    }
+    .sidebar-link:hover  { color: #0f3b14; background: rgba(192, 218, 194, 0.562); }
+    .sidebar-link.active { background: rgba(7, 62, 11, 0.954); color: #f8faf8; font-weight: 600; border-radius: 6px; margin: 0 8px; padding: 9px 10px; }
+    .sidebar-link i { width: 14px; text-align: center; font-size: 0.8rem; }
+
+    /* ── Top bar ── */
+    .topbar { background: #104b10; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { color: #fff; font-size: 1rem; font-weight: 600; }
+
+    /* ── Stat cards ── */
+    .stat-card { background: #fff; border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .stat-icon { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+
+    /* ── Table ── */
+    .tbl-head { font-size: 0.72rem; color: #6b7280; font-weight: 500; padding: 10px 16px; }
+    .tbl-cell { font-size: 0.75rem; color: #374151; padding: 11px 16px; }
+    .badge { font-size: 0.65rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+    .badge-delivered  { background: #dcfce7; color: #16a34a; }
+    .badge-pending    { background: #fef9c3; color: #ca8a04; }
+    .badge-cancelled  { background: #fee2e2; color: #dc2626; }
+    .badge-processing { background: #dbeafe; color: #2563eb; }
+  </style>
+</head>
+<body class="min-h-screen" style="background:#d4e8d4">
+
+<div class="flex min-h-screen">
+
+  <%# ═══ SIDEBAR ═══ %>
+  <aside class="sidebar flex flex-col">
+
+    <div class="sidebar-brand">
+      <p>leafora</p>
+    </div>
+
+    <nav class="flex-1 py-3 space-y-0.5">
+      <a href="/admin/dashboard"  class="sidebar-link active"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="/admin/orders"     class="sidebar-link"><i class="fa-solid fa-bag-shopping"></i> Orders</a>
+      <a href="/admin/products"   class="sidebar-link"><i class="fa-solid fa-box"></i> Products</a>
+      <a href="/admin/categories" class="sidebar-link"><i class="fa-solid fa-list"></i> Categories</a>
+      <a href="/admin/users"      class="sidebar-link"><i class="fa-regular fa-user"></i> Users</a>
+      <a href="/admin/offers"     class="sidebar-link"><i class="fa-regular fa-heart"></i> Offers</a>
+      <a href="/admin/coupons"    class="sidebar-link"><i class="fa-solid fa-ticket"></i> Coupons</a>
+      <a href="/admin/reports"    class="sidebar-link"><i class="fa-solid fa-chart-bar"></i> Reports</a>
+    </nav>
+  </aside>
+
+  <%# ═══ RIGHT PANEL ═══ %>
+  <div class="flex-1 flex flex-col" style="background:#e8f0e8">
+
+    <%# Top bar %>
+    <div class="topbar">
+      <h1>Dashboard</h1>
+      <div class="flex items-center gap-3">
+        <%# IMAGE SLOT: Admin avatar — /images/admin-avatar.png — 34x34px circle %>
+        <div class="w-9 h-9 rounded-full overflow-hidden border-2 border-white border-opacity-50 bg-green-700 flex items-center justify-center flex-shrink-0">
+          <% if (typeof admin !== 'undefined' && admin && admin.avatar) { %>
+            <img src="<%= admin.avatar %>" alt="Admin" class="w-full h-full object-cover" />
+          <% } else { %>
+            <i class="fa-regular fa-user text-white text-sm"></i>
+          <% } %>
+        </div>
+        <span class="text-white font-semibold text-sm">3</span>
+      </div>
+    </div>
+
+    <%# ── MAIN CONTENT ── %>
+    <main class="flex-1 p-5">
+
+      <%# Stat Cards %>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+
+        <div class="stat-card">
+          <div>
+            <p class="text-xs text-gray-400 font-medium mb-0.5">Total Orders</p>
+            <p class="text-2xl font-bold text-gray-800">
+              <% if (typeof stats !== 'undefined' && stats && stats.totalOrders !== undefined) { %><%= stats.totalOrders.toLocaleString() %><% } else { %>1,248<% } %>
+            </p>
+          </div>
+          <div class="stat-icon bg-green-50">
+            <i class="fa-solid fa-lock text-green-700"></i>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div>
+            <p class="text-xs text-gray-400 font-medium mb-0.5">Total Revenue</p>
+            <p class="text-2xl font-bold text-gray-800">
+              $<% if (typeof stats !== 'undefined' && stats && stats.totalRevenue !== undefined) { %><%= stats.totalRevenue.toLocaleString() %><% } else { %>48,392<% } %>
+            </p>
+          </div>
+          <div class="stat-icon bg-green-50">
+            <i class="fa-solid fa-circle text-green-700"></i>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div>
+            <p class="text-xs text-gray-400 font-medium mb-0.5">Total Users</p>
+            <p class="text-2xl font-bold text-gray-800">
+              <% if (typeof stats !== 'undefined' && stats && stats.totalUsers !== undefined) { %><%= stats.totalUsers.toLocaleString() %><% } else { %>3,572<% } %>
+            </p>
+          </div>
+          <div class="stat-icon bg-green-50">
+            <i class="fa-solid fa-users text-green-700"></i>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div>
+            <p class="text-xs text-gray-400 font-medium mb-0.5">Pending Orders</p>
+            <p class="text-2xl font-bold text-gray-800">
+              <% if (typeof stats !== 'undefined' && stats && stats.pendingOrders !== undefined) { %><%= stats.pendingOrders %><% } else { %>87<% } %>
+            </p>
+          </div>
+          <div class="stat-icon bg-green-50">
+            <i class="fa-solid fa-square text-green-700"></i>
+          </div>
+        </div>
+
+      </div>
+
+      <%# Sales Overview chart %>
+      <div class="bg-white rounded-xl p-5 mb-4 shadow-sm">
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">Sales Overview</h2>
+        <div style="height: 220px">
+          <canvas id="salesChart"></canvas>
+        </div>
+      </div>
+
+      <%# Recent Orders %>
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="px-5 py-4 border-b border-gray-100">
+          <h2 class="text-sm font-semibold text-gray-700">Recent Orders</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="border-b border-gray-100 bg-gray-50">
+              <tr>
+                <th class="tbl-head text-left">Order ID</th>
+                <th class="tbl-head text-left">Customer</th>
+                <th class="tbl-head text-left">Date</th>
+                <th class="tbl-head text-left">Status</th>
+                <th class="tbl-head text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+
+              <% if (typeof recentOrders !== 'undefined' && recentOrders && recentOrders.length > 0) { %>
+                <% recentOrders.forEach(function(order) { %>
+                  <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="tbl-cell font-medium text-gray-700">#<%= order.orderId || order._id %></td>
+                    <td class="tbl-cell"><%= order.customer %></td>
+                    <td class="tbl-cell text-gray-500">
+                      <%= order.date ? new Date(order.date).toISOString().split('T')[0] : '-' %>
+                    </td>
+                    <td class="tbl-cell">
+                      <span class="badge
+                        <% if (order.status === 'Delivered') { %>badge-delivered
+                        <% } else if (order.status === 'Pending') { %>badge-pending
+                        <% } else if (order.status === 'Cancelled') { %>badge-cancelled
+                        <% } else { %>badge-processing<% } %>">
+                        <%= order.status %>
+                      </span>
+                    </td>
+                    <td class="tbl-cell text-right font-medium">$<%= order.amount %></td>
+                  </tr>
+                <% }); %>
+
+              <% } else { %>
+                <%# Static demo rows — exact match to screenshot %>
+                <% var demo = [
+                  {id:'ORD-1248', customer:'John Smith',    date:'2024-01-15', status:'Delivered',  amount:'248.00'},
+                  {id:'ORD-1247', customer:'Sarah Johnson', date:'2024-01-15', status:'Pending',    amount:'412.00'},
+                  {id:'ORD-1246', customer:'Michael Brown', date:'2024-01-14', status:'Delivered',  amount:'188.00'},
+                  {id:'ORD-1245', customer:'Emily Davis',   date:'2024-01-14', status:'Cancelled',  amount:'324.00'},
+                  {id:'ORD-1244', customer:'David Wilson',  date:'2024-01-13', status:'Delivered',  amount:'562.00'},
+                ]; %>
+                <% demo.forEach(function(o) { %>
+                  <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="tbl-cell font-medium text-gray-700">#<%= o.id %></td>
+                    <td class="tbl-cell"><%= o.customer %></td>
+                    <td class="tbl-cell text-gray-500"><%= o.date %></td>
+                    <td class="tbl-cell">
+                      <span class="badge
+                        <% if (o.status === 'Delivered') { %>badge-delivered
+                        <% } else if (o.status === 'Pending') { %>badge-pending
+                        <% } else if (o.status === 'Cancelled') { %>badge-cancelled
+                        <% } else { %>badge-processing<% } %>">
+                        <%= o.status %>
+                      </span>
+                    </td>
+                    <td class="tbl-cell text-right font-medium">$<%= o.amount %></td>
+                  </tr>
+                <% }); %>
+              <% } %>
+
+            </tbody>
+          </table>
+        </div>
+
+        <%# Footer %>
+        <div class="px-5 py-3 border-t border-gray-100 text-center">
+          <p class="text-[10px] text-gray-400">&copy; 2024 MobileMart Admin. All rights reserved.</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  var ctx = document.getElementById('salesChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets: [{
+        label: 'Sales',
+        data: [
+          <% if (typeof salesData !== 'undefined' && salesData && salesData.length > 0) { %>
+            <% salesData.forEach(function(v,i) { %><%= v %><% if(i < salesData.length-1){ %>,<% } %><% }); %>
+          <% } else { %>
+            4000, 3800, 5800, 4400, 6200, 6400
+          <% } %>
+        ],
+        backgroundColor: '#1a5c1a',
+        borderRadius: 4,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) { return '$' + ctx.parsed.y.toLocaleString(); }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 10, family: 'Poppins' }, color: '#9ca3af' }
+        },
+        y: {
+          grid: { color: '#f3f4f6' },
+          ticks: { font: { size: 10, family: 'Poppins' }, color: '#9ca3af' },
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

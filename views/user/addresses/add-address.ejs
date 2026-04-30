@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora - Add Address</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leaf: { 700:'#185c18', 800:'#124512' },
+          },
+          fontFamily: { display:['"Playfair Display"','serif'], body:['Poppins','sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family:'Poppins',sans-serif; }
+    .backdrop { background:rgba(75,75,75,0.72); backdrop-filter:blur(1px); }
+    .field-label { display:block; font-size:0.7rem; color:#374151; font-weight:500; margin-bottom:4px; }
+    .field-input {
+      width:100%; border:1.5px solid #d1d5db; border-radius:8px;
+      padding:9px 12px; font-size:0.8rem; color:#1f2937;
+      font-family:'Poppins',sans-serif; background:#fff; outline:none;
+      transition:border-color 0.2s, box-shadow 0.2s;
+    }
+    .field-input:focus { border-color:#185c18; box-shadow:0 0 0 3px rgba(24,92,24,0.08); }
+    .field-input.is-error { border-color:#dc2626; }
+    .field-input::placeholder { color:#9ca3af; font-size:0.78rem; }
+    .field-error { color:#dc2626; font-size:0.67rem; margin-top:3px; display:flex; align-items:center; gap:3px; }
+  </style>
+</head>
+<body class="min-h-screen backdrop flex items-center justify-center p-4">
+
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative p-7">
+
+    <%# Header %>
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-base font-semibold text-gray-800">Add Address</h2>
+      <a href="/user/addresses" class="text-gray-400 hover:text-gray-600 transition-colors text-lg leading-none">
+        <i class="fa-solid fa-xmark"></i>
+      </a>
+    </div>
+
+    <%# Form %>
+    <form id="addAddressForm" action="/user/add-address" method="POST" novalidate class="space-y-4">
+
+      
+      <div>
+  <label for="name" class="field-label">Full Name</label>
+  <input type="text" id="name" name="name"
+    placeholder="Enter your full name"
+    class="field-input" required />
+</div>
+
+      <%# Address Label %>
+      <div>
+        <label for="label" class="field-label">Address Label</label>
+        <input type="text" id="label" name="label"
+          placeholder="e.g. Home, Work, Other"
+          value="<% if (typeof formData !== 'undefined' && formData && formData.label) { %><%= formData.label %><% } %>"
+          class="field-input <% if (typeof errors !== 'undefined' && errors && errors.label) { %>is-error<% } %>" />
+        <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.label) { %>
+          <p class="field-error"><i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> <%= errors.label %></p>
+        <% } %>
+      </div>
+
+      <%# Street Address %>
+      <div>
+        <label for="street" class="field-label">Street Address</label>
+        <input type="text" id="street" name="street"
+          placeholder="123 Main Street, Apartment 4B"
+          value="<% if (typeof formData !== 'undefined' && formData && formData.street) { %><%= formData.street %><% } %>"
+          class="field-input <% if (typeof errors !== 'undefined' && errors && errors.street) { %>is-error<% } %>" />
+        <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.street) { %>
+          <p class="field-error"><i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> <%= errors.street %></p>
+        <% } %>
+      </div>
+
+      <%# City + State %>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="city" class="field-label">City</label>
+          <input type="text" id="city" name="city"
+            placeholder="City"
+            value="<% if (typeof formData !== 'undefined' && formData && formData.city) { %><%= formData.city %><% } %>"
+            class="field-input <% if (typeof errors !== 'undefined' && errors && errors.city) { %>is-error<% } %>" />
+          <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.city) { %>
+            <p class="field-error"><i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> <%= errors.city %></p>
+          <% } %>
+        </div>
+        <div>
+          <label for="state" class="field-label">State</label>
+          <input type="text" id="state" name="state"
+            placeholder="State"
+            value="<% if (typeof formData !== 'undefined' && formData && formData.state) { %><%= formData.state %><% } %>"
+            class="field-input <% if (typeof errors !== 'undefined' && errors && errors.state) { %>is-error<% } %>" />
+          <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.state) { %>
+            <p class="field-error"><i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> <%= errors.state %></p>
+          <% } %>
+        </div>
+      </div>
+
+      <%# ZIP + Country %>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="zip" class="field-label">ZIP Code</label>
+          <input type="text" id="zip" name="zip"
+            placeholder="ZIP Code"
+            value="<% if (typeof formData !== 'undefined' && formData && formData.zip) { %><%= formData.zip %><% } %>"
+            class="field-input <% if (typeof errors !== 'undefined' && errors && errors.zip) { %>is-error<% } %>" />
+          <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.zip) { %>
+            <p class="field-error"><i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> <%= errors.zip %></p>
+          <% } %>
+        </div>
+        <div>
+          <label for="country" class="field-label">Country</label>
+          <input type="text" id="country" name="country"
+            placeholder="Country"
+            value="<% if (typeof formData !== 'undefined' && formData && formData.country) { %><%= formData.country %><% } %>"
+            class="field-input <% if (typeof errors !== 'undefined' && errors && errors.country) { %>is-error<% } %>" />
+          <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.country) { %>
+            <p class="field-error"><i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> <%= errors.country %></p>
+          <% } %>
+        </div>
+      </div>
+
+      <%# Phone + Alt Phone %>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="phone" class="field-label">Phone</label>
+          <input type="tel" id="phone" name="phone"
+            placeholder="+91 9389XXXXXXX"
+            value="<% if (typeof formData !== 'undefined' && formData && formData.phone) { %><%= formData.phone %><% } %>"
+            class="field-input <% if (typeof errors !== 'undefined' && errors && errors.phone) { %>is-error<% } %>" />
+          <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.phone) { %>
+            <p class="field-error"><i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> <%= errors.phone %></p>
+          <% } %>
+        </div>
+        <div>
+          <label for="altPhone" class="field-label">Alternative Phone</label>
+          <input type="tel" id="altPhone" name="altPhone"
+            placeholder="+91 9389XXXXXXX"
+            value="<% if (typeof formData !== 'undefined' && formData && formData.altPhone) { %><%= formData.altPhone %><% } %>"
+            class="field-input" />
+        </div>
+      </div>
+
+      <%# Buttons %>
+      <div class="flex items-center gap-3 pt-2">
+        <a href="/user/addresses"
+          class="flex-1 text-center text-sm font-semibold text-gray-600 border border-gray-300 hover:border-gray-400 py-2.5 rounded-lg transition-colors bg-white">
+          Cancel
+        </a>
+        <button type="submit" id="saveBtn"
+          class="flex-1 bg-leaf-700 hover:bg-leaf-800 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
+          Save Changes
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('addAddressForm').addEventListener('submit', function(e) {
+      var valid = true;
+      document.querySelectorAll('.client-err').forEach(function(el) { el.remove(); });
+      document.querySelectorAll('.field-input').forEach(function(el) { el.classList.remove('is-error'); });
+
+      function showErr(id, msg) {
+        var input = document.getElementById(id);
+        if (!input) return;
+        input.classList.add('is-error');
+        var p = document.createElement('p');
+        p.className = 'field-error client-err';
+        p.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> ' + msg;
+        input.parentElement.appendChild(p);
+        valid = false;
+      }
+
+      if (!document.getElementById('label').value.trim())   showErr('label',  'Address label is required.');
+      if (!document.getElementById('street').value.trim())  showErr('street', 'Street address is required.');
+      if (!document.getElementById('city').value.trim())    showErr('city',   'City is required.');
+      if (!document.getElementById('state').value.trim())   showErr('state',  'State is required.');
+      if (!document.getElementById('zip').value.trim())     showErr('zip',    'ZIP code is required.');
+      if (!document.getElementById('country').value.trim()) showErr('country','Country is required.');
+      if (!document.getElementById('phone').value.trim())   showErr('phone',  'Phone is required.');
+
+      if (!valid) {
+        e.preventDefault();
+      } else {
+        var btn = document.getElementById('saveBtn');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Saving...';
+        btn.disabled = true;
+      }
+    });
+  </script>
+</body>
+</html>
+
+<!-- <form action="/user/add-address" method="POST">
+  <input type="text" name="name" placeholder="Name" required />
+  <input type="text" name="phone" placeholder="Phone" required />
+  <input type="text" name="city" placeholder="City" required />
+  <input type="text" name="state" placeholder="State" required />
+  <input type="text" name="pincode" placeholder="Pincode" required />
+  <textarea name="address" placeholder="Full Address"></textarea>
+
+  <button type="submit">Save Address</button>
+</form> -->

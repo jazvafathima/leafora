@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora - Verify OTP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leaf: { 700:'#185c18', 800:'#124512', 900:'#0b2f0b' },
+          },
+          fontFamily: { body: ['Poppins','sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #e2e2e2; }
+
+    /* OTP input boxes */
+    .otp-input {
+      width: 46px;
+      height: 46px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1f2937;
+      font-family: 'Poppins', sans-serif;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background: #fff;
+      caret-color: #185c18;
+    }
+    .otp-input:focus {
+      border-color: #185c18;
+      box-shadow: 0 0 0 3px rgba(24,92,24,0.1);
+    }
+    .otp-input.is-error { border-color: #dc2626; }
+    .otp-input.is-filled { border-color: #185c18; }
+
+    /* Timer square icon */
+    .timer-square {
+      width: 18px; height: 18px;
+      background: #185c18;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Verify button */
+    .verify-btn {
+      width: 100%;
+      background: #185c18;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.88rem;
+      padding: 13px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: 'Poppins', sans-serif;
+      letter-spacing: 0.01em;
+    }
+    .verify-btn:hover    { background: #124512; }
+    .verify-btn:disabled { background: #4a8a4a; cursor: not-allowed; }
+
+    /* Security notice box */
+    .security-box {
+      background: #f8fffe;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center px-4 py-10" style="background:#e0e0e0">
+
+  <%# ═══ CARD ═══ %>
+  <div class="bg-white rounded-2xl shadow-lg w-full max-w-sm px-8 pt-8 pb-7">
+
+    <%# Lock icon circle %>
+    <div class="flex justify-center mb-4">
+      <div class="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center">
+        <i class="fa-solid fa-lock text-gray-700 text-xl"></i>
+      </div>
+    </div>
+
+    <%# Title %>
+    <h1 class="text-xl font-semibold text-gray-800 text-center mb-1">Verify OTP</h1>
+
+    <%# Phone / email display %>
+    <p class="text-sm text-gray-500 text-center mb-6">
+      <% if (typeof phone !== 'undefined' && phone) { %>
+        <%= phone %>
+      <% } else if (typeof email !== 'undefined' && email) { %>
+        <%= email %>
+      <% } else { %>
+        +91 98765 43210
+      <% } %>
+    </p>
+
+    <%# Flash error %>
+    <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+      <div class="bg-red-50 border border-red-200 text-red-600 text-xs rounded-lg px-3 py-2 mb-4 text-center">
+        <%= error[0] %>
+      </div>
+    <% } %>
+
+    <%# OTP Form %>
+    <form id="otpForm" action="/verify-otp" method="POST" novalidate>
+
+      <%# Hidden fields %>
+      <% if (typeof phone !== 'undefined' && phone) { %>
+        <input type="hidden" name="phone" value="<%= phone %>" />
+      <% } %>
+      <% if (typeof email !== 'undefined' && email) { %>
+        <input type="hidden" name="email" value="<%= email %>" />
+      <% } %>
+      <% if (typeof userId !== 'undefined' && userId) { %>
+        <input type="hidden" name="userId" value="<%= userId %>" />
+      <% } %>
+      <input type="hidden" name="otp" id="otpHidden" />
+
+      <%# 6 OTP boxes %>
+      <div class="flex items-center justify-center gap-2 mb-5" id="otpBoxes">
+        <input type="text" maxlength="1" class="otp-input" id="otp1" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" />
+        <input type="text" maxlength="1" class="otp-input" id="otp2" inputmode="numeric" pattern="[0-9]" />
+        <input type="text" maxlength="1" class="otp-input" id="otp3" inputmode="numeric" pattern="[0-9]" />
+        <input type="text" maxlength="1" class="otp-input" id="otp4" inputmode="numeric" pattern="[0-9]" />
+        <input type="text" maxlength="1" class="otp-input" id="otp5" inputmode="numeric" pattern="[0-9]" />
+        <input type="text" maxlength="1" class="otp-input" id="otp6" inputmode="numeric" pattern="[0-9]" />
+      </div>
+
+      <%# Timer row %>
+      <div class="flex items-center justify-center gap-2 mb-5">
+        <div class="timer-square"></div>
+        <span class="text-sm font-semibold text-gray-700" id="timerDisplay">
+          <% if (typeof timerSeconds !== 'undefined' && timerSeconds) { %>
+            <%= Math.floor(timerSeconds/60) %>:<%= String(timerSeconds%60).padStart(2,'0') %>
+          <% } else { %>
+            00:45
+          <% } %>
+        </span>
+        <span class="text-sm text-gray-500">remaining</span>
+      </div>
+
+      <%# Verify button %>
+      <button type="submit" id="verifyBtn" class="verify-btn mb-4">
+        Verify OTP
+      </button>
+
+    </form>
+
+    <%# Resend OTP %>
+    <p class="text-xs text-center text-gray-500 mb-2">
+      Didn't receive the code?
+      <button id="resendBtn" onclick="resendOtp()" disabled
+        class="text-leaf-700 font-semibold hover:underline disabled:opacity-40 disabled:cursor-not-allowed disabled:no-underline">
+        Resend OTP
+      </button>
+    </p>
+
+    <%# Change email/phone %>
+    <p class="text-xs text-center mb-5">
+      <a href="/signup" class="text-leaf-700 hover:underline flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-phone text-xs"></i>
+        Change Your Email id
+      </a>
+    </p>
+
+    <%# Security notice %>
+    <div class="security-box">
+      <i class="fa-solid fa-shield-halved text-leaf-700 text-sm flex-shrink-0 mt-0.5"></i>
+      <p class="text-xs text-gray-500 leading-relaxed">
+        Your information is secure and will be used only for verification purposes
+      </p>
+    </div>
+
+  </div>
+
+  <%# Back to login %>
+  <a href="/login" class="mt-5 text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1.5 transition-colors">
+    <i class="fa-solid fa-arrow-left text-xs"></i>
+    Back to login
+  </a>
+
+  <script>
+    <%# ── OTP box auto-advance ── %>
+    var boxes = document.querySelectorAll('.otp-input');
+
+    boxes.forEach(function(box, i) {
+      box.addEventListener('input', function() {
+        var val = box.value.replace(/[^0-9]/g,'');
+        box.value = val;
+        if (val) {
+          box.classList.add('is-filled');
+          box.classList.remove('is-error');
+          if (i < boxes.length - 1) boxes[i+1].focus();
+        } else {
+          box.classList.remove('is-filled');
+        }
+        updateHidden();
+      });
+
+      box.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace') {
+          if (!box.value && i > 0) {
+            boxes[i-1].focus();
+            boxes[i-1].value = '';
+            boxes[i-1].classList.remove('is-filled');
+            updateHidden();
+          }
+        }
+        if (e.key === 'ArrowLeft' && i > 0)              boxes[i-1].focus();
+        if (e.key === 'ArrowRight' && i < boxes.length-1) boxes[i+1].focus();
+      });
+
+      <%# Handle paste on first box %>
+      box.addEventListener('paste', function(e) {
+        e.preventDefault();
+        var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g,'');
+        boxes.forEach(function(b, j) {
+          b.value = pasted[j] || '';
+          if (b.value) { b.classList.add('is-filled'); } else { b.classList.remove('is-filled'); }
+        });
+        var nextEmpty = pasted.length < boxes.length ? pasted.length : boxes.length - 1;
+        boxes[nextEmpty].focus();
+        updateHidden();
+      });
+    });
+
+    function updateHidden() {
+      var otp = '';
+      boxes.forEach(function(b) { otp += b.value; });
+      document.getElementById('otpHidden').value = otp;
+    }
+
+    <%# ── Countdown timer ── %>
+    var seconds = <% if (typeof timerSeconds !== 'undefined' && timerSeconds) { %><%= timerSeconds %><% } else { %>45<% } %>;
+    var timerEl  = document.getElementById('timerDisplay');
+    var resendBtn = document.getElementById('resendBtn');
+    var countdown;
+
+    function startTimer(secs) {
+      seconds = secs;
+      resendBtn.disabled = true;
+      clearInterval(countdown);
+      countdown = setInterval(function() {
+        if (seconds <= 0) {
+          clearInterval(countdown);
+          timerEl.textContent = '00:00';
+          resendBtn.disabled = false;
+          return;
+        }
+        seconds--;
+        var m = Math.floor(seconds / 60);
+        var s = seconds % 60;
+        timerEl.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+      }, 1000);
+    }
+
+    startTimer(seconds);
+
+    function resendOtp() {
+      resendBtn.disabled = true;
+      resendBtn.textContent = 'Sending...';
+      fetch('/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: '<% if (typeof phone !== "undefined" && phone) { %><%= phone %><% } %>',
+          email: '<% if (typeof email !== "undefined" && email) { %><%= email %><% } %>',
+          userId: '<% if (typeof userId !== "undefined" && userId) { %><%= userId %><% } %>',
+        })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        resendBtn.textContent = 'Resend OTP';
+        if (data.success) {
+          boxes.forEach(function(b) { b.value = ''; b.classList.remove('is-filled','is-error'); });
+          document.getElementById('otpHidden').value = '';
+          startTimer(60);
+        }
+      })
+      .catch(function() {
+        resendBtn.textContent = 'Resend OTP';
+        resendBtn.disabled = false;
+      });
+    }
+
+    <%# ── Form submit validation ── %>
+    document.getElementById('otpForm').addEventListener('submit', function(e) {
+      var otp = document.getElementById('otpHidden').value;
+      var allFilled = true;
+
+      boxes.forEach(function(b) {
+        if (!b.value) { b.classList.add('is-error'); allFilled = false; }
+        else          { b.classList.remove('is-error'); }
+      });
+
+      if (!allFilled || otp.length < 6) {
+        e.preventDefault();
+        return;
+      }
+
+      var btn = document.getElementById('verifyBtn');
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2 text-sm"></i>Verifying...';
+      btn.disabled = true;
+    });
+
+    <%# Focus first box on load %>
+    window.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('otp1').focus();
+    });
+  </script>
+
+</body>
+</html>

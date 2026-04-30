@@ -8,17 +8,10 @@ const isAuthenticated = (req, res, next) => {
 
 // ─── Redirect logged-in users away from auth pages ────────────────────────
 const isGuest = (req, res, next) => {
-  if (req.session && req.session.user) return res.redirect('/dashboard');
+  if (req.session && req.session.user) return res.redirect('/user/dashboard');
   next();
 };
 
-// ─── Admin only ───────────────────────────────────────────────────────────
-const isAdmin = (req, res, next) => {
-  if (req.session && req.session.user && req.session.user.role === 'admin') {
-    return next();
-  }
-  req.flash('error', 'Access denied. Admins only.');
-  res.redirect('/dashboard');
-};
 
-module.exports = { isAuthenticated, isGuest, isAdmin };
+
+module.exports = { isAuthenticated, isGuest };

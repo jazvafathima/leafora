@@ -11,12 +11,15 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       maxlength: 50,
     },
-    lastName: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 50,
-    },
+   lastName: {
+  type: String,
+  trim: true,
+  maxlength: 50,
+  required: function () {
+    return !this.googleId; // required only if NOT Google user
+  },
+  default: ''
+},
     email: {
       type: String,
       required: true,
@@ -33,17 +36,35 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: true,
       minlength: 8,
+      required: function () {
+       return !this.googleId;
+  }
     },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
+   
     role: {
       type: String,
       enum: ['user', 'admin'],
       default: 'user',
     },
-    // ── For future SSO (next steps) ─────────────────────────────────────
+
+    isBlocked: {
+       type: Boolean,
+       default: false
+
+    },
+       otp:{
+        otp: String,
+        otpExpiry: Date,
+        isVerified: {
+       type: Boolean,
+       default: false
+     }
+
+
+
+
+       },
+    // // ── For future SSO (next steps) ─────────────────────────────────────
     googleId:   { type: String, default: null },
     facebookId: { type: String, default: null },
 
@@ -72,4 +93,5 @@ UserSchema.virtual('fullName').get(function () {
 });
 
 
-module.exports = mongoose.model('User', UserSchema);
+// module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.models.User || mongoose.model('User', UserSchema);
