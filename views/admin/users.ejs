@@ -138,33 +138,41 @@
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style="font-size:11px"></i>
                 <input type="text" name="search" id="searchInput"
                   placeholder="Search by name, email"
-                  value="<% if (typeof query !== 'undefined' && query && query.search) { %><%= query.search %><% } %>"
+                  value="<%= typeof search !== 'undefined' ? search : '' %>"
                   class="filter-input" />
               </div>
             </div>
 
             <%# Role filter %>
-            <div>
+            <!-- <div>
               <label class="block text-xs text-gray-500 font-medium mb-1.5">Role</label>
               <div class="relative">
-                <select name="role" class="filter-select pr-8">
-                  <option value="">All Roles</option>
-                  <option value="customer" <% if (typeof query !== 'undefined' && query && query.role === 'customer') { %>selected<% } %>>Customer</option>
-                  <option value="admin"    <% if (typeof query !== 'undefined' && query && query.role === 'admin')    { %>selected<% } %>>Admin</option>
-                </select>
+              
                 <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
               </div>
-            </div>
+            </div> -->
 
             <%# Status filter %>
             <div>
               <label class="block text-xs text-gray-500 font-medium mb-1.5">Status</label>
               <div class="relative">
-                <select name="status" class="filter-select pr-8">
-                  <option value="">All Status</option>
-                  <option value="active"  <% if (typeof query !== 'undefined' && query && query.status === 'active')  { %>selected<% } %>>Active</option>
-                  <option value="blocked" <% if (typeof query !== 'undefined' && query && query.status === 'blocked') { %>selected<% } %>>Blocked</option>
-                </select>
+             <select name="status"
+  class="filter-select pr-8"
+  onchange="document.getElementById('filterForm').submit()">
+
+  <option value="">All Status</option>
+
+  <option value="active" <%= status === 'active' ? 'selected' : '' %>>
+    Active
+  </option>
+
+  <option value="blocked" <%= status === 'blocked' ? 'selected' : '' %>>
+    Blocked
+  </option>
+
+</select>
+
+  
                 <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
               </div>
             </div>
@@ -201,108 +209,78 @@
                 <th class="th text-right">Actions</th>
               </tr>
             </thead>
-            <tbody>
+        
+     <tbody>
 
-              <% if (typeof users !== 'undefined' && users && users.length > 0) { %>
+<% if (users && users.length > 0) { %>
 
-                <% users.forEach(function(u, idx) { %>
-                  <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="td font-medium text-gray-600">
-                      #USR-<%= String(idx + 1).padStart(3,'0') %>
-                    </td>
-                    <td class="td font-medium text-gray-800"><%= u.firstName %> <%= u.lastName %></td>
-                    <td class="td text-gray-500"><%= u.email %></td>
-                    <td class="td text-gray-600 capitalize"><%= u.role || 'Customer' %></td>
-                    <td class="td text-gray-500 text-center">
-                      <%= u.orderCount !== undefined ? u.orderCount : '-' %>
-                    </td>
-                    <td class="td">
-                      <% if (!u.isBlocked) { %>
-  <a href="/admin/users/<%= u._id %>/block-confirm">...</a>
-<% } else { %>
-  <a href="/admin/users/<%= u._id %>/unblock-confirm">...</a>
-<% } %>
-                      <!-- <% if (u.status === 'active') { %>
-                        <span class="badge-active">Active</span>
-                      <% } else if (u.status === 'blocked') { %>
-                        <span class="badge-blocked">Blocked</span>
-                      <!-- <% } else { %>
-                        <span class="badge-active">Active</span>
-                      <% } %> --> -->
-                    </td>
-                    <td class="td text-gray-500">
-                      <%= u.createdAt ? new Date(u.createdAt).toISOString().split('T')[0] : '-' %>
-                    </td>
-                    <td class="td text-right">
-  <div class="flex items-center justify-end gap-2">
+  <% users.forEach(function(u, idx) { %>
+    <tr>
 
-    <% if (u.isBlocked) { %>
-      <!-- UNBLOCK -->
-      <form action="/admin/users/<%= u._id %>/unblock" method="POST">
-        <button onclick="return confirm('Unblock this user?')"
-          class="text-green-600 hover:text-green-800">
-          <i class="fa-solid fa-unlock text-xs"></i>
-        </button>
-      </form>
-    <% } else { %>
-      <!-- BLOCK -->
-      <form action="/admin/users/<%= u._id %>/block" method="POST">
-        <button onclick="return confirm('Block this user?')"
-          class="text-red-600 hover:text-red-800">
-          <i class="fa-solid fa-ban text-xs"></i>
-        </button>
-      </form>
-    <% } %>
+      <td class="td">#USR-<%= String(idx + 1).padStart(3,'0') %></td>
+      <td class="td"><%= u.firstName %> <%= u.lastName %></td>
+      <td class="td"><%= u.email %></td>
+      <td class="td"><%= u.role || 'user' %></td>
+      <td class="td text-center"><%= u.orderCount || '-' %></td>
 
-  </div>
+      <td class="td">
+        <% if (!u.isBlocked) { %>
+          <span class="badge-active">Active</span>
+        <% } else { %>
+          <span class="badge-blocked">Blocked</span>
+        <% } %>
+      </td>
+
+      <td class="td">
+        <%= u.createdAt ? new Date(u.createdAt).toISOString().split('T')[0] : '-' %>
+      </td>
+
+     <td class="td text-right">
+
+  <% if (u.isBlocked) { %>
+
+    <!-- UNBLOCK -->
+    <form id="unblockForm-<%= u._id %>" action="/admin/users/<%= u._id %>/unblock" method="POST">
+      <button type="button"
+        onclick="openModal('Are you sure you want to UNBLOCK this user?', '<%= u._id %>')"
+        class="text-green-600 font-medium">
+        Unblock
+      </button>
+    </form>
+
+  <% } else { %>
+
+    <!-- BLOCK -->
+    <form id="blockForm-<%= u._id %>" action="/admin/users/<%= u._id %>/block" method="POST">
+      <button type="button"
+        onclick="openModal('Are you sure you want to BLOCK this user?', '<%= u._id %>')"
+        class="text-red-600 font-medium">
+        Block
+      </button>
+    </form>
+
+  <% } %>
+
 </td>
-                  </tr>
-                <% }); %>
 
-              <% } else { %>
+    </tr>
+  <% }); %>
 
-                <%# Static demo rows — exact match to screenshot %>
-                <% var demoUsers = [
-                  {id:'USR-001', name:'Alex\nJohnson',    email:'alex.j@example.com',        role:'Customer', orders:'-',  status:'Active',  date:'2023-08-12'},
-                  {id:'USR-002', name:'Sarah Williams',   email:'sarah.w@example.com',       role:'Customer', orders:'24', status:'Active',  date:'2023-09-01'},
-                  {id:'USR-003', name:'Michael Brown',    email:'m.brown99@example.com',     role:'Customer', orders:'12', status:'Blocked', date:'2023-09-15'},
-                  {id:'USR-004', name:'Emily Davis',      email:'emily.davis@example.com',   role:'Customer', orders:'8',  status:'Active',  date:'2023-10-02'},
-                  {id:'USR-005', name:'James Wilson',     email:'james.w@example.com',       role:'Customer', orders:'3',  status:'Active',  date:'2023-10-20'},
-                ]; %>
+<% } else { %>
 
-                <% demoUsers.forEach(function(u) { %>
-                  <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="td font-medium text-gray-600">#<%= u.id %></td>
-                    <td class="td font-medium text-gray-800" style="white-space:pre-line"><%= u.name %></td>
-                    <td class="td text-gray-500"><%= u.email %></td>
-                    <td class="td text-gray-600"><%= u.role %></td>
-                    <td class="td text-gray-500"><%= u.orders %></td>
-                    <td class="td">
-                      <% if (!u.isBlocked) { %>
-                        <span class="badge-active">Active</span>
-                      <% } else { %>
-                        <span class="badge-blocked">Blocked</span>
-                      <% } %>
-                    </td>
-                    <td class="td text-gray-500"><%= u.date %></td>
-                    <td class="td text-right">
-                      <button title="Block/Unblock user"
-                        class="w-7 h-7 rounded-full border border-gray-200 hover:border-green-600 flex items-center justify-center text-gray-400 hover:text-green-700 transition-colors ml-auto">
-                        <i class="fa-solid fa-ban text-xs"></i>
-                      </button>
-                    </td>
-                  </tr>
-                <% }); %>
+  <tr>
+    <td colspan="8" class="text-center text-gray-400 py-6">
+      No users found
+    </td>
+  </tr>
 
-              <% } %>
+<% } %>
 
-            </tbody>
-          </table>
-        </div>
+</tbody>
 
-        <%# Pagination row %>
-        <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
-          <%# Showing info %>
+        
+        <!-- <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
+          Showing info 
           <p class="text-xs text-gray-500">
             Showing
             <span class="font-semibold text-gray-700">
@@ -310,49 +288,127 @@
             </span>
             of
             <span class="font-semibold text-gray-700">
-              <% if (typeof totalUsers !== 'undefined' && totalUsers) { %><%= totalUsers %><% } else { %>48<% } %>
+              <% if (typeof totalUsers !== 'undefined' && totalUsers) { %>
+  <%= totalUsers %>
+<% } %>
             </span>
             users
-          </p>
+          </p> -->
+          
+<%
+  const current = currentPage || 1;
+  const limit = 10;
 
-          <%# Page buttons %>
-          <div class="flex items-center gap-2">
-            <%# Previous %>
-            <a href="<% if (typeof currentPage !== 'undefined' && currentPage > 1) { %>/admin/users?page=<%= currentPage - 1 %><% } else { %>#<% } %>"
-              class="page-nav <% if (!(typeof currentPage !== 'undefined' && currentPage > 1)) { %>disabled<% } %>">
-              <i class="fa-solid fa-chevron-left text-xs"></i> Previous
-            </a>
+  const start = users && users.length > 0 ? (current - 1) * limit + 1 : 0;
+  const end = users && users.length > 0 ? start + users.length - 1 : 0;
 
-            <%# Page numbers %>
-            <% var totalPages = typeof pages !== 'undefined' && pages ? pages : 3; %>
-            <% var activePage = typeof currentPage !== 'undefined' && currentPage ? currentPage : 1; %>
-            <% for (var p = 1; p <= totalPages; p++) { %>
-              <a href="/admin/users?page=<%= p %>"
-                class="page-btn <%= p === activePage ? 'active' : '' %>">
-                <%= p %>
-              </a>
-            <% } %>
-            <span class="page-btn cursor-default">…</span>
+  const total = totalUsers || 0;
+%>
 
-            <%# Next %>
-            <a href="<% if (typeof currentPage !== 'undefined' && currentPage < totalPages) { %>/admin/users?page=<%= currentPage + 1 %><% } else { %>#<% } %>"
-              class="page-nav <% if (!(typeof currentPage !== 'undefined' && currentPage < totalPages)) { %>disabled<% } %>">
-              Next <i class="fa-solid fa-chevron-right text-xs"></i>
-            </a>
-          </div>
-        </div>
+<div class="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
 
-      </div>
-    </main>
+  <!-- Showing info -->
+  <p class="text-xs text-gray-500">
+    Showing
+    <span class="font-semibold text-gray-700">
+      <%= start %>-<%= end %>
+    </span>
+    of
+    <span class="font-semibold text-gray-700">
+      <%= total %>
+    </span>
+    users
+  </p>
+
+  <!-- Pagination -->
+  <div class="flex items-center gap-2">
+
+    <!-- Previous -->
+    <a href="<%= current > 1 ? '/admin/users?page=' + (current - 1) : '#' %>"
+       class="page-nav <%= current > 1 ? '' : 'disabled' %>">
+      <i class="fa-solid fa-chevron-left text-xs"></i> Previous
+    </a>
+
+    <% for (let p = 1; p <= (totalPages || 1); p++) { %>
+      <a href="/admin/users?page=<%= p %>"
+         class="page-btn <%= p === current ? 'active' : '' %>">
+        <%= p %>
+      </a>
+    <% } %>
+
+    <!-- Next -->
+    <a href="<%= current < (totalPages || 1) ? '/admin/users?page=' + (current + 1) : '#' %>"
+       class="page-nav <%= current < (totalPages|| 1) ? '' : 'disabled' %>">
+      Next <i class="fa-solid fa-chevron-right text-xs"></i>
+    </a>
+
   </div>
+
 </div>
 
+<!-- Confirm Modal -->
+<div id="confirmModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+  <div class="bg-white rounded-xl shadow-lg w-[320px] p-5 text-center">
+
+    <h2 class="text-sm font-semibold text-gray-800 mb-2">
+      Confirm Action
+    </h2>
+
+    <p id="modalText" class="text-xs text-gray-500 mb-4">
+      Are you sure?
+    </p>
+
+    <div class="flex justify-center gap-3">
+
+      <button onclick="closeModal()"
+        class="px-4 py-2 text-xs border rounded-lg text-gray-600 hover:bg-gray-100">
+        Cancel
+      </button>
+
+      <button id="confirmBtn"
+        class="px-4 py-2 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700">
+        Yes
+      </button>
+
+    </div>
+  </div>
+</div>
 <script>
-  <%# Live search filter (client-side fallback while typing) %>
-  document.getElementById('searchInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      document.getElementById('filterForm').submit();
-    }
+  let targetFormId = null;
+
+  function openModal(message, userId) {
+    targetFormId = userId;
+    document.getElementById('modalText').innerText = message;
+    document.getElementById('confirmModal').classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('confirmModal').classList.add('hidden');
+    targetFormId = null;
+  }
+
+ document.getElementById('confirmBtn').addEventListener('click', function () {
+  if (targetFormId) {
+    const form =
+      document.getElementById('blockForm-' + targetFormId) ||
+      document.getElementById('unblockForm-' + targetFormId);
+
+    if (form) form.submit();
+  }
+});
+</script>
+<script>
+  const form = document.getElementById('filterForm');
+  const searchInput = document.getElementById('searchInput');
+
+  // Prevent auto submit on every key behavior issues
+  searchInput.addEventListener('input', function () {
+    clearTimeout(this.timer);
+
+    this.timer = setTimeout(() => {
+      form.submit();
+    }, 500); // debounce search
   });
 </script>
 

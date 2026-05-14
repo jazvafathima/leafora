@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora - Enter Confirmation Code</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leaf: { 50:'#f0faf0', 100:'#dcf5dc', 600:'#1f7a1f', 700:'#185c18', 800:'#124512', 900:'#0b2f0b' },
+            cream: '#f5f0e8',
+          },
+          fontFamily: {
+            display: ['"Playfair Display"', 'serif'],
+            body:    ['Poppins', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+
+    .field-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1.5px solid #5a7a5a;
+      outline: none;
+      padding: 6px 0 4px;
+      font-size: 0.82rem;
+      color: #1a3a1a;
+      font-family: 'Poppins', sans-serif;
+      transition: border-color 0.2s;
+    }
+    .field-input::placeholder { color: #6b7a6b; font-size: 0.82rem; }
+    .field-input:focus         { border-bottom-color: #185c18; }
+    .field-input.is-error      { border-bottom-color: #dc2626; }
+
+    .field-error {
+      color: #dc2626;
+      font-size: 0.68rem;
+      margin-top: 3px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .toast {
+      position: fixed; top: 1rem; right: 1rem; z-index: 9999;
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 18px; border-radius: 10px;
+      font-size: 0.82rem; font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+      animation: slideIn 0.3s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(120%); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+  </style>
+</head>
+
+<body class="bg-cream min-h-screen">
+
+  <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+    <div class="toast bg-red-50 border border-red-200 text-red-700" id="flashToast">
+      <i class="fa-solid fa-circle-exclamation"></i>
+      <%= error[0] %>
+      <button onclick="document.getElementById('flashToast').remove()" class="ml-2 text-red-400 hover:text-red-600">
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </button>
+    </div>
+  <% } %>
+
+  <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+    <div class="toast bg-green-50 border border-green-200 text-green-700" id="flashToast">
+      <i class="fa-solid fa-circle-check"></i>
+      <%= success[0] %>
+    </div>
+  <% } %>
+
+  <div class="flex min-h-screen">
+
+    <!-- LEFT: Plant Image Placeholder -->
+    <div class="hidden md:block w-7/12 relative overflow-hidden flex-shrink-0 bg-gray-100">
+      <!-- Place your plant image here -->
+      <!-- <img src="/images/your-cactus-image.jpg" alt="Plants" class="absolute inset-0 w-full h-full object-cover" /> -->
+    </div>
+
+    <!-- RIGHT: Form -->
+    <div class="flex-1 bg-cream flex flex-col items-center justify-center px-10 md:px-16 py-12 min-h-screen">
+
+      <!-- Logo -->
+      <div class="flex items-center gap-2 mb-10">
+        <img src="/images/leafora logo.png" alt="Leafora" class="h-16 w-auto" />
+        <span class="font-display text-2xl font-bold text-leaf-800 tracking-tight">Leafora</span>
+      </div>
+
+      <div class="w-full max-w-sm">
+
+        <h1 class="font-display text-2xl font-semibold text-leaf-800 mb-8">Enter The Confirmation Code</h1>
+
+        <form action="/verify-code" method="POST" novalidate id="codeForm">
+
+          <!-- Confirmation Code -->
+          <div class="mb-6">
+            <input type="text" name="confirmationCode" id="confirmationCode"
+              placeholder="Confirmation Code"
+              maxlength="6"
+              class="field-input <%= (typeof errors !== 'undefined' && errors && errors.confirmationCode) ? 'is-error' : '' %>"
+            />
+            <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.confirmationCode) { %>
+              <p class="field-error">
+                <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
+                <%= errors.confirmationCode %>
+              </p>
+            <% } %>
+          </div>
+
+          <!-- Submit -->
+          <button type="submit" id="submitBtn"
+            class="w-full bg-leaf-700 hover:bg-leaf-800 text-white font-semibold text-sm py-3 rounded-md transition-colors tracking-wide flex items-center justify-center gap-2">
+            <i class="fa-solid fa-check text-xs"></i>
+            Submit
+          </button>
+
+        </form>
+
+        <input type="hidden" name="email" value="<%= email %>">
+
+  <p class="text-center text-xs text-gray-500 mt-5">
+    Didn't receive Confirmation Code?
+    <button type="submit" class="text-leaf-700 font-medium hover:underline">
+      Resend Now
+    </button>
+  </p>
+      </div>
+
+      <p class="mt-auto pt-10 text-[10px] text-gray-400 text-right w-full max-w-sm">
+        Leafora Terms &amp; Conditions
+      </p>
+
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('codeForm').addEventListener('submit', function(e) {
+      let valid = true;
+      document.querySelectorAll('.client-err').forEach(el => el.remove());
+      document.querySelectorAll('.field-input').forEach(el => el.classList.remove('is-error'));
+
+      const showErr = (id, msg) => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        input.classList.add('is-error');
+        const p = document.createElement('p');
+        p.className = 'field-error client-err';
+        p.innerHTML = `<i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> ${msg}`;
+        input.closest('div').appendChild(p);
+        valid = false;
+      };
+
+      const code = document.getElementById('confirmationCode').value.trim();
+      if (!code) showErr('confirmationCode', 'Confirmation code is required.');
+      else if (code.length < 4) showErr('confirmationCode', 'Enter a valid confirmation code.');
+
+      if (!valid) {
+        e.preventDefault();
+      } else {
+        const btn = document.getElementById('submitBtn');
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Verifying...';
+        btn.disabled = true;
+      }
+    });
+
+    const toast = document.getElementById('flashToast');
+    if (toast) setTimeout(() => toast.remove(), 5000);
+  </script>
+
+</body>
+</html>

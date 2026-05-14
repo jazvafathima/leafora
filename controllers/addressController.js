@@ -3,7 +3,7 @@ const Address = require('../models/address');
 // ── GET ALL ADDRESSES ─────────────────────
 exports.getAddresses = async (req, res) => {
   try {
-    const userId = req.session.user;
+    const userId = req.session.userId;
 
     const addresses = await Address.find({ user: userId });
 
@@ -26,7 +26,7 @@ exports.getAddAddress = (req, res) => {
 // Save Address
 exports.addAddress = async (req, res) => {
   try {
-    const userId = req.session.user;
+    const userId = req.session.userId;
 
     const newAddress = new Address({
       user: userId,
@@ -51,7 +51,7 @@ exports.addAddress = async (req, res) => {
 // ── ADD ADDRESS ───────────────────────────
 exports.addAddress = async (req, res) => {
   try {
-    const userId = req.session.user;
+    const userId = req.session.userId;
 
     const newAddress = new Address({
       user: userId,
@@ -60,7 +60,7 @@ exports.addAddress = async (req, res) => {
 
     await newAddress.save();
 
-    res.redirect('/user/addresses');
+    res.redirect('/addresses');
   } catch (err) {
     console.log(err);
     res.send("Error adding address");
@@ -74,7 +74,7 @@ exports.editAddress = async (req, res) => {
 
     await Address.findByIdAndUpdate(id, req.body);
 
-    res.redirect('/user/addresses'); // IMPORTANT FIX
+    res.redirect('/addresses'); // IMPORTANT FIX
   } catch (err) {
     console.log(err);
     res.send("Error editing address");
@@ -89,7 +89,7 @@ exports.deleteAddress = async (req, res) => {
 
     await Address.findByIdAndDelete(id);
 
-    res.redirect('/user/addresses');
+    res.redirect('/addresses');
   } catch (err) {
     console.log(err);
     res.send("Error deleting address");
@@ -100,7 +100,7 @@ exports.deleteAddress = async (req, res) => {
 // ── SET DEFAULT ADDRESS ───────────────────
 exports.setDefaultAddress = async (req, res) => {
   try {
-    const userId = req.session.user;
+    const userId = req.session.userId;
     const { id } = req.params;
 
     // remove old default
@@ -114,7 +114,7 @@ exports.setDefaultAddress = async (req, res) => {
       isDefault: true
     });
 
-    res.redirect('/user/addresses');
+    res.redirect('/addresses');
   } catch (err) {
     console.log(err);
     res.send("Error setting default");

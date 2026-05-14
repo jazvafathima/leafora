@@ -52,18 +52,16 @@ const UserSchema = new mongoose.Schema(
        default: false
 
     },
-       otp:{
-        otp: String,
-        otpExpiry: Date,
-        isVerified: {
-       type: Boolean,
-       default: false
-     }
-
-
-
-
-       },
+      otp: {
+  type: String
+},
+otpExpiry: {
+  type: Date
+},
+isVerified: {
+  type: Boolean,
+  default: false
+},
     // // ── For future SSO (next steps) ─────────────────────────────────────
     googleId:   { type: String, default: null },
     facebookId: { type: String, default: null },

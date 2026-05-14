@@ -33,11 +33,11 @@
     <div class="flex justify-between mb-4">
       <p class="text-sm font-semibold">Saved Addresses</p>
 
-     <!-- <a href="/user/addresses/add"
+     <!-- <a href="/addresses/add"
    style="display:inline-block; background:#185c18; color:white; padding:8px 12px; border-radius:6px;">
    Add New Address
 </a> -->
-<a href="/user/add-address" class="btn">
+<a href="/add-address" class="btn">
   Add New Address
 </a>
 
@@ -90,12 +90,12 @@
             <div class="flex flex-col gap-2 text-right">
 
               <!-- EDIT -->
-              <a href="/user/addresses/<%= addr._id %>/edit" class="btn-edit">
+              <a href="/addresses/<%= addr._id %>/edit" class="btn-edit">
                 Edit
               </a>
 
               <!-- DELETE -->
-              <form action="/user/addresses/<%= addr._id %>/delete" method="POST">
+              <form action="/addresses/<%= addr._id %>/delete" method="POST">
                 <button type="submit" class="btn-del">
                   Delete
                 </button>
@@ -103,7 +103,7 @@
 
               <!-- DEFAULT -->
               <% if (!addr.isDefault) { %>
-                <form action="/user/addresses/<%= addr._id %>/default" method="POST">
+                <form action="/addresses/<%= addr._id %>/default" method="POST">
                   <button class="btn-setdef">Set Default</button>
                 </form>
               <% } %>

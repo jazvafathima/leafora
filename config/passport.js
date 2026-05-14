@@ -9,16 +9,26 @@ passport.use(new GoogleStrategy({
 },
 async (accessToken, refreshToken, profile, done) => {
   try {
-    let user = await User.findOne({ googleId: profile.id });
+    const email = profile.emails[0].value;
 
-    if (!user) {
-    user = await User.create({
-  firstName: profile.name.givenName,
-  lastName: profile.name.familyName || '',
-  email: profile.emails[0].value,
-  googleId: profile.id,
-  isVerified: true
-});
+    // 👉 Step 1: check if user already exists by email
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // 👉 If user exists but no googleId, link it
+      if (!user.googleId) {
+        user.googleId = profile.id;
+        await user.save();
+      }
+    } else {
+      // 👉 If user does not exist, create new
+      user = await User.create({
+        firstName: profile.name.givenName,
+        lastName: profile.name.familyName || '',
+        email,
+        googleId: profile.id,
+        isVerified: true
+      });
     }
 
     return done(null, user);
@@ -26,7 +36,8 @@ async (accessToken, refreshToken, profile, done) => {
   } catch (err) {
     return done(err, null);
   }
-}));
+}
+));
 
 // session handling
 passport.serializeUser((user, done) => {

@@ -1,44 +1,31 @@
 const express = require('express');
 const router = express.Router();
 
-const adminController = require('../controllers/adminController');
-const { isAdminLoggedIn } = require('../middleware/adminAuth'); // ✅ ADD HERE
-const User = require('../models/user'); 
+console.log("ADMIN ROUTES LOADED");
 
-// 🔐 Admin Login Routes
-router.get('/login', adminController.loadLogin);
+const adminController = require('../controllers/adminController');
+const { isAdminLoggedIn, checkAuth } = require('../middleware/adminAuth');
+
+// LOGIN
+router.get('/login', checkAuth ,adminController.loadLogin);
 router.post('/login', adminController.login);
 
-// 🛡️ Protected Dashboard Route
+// DASHBOARD
 router.get('/dashboard', isAdminLoggedIn, (req, res) => {
   res.render('admin/dashboard');
 });
 
-// GET USERS PAGE
+// USERS
+router.get('/users', isAdminLoggedIn, adminController.getUsers);
 
-router.get('/users', async (req, res) => {
-  try {
-    const users = await User.find().sort({ createdAt: -1 }); // latest first
-
-    res.render('admin/users', { users }); // render users page
-  } catch (err) {
-    console.log(err);
-    res.send("Error loading users");
-  }
-});
-
-// Show confirm pages
-router.get('/users/:id/block-confirm', isAdminLoggedIn, (req, res) => {
-  res.render('admin/block-user', { userId: req.params.id });
-});
-router.get('/admin/users/:id/unblock-confirm', isAdminLoggedIn, (req, res) => {
-  res.render('admin/unblock-user', { userId: req.params.id });
-});
-
-// Handle POST actions
+// BLOCK / UNBLOCK
 router.post('/users/:id/block', isAdminLoggedIn, adminController.blockUser);
 router.post('/users/:id/unblock', isAdminLoggedIn, adminController.unblockUser);
 
-
+router.get('/logout', isAdminLoggedIn, adminController.logout);
+router.get('/testlogout', (req, res) => {
+  res.send("LOGOUT ROUTE WORKING");
+});
 
 module.exports = router;
+

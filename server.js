@@ -8,12 +8,13 @@ const flash      = require('connect-flash');
 const morgan     = require('morgan');
 const path       = require('path');
 const passport = require('passport');
-
+const nocache = require('nocache')
 require('./config/passport');
 
 const connectDB   = require('./config/db');
 const userRoutes  = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const checkUserBlocked = require('./middleware/checkUserBlocked');
 
 
 
@@ -28,7 +29,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 
-// ─── Middleware ─────────────────────────────────
+
 // ─── Middleware ─────────────────────────────────
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
@@ -49,9 +50,10 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
   }
 }));
+app.use(nocache())
+app.use(checkUserBlocked);
 
-
-// ─── Passport (AFTER session) ───────────────────
+// ─── Passport  ───────────────────
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -64,19 +66,15 @@ app.use(flash());
 app.use((req, res, next) => {
   res.locals.success  = req.flash('success');
   res.locals.error    = req.flash('error');
-  res.locals.user     = req.session.user || null;
+  res.locals.user     = req.session.userId || null;
   next();
 });
 
 
 // ─── ROUTES (ONLY ONCE) ─────────────────────────
-app.use('/user', userRoutes);
-app.use('/admin',adminRoutes);
-
-// 🧪 Test Route (optional)
-app.get('/test', (req, res) => {
-  res.send("TEST WORKING");
-});
+app.use('/', userRoutes);
+app.use('/admin', adminRoutes);
+console.log("ADMIN ROUTES CONNECTED");
 
 
 // ─── 404 Handler (MUST BE AFTER ROUTES) ─────────

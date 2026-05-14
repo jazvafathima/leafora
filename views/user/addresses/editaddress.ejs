@@ -42,13 +42,13 @@
     <%# Header %>
     <div class="flex items-center justify-between mb-5">
       <h2 class="text-base font-semibold text-gray-800">Edit Address</h2>
-      <a href="/user/addresses" class="text-gray-400 hover:text-gray-600 transition-colors text-lg leading-none">
+      <a href="/addresses" class="text-gray-400 hover:text-gray-600 transition-colors text-lg leading-none">
         <i class="fa-solid fa-xmark"></i>
       </a>
     </div>
 
     <%# Form %>
-    <form id="editAddressForm" action="/user/addresses/<% if (typeof address !== 'undefined' && address) { %><%= address._id %><% } %>/update" method="POST" novalidate class="space-y-4">
+    <form id="editAddressForm" action="/addresses/<% if (typeof address !== 'undefined' && address) { %><%= address._id %><% } %>/update" method="POST" novalidate class="space-y-4">
 
       <%# Address Label %>
       <div>
@@ -145,7 +145,7 @@
 
       <%# Buttons %>
       <div class="flex items-center gap-3 pt-2">
-        <a href="/user/addresses"
+        <a href="/addresses"
           class="flex-1 text-center text-sm font-semibold text-gray-600 border border-gray-300 hover:border-gray-400 py-2.5 rounded-lg transition-colors bg-white">
           Cancel
         </a>

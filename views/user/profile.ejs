@@ -75,7 +75,7 @@
 
       <a href="/" class="flex items-center gap-2">
         <%# IMAGE SLOT: Logo — /images/leafora-logo.png — 130x36px %>
-        <img src="/images/leafora-logo.png" alt="Leafora" class="h-8 w-auto" />
+        <img src="/public/images/leafora logo.png" alt="Leafora" class="h-8 w-auto" />
         <span class="font-display text-lg font-bold text-leaf-900">Leafora</span>
       </a>
 
@@ -142,17 +142,17 @@
       <div class="flex items-center gap-2 flex-shrink-0">
 
     
-        <a href="/user/profileEdit"
+        <a href="/profileEdit"
            class="bg-leaf-700 hover:bg-leaf-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
           Edit Profile
         </a>
-        <a href="/user/change-password"
+        <a href="/change-password"
            class="border border-gray-300 hover:border-gray-400 bg-white text-gray-600 text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
           Change Password
         </a>
 
 
-        <a href="/user/logout"
+        <a href="/logout"
            class="border border-gray-300 hover:border-gray-400 bg-white text-gray-600 text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
           logout
         </a>
@@ -197,33 +197,30 @@
                 <% } %>
               </span>
             </div>
-
             <div class="info-row">
-              <span class="info-key">Phone Number</span>
-              <span class="info-val">
-                <% if (typeof user !== 'undefined' && user && user.phone) { %>
-                  <%= user.phone %>
-                <% } else { %>
-                  +1 (555) 123-4567
-                <% } %>
-              </span>
-            </div>
+  <span class="info-key">Phone Number</span>
+  <span class="info-val">
+    <%= user?.phone || 'Not added' %>
+  </span>
+</div>
 
-            <div class="info-row">
-              <span class="info-key">Member Since</span>
-              <span class="info-val">
-                <%
-                  var memberSince = 'March 15, 2023';
-                  if (typeof user !== 'undefined' && user && user.createdAt) {
-                    memberSince = new Date(user.createdAt).toLocaleDateString('en-US', {
-                      year: 'numeric', month: 'long', day: 'numeric'
-                    });
-                  }
-                %>
-                <%= memberSince %>
-              </span>
+    <div class="info-row">
+  <span class="info-key">Member Since</span>
+  <span class="info-val">
+    <%= user?.createdAt 
+      ? new Date(user.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      : 'N/A'
+    %>
+  </span>
+       </div>
+
+          
             </div>
-          </div>
+          
 
           <div class="border border-gray-100 rounded-xl p-5 flex flex-col">
             <h2 class="text-sm font-semibold text-gray-800 mb-3">Primary Address</h2>
@@ -250,7 +247,7 @@
             
 
             <div class="mt-auto pt-4">
-              <a href="/user/addresses"
+              <a href="/addresses"
                  class="block w-full bg-leaf-700 hover:bg-leaf-800 text-white text-xs font-semibold py-2.5 rounded-lg text-center transition-colors">
                 Manage Addresses
               </a>
@@ -282,7 +279,7 @@
                     <% } else { %>bg-blue-100 text-blue-700<% } %>">
                     <%= order.status %>
                   </span>
-                  <a href="/user/orders/<%= order._id %>" class="text-xs text-leaf-700 hover:underline font-medium">View</a>
+                  <a href="/orders/<%= order._id %>" class="text-xs text-leaf-700 hover:underline font-medium">View</a>
                 </div>
               </div>
             <% }); %>
@@ -308,7 +305,7 @@
             </p>
           </div>
           <div class="border border-gray-100 rounded-xl p-5 flex items-center justify-center">
-            <a href="/user/wallet/add" class="bg-leaf-700 hover:bg-leaf-800 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">
+            <a href="/wallet/add" class="bg-leaf-700 hover:bg-leaf-800 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors">
               <i class="fa-solid fa-plus mr-1.5 text-xs"></i>Add Money
             </a>
           </div>

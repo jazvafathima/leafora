@@ -85,35 +85,35 @@
   <!-- ═══════════════════════════════════════════════════════════════════════
        TOP ANNOUNCEMENT BAR
   ════════════════════════════════════════════════════════════════════════ -->
-  <div class="bg-leaf-700 text-white text-center text-xs py-1.5 tracking-wide">
+  <!-- <div class="bg-leaf-700 text-white text-center text-xs py-1.5 tracking-wide">
     🌿 Free shipping on orders above ₹599 &nbsp;|&nbsp; Use code <strong>NATURE10</strong> for 10% off
-  </div>
+  </div> -->
 
   <!-- ═══════════════════════════════════════════════════════════════════════
        NAVBAR
   ════════════════════════════════════════════════════════════════════════ -->
-  <header class="bg-cream   shadow-sm sticky top-0 z-50">
+  <!-- <header class="bg-cream   shadow-sm sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
 
-      <!-- ── LOGO IMAGE ──────────────────────────────────────────────────
+       ── LOGO IMAGE ──────────────────────────────────────────────────
            Replace src with your logo path.
            Recommended size: any height, keep aspect ratio, h-8 = 32px tall
       ─────────────────────────────────────────────────────────────────── -->
-      <a href="/" class="flex items-center gap-2 flex-shrink-0">
-        <img src="\images\leafora logo.png " alt="Leafora Logo" class="h-16 w-24" />
-        <a text-green>Leafora</a>
+      <!-- <a href="/" class="flex items-center gap-2 flex-shrink-0">
+        <img src="\images\leafora logo.jpeg " alt="Leafora Logo" class="h-18 w-28" />
+        
       </a>
 
-      <!-- Search Bar -->
-      <div class="flex-1 max-w-lg hidden md:flex items-center border border-gray-200 rounded-full px-4 py-2 gap-2 bg-gray-50 hover:bg-white transition-colors">
+      Search Bar -->
+      <!-- <div class="flex-1 max-w-lg hidden md:flex items-center border border-gray-200 rounded-full px-4 py-2 gap-2 bg-gray-50 hover:bg-white transition-colors">
         <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
         <input type="text" placeholder="Search for plants, pots, seeds..."
           class="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400" />
-      </div>
+      </div> -->
 
       <!-- Nav Icons -->
-      <div class="flex items-center gap-4 text-leaf-700">
-        <a href="/user/profile" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
+      <!-- <div class="flex items-center gap-4 text-leaf-700">
+        <a href="/profile" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
           <i class="fa-regular fa-user text-base"></i>
           <span class="text-[10px] text-gray-500">Account</span>
         </a>
@@ -130,13 +130,13 @@
         </a>
         <button class="md:hidden text-gray-600"><i class="fa-solid fa-bars text-lg"></i></button>
       </div>
-    </div>
+    </div> -->
 
     <!-- Category Nav -->
-    <nav class="border-t border-gray-100 bg-white">
+    <!-- <nav class="border-t border-gray-100 bg-white">
       <div class="max-w-7xl mx-auto px-4">
         <ul class="flex items-center gap-6 overflow-x-auto scrollbar-hide py-2 text-sm font-medium text-gray-600">
-          <% const categories = ['Home','Indoor Plants','Outdoor Plants','Succulents','Air Purifiers','Pots & Planters','Seeds','Fertilizers','Tools','Gift Sets']; %>
+          <% const categories = ['Home','Indoor Plants','Outdoor Plants','Air Purifiers','Pots & Planters','Gift Sets']; %>
           <% categories.forEach((cat, i) => { %>
             <li class="flex-shrink-0">
               <a href="#" class="<%= i===0 ? 'text-leaf-600 font-semibold border-b-2 border-leaf-500 pb-1' : 'hover:text-leaf-600 transition-colors' %>">
@@ -147,78 +147,105 @@
         </ul>
       </div>
     </nav>
-  </header>
+  </header> -->
 
   <!-- ═══════════════════════════════════════════════════════════════════════
        HERO BANNER  (3-column layout)
-  ════════════════════════════════════════════════════════════════════════ -->
-  <section class="relative overflow-hidden">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-0">
+  <div class="relative w-full h-screen bg-black">
+   Background Image -->
+  <!-- <img src="/images/dashboar .jpeg" alt="Plant" class="w-full h-full object-cover opacity-80"> --> 
 
-      <!-- Left column: 2 stacked banner images -->
-      <div class="hidden md:flex flex-col">
+  <!-- Overlay Content -->
+  <!-- <div class="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-6">
+    
+    <h1 class="text-4xl md:text-6xl font-bold mb-4">
+      Grow Something Beautiful
+    </h1>
+    
+    <p class="max-w-xl text-lg md:text-xl mb-6 text-gray-200">
+      Bring life into your space with handpicked plants that purify your air and calm your mind. 
+      Start your green journey today.
+    </p>
+    
+    <button class="bg-green-600 hover:bg-green-800 text-white px-6 py-3 rounded-full text-lg shadow-lg transition">
+      Shop Now
+    </button>
 
-        <!-- ── IMAGE SLOT ① — Hero Left Top ─────────────────────────────
-             File: /images/hero-left-top.jpg   |   Size: 480 × 160 px
-        ─────────────────────────────────────────────────────────────── -->
-        <div class="img-box h-40 w-full">
-          <img src="/images/hero-left-top.jpg" alt="Outdoor Plants" />
-        </div>
+  </div>
+</div> 
+     
 
-        <!-- ── IMAGE SLOT ② — Hero Left Bottom ──────────────────────────
-             File: /images/hero-left-bottom.jpg   |   Size: 480 × 160 px
-        ─────────────────────────────────────────────────────────────── -->
-        <div class="img-box h-40 w-full">
-          <img src="/images/hero-left-bottom.jpg" alt="Indoor Plants" />
-        </div>
 
+   HERO SECTION -->
+  <div class="relative h-screen w-full">
+
+    <!-- Background Image -->
+    <img src="/images/dashboar .jpeg" 
+         class="absolute inset-0 w-full h-full object-cover" />
+
+    <!-- Dark Overlay -->
+    <div class="absolute inset-0 bg-black/40 pointer-events-none"></div>
+
+    <!-- HEADER -->
+  <header class="absolute top-0 left-0 w-full flex justify-between items-center px-10 py-5 text-white z-50">
+      <h1 class="text-2xl font-bold">Leafora</h1>
+
+       <!-- <nav class="space-x-6">
+         <a href="#" class="hover:text-green-400">Home</a>
+        <a href="#" class="hover:text-green-400">About</a>
+        <a href="#" class="hover:text-green-400">Plants</a>
+        <a href="#" class="hover:text-green-400">Contact</a>
+      </nav>  -->
+
+  
+      <div class="flex-1 max-w-lg hidden md:flex items-center border border-gray-200 rounded-full px-4 py-2 gap-2 bg-gray-50 hover:bg-white transition-colors">
+        <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
+        <input type="text" placeholder="Search for plants, pots, seeds..."
+          class="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400" />
       </div>
 
-      <!-- Center: hero text over a background image -->
-      <div class="relative bg-gradient-to-br from-leaf-50 to-leaf-100 flex flex-col items-center justify-center text-center px-6 py-16 md:py-20 min-h-[320px]">
+      <div class="flex items-center gap-4 text-white">
+        <a href="/profile" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
+          <i class="fa-regular fa-user text-base"></i>
+          <span class="text-[10px] text-gray-500">Account</span>
+        </a> 
 
-        <!-- ── IMAGE SLOT ③ — Hero Centre Background ─────────────────────
-             File: /images/hero-bg.jpg   |   Size: 640 × 320 px
-             Kept at low opacity so text stays readable
-        ─────────────────────────────────────────────────────────────── -->
-        <div class="img-box absolute inset-0">
-          <img src="/images/hero-bg.jpg" alt="" class="opacity-20" />
-        </div>
 
-        <div class="relative z-10">
-          <p class="text-leaf-600 text-xs font-semibold tracking-widest uppercase mb-2">Welcome to Leafora</p>
-          <h1 class="font-display text-4xl md:text-5xl font-bold text-leaf-900 leading-tight mb-3">
-            Bring Nature<br/>Into Your Home
-          </h1>
-          <p class="text-gray-600 text-sm mb-6 max-w-xs mx-auto">
-            Explore our curated collection of indoor & outdoor plants for every space and budget.
-          </p>
-          <div class="flex flex-col sm:flex-row gap-3 justify-center">
-            <a href="#" class="bg-leaf-600 text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-leaf-700 transition-colors shadow-md">Shop Now</a>
-            <a href="#" class="border-2 border-leaf-600 text-leaf-700 px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-leaf-50 transition-colors">Explore Plants</a>
-          </div>
-        </div>
+        
+
+        <a href="#" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
+          <i class="fa-regular fa-heart text-base"></i>
+          <span class="text-[10px] text-gray-500">Wishlist</span>
+        </a>
+        <a href="#" class="flex flex-col items-center gap-0.5 relative hover:text-leaf-500 transition-colors">
+          <i class="fa-solid fa-cart-shopping text-base"></i>
+          <span class="absolute -top-1 -right-2 bg-orange-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">3</span>
+          <span class="text-[10px] text-gray-500">Cart</span>
+        </a>
+        <button class="md:hidden text-gray-600"><i class="fa-solid fa-bars text-lg"></i></button>
       </div>
+    </div> 
 
-      <!-- Right column: 2 stacked banner images -->
-      <div class="hidden md:flex flex-col">
+    </header>
 
-        <!-- ── IMAGE SLOT ④ — Hero Right Top ────────────────────────────
-             File: /images/hero-right-top.jpg   |   Size: 480 × 160 px
-        ─────────────────────────────────────────────────────────────── -->
-        <div class="img-box h-40 w-full">
-          <img src="/images/hero-right-top.jpg" alt="Succulents" />
-        </div>
+    <!-- HERO TEXT -->
+    <div class="absolute inset-0 flex flex-col justify-center items-start px-10 text-white z-10">
+      <h2 class="text-5xl font-bold text-white mb-4">
+        BRING NATURE <br> INTO YOUR HOME
+      </h2>
+      <p class="max-w-xl text-lg mb-6">
+         Bring life into your space with handpicked plants that purify your air and calm your mind. 
+      Start your green journey today.
+      </p>
 
-        <!-- ── IMAGE SLOT ⑤ — Hero Right Bottom ─────────────────────────
-             File: /images/hero-right-bottom.jpg   |   Size: 480 × 160 px
-        ─────────────────────────────────────────────────────────────── -->
-        <div class="img-box h-40 w-full">
-          <img src="/images/hero-right-bottom.jpg" alt="Air Purifiers" />
-        </div>
-
-      </div>
+      <button class="bg-green-500 px-6 py-3 rounded-lg hover:bg-green-900">
+        Explore Now
+      </button>
     </div>
+
+  </div>
+
+
 
     <!-- Category thumbnail strip -->
     <div class="bg-white border-b border-gray-100">

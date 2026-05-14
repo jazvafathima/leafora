@@ -10,6 +10,10 @@ const { signupRules, loginRules, handleValidation } = require('../middleware/val
 const addressController = require('../controllers/addressController');
 const passport = require('passport');
 
+const { generateOTP, sendOTP, createAndSendOTP } = require('../utils/otp');
+
+
+console.log("authController:", authController);
 
 router.use((req, res, next) => {
   console.log("ROUTE HIT:", req.method, req.url);
@@ -53,42 +57,54 @@ router.post('/login',
 
 
 // Show OTP page
-router.get('/verify-otp', (req, res) => {
-  res.render('verify-otp', {
-    phone:  req.session.pendingPhone,
-    email:  req.session.pendingEmail,
-    userId: req.session.pendingUserId,
-    timerSeconds: 45,
-    error: req.flash('error'),
-  });
-});
+// router.get('/verify-otp', async (req, res) => {
 
-// Verify OTP
+//   try {
+
+//     const user = await User.findById(req.session.tempUser);
+
+//     if (!user) {
+//       return res.redirect('/signup');
+//     }
+
 router.post('/verify-otp', authController.verifyOtp);
+
+router.get('/verify-otp', authController.getVerifyOtp);
+
 
 // Resend OTP
 router.post('/resend-otp', authController.resendOtp);
 
-
-
-
-
 // start login
-router.get('/auth/google',
+router.get('/user/auth/google',
   passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 
 // callback
-router.get('/auth/google/callback',
-  passport.authenticate('google', { failureRedirect: '/user/login' }),
+router.get('/user/auth/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
   (req, res) => {
-    req.session.user = req.user._id;
-    res.redirect('/user/dashboard');
+    req.session.userId = req.user._id;
+    res.redirect('/dashboard');
   }
 );
 
 
+// Forgot password
+router.get('/forgot-password', (req, res) => {
+  res.render('user/forgot-password');
+});
 
+router.post('/forgot-password', authController.forgotPassword);
+
+
+
+// Reset password
+router.get('/reset-password', (req, res) => {
+  res.render('user/reset-password');
+});
+
+router.post('/reset-password', authController.resetPassword);
 
 
 // ── Logout ───────────────────────────────────────────────────
@@ -99,16 +115,17 @@ router.get('/logout', (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       console.log('Logout error:', err);
-      return res.redirect('/user/home'); // fallback
+      return res.redirect('/dashboard'); // fallback
     }
 
     res.clearCookie('connect.sid'); // remove session cookie
-    res.redirect('/user/login'); // redirect after logout
+    res.redirect('/login'); // redirect after logout
   });
 });
 
 
 // ── Dashboard ────────────────────────────────────────────────
+// router.get('/dashboard', isAuthenticated, authController.getDashboard);
 router.get('/dashboard', isAuthenticated, authController.getDashboard);
 
 
@@ -116,10 +133,10 @@ router.get('/dashboard', isAuthenticated, authController.getDashboard);
 const Address = require('../models/address'); // add this at top
 
 router.get('/profile', isAuthenticated, async (req, res) => {
-  const user = await User.findById(req.session.user);
+  const user = await User.findById(req.session.userId);
 
   const defaultAddress = await Address.findOne({
-    user: req.session.user,
+    user: req.session.userId,
     isDefault: true
   });
 
@@ -128,45 +145,37 @@ router.get('/profile', isAuthenticated, async (req, res) => {
 
 // ── Profile Edit ─────────────────────────────────────────────
 router.get('/profileEdit', isAuthenticated, async (req, res) => {
-  const user = await User.findById(req.session.user);
-  res.render('user/profileEdit', { user });
-});
-
-
-router.post('/profile/update', isAuthenticated, async (req, res) => {
   try {
-    const userId = req.session.user;
+    const user = await User.findById(req.session.userId);
 
-    console.log("BODY:", req.body); // DEBUG
-
-    const fullName = req.body.fullName;
-
-    let firstName = "";
-    let lastName = "";
-
-    if (fullName) {
-      const parts = fullName.split(" ");
-      firstName = parts[0];
-      lastName = parts.slice(1).join(" ");
-    }
-
-    await User.findByIdAndUpdate(userId, {
-      firstName,
-      lastName,
-      email: req.body.email,
-      phone: req.body.phone,
-      dob: req.body.dob,
-      gender: req.body.gender,
-      country: req.body.country
-    });
-
-    res.redirect('/user/profileEdit');
+    res.render('user/profileEdit', { user });
 
   } catch (err) {
-    console.log("PROFILE UPDATE ERROR:", err);
-    res.status(500).send(err.message);
+    console.log("PROFILE EDIT ERROR:", err);
+    res.redirect('/profile');
   }
 });
+
+
+   router.post(
+  '/profile/update',
+  isAuthenticated,
+  authController.updateProfile
+);
+  
+
+router.get('/change-password', isAuthenticated, (req, res) => {
+  const success = req.session.success;
+  const error = req.session.error;
+
+  req.session.success = null;
+  req.session.error = null;
+
+  res.render('user/change-password', { success, error });
+});
+
+
+router.post('/update-password', isAuthenticated, authController.updatePassword);
 
 
 
@@ -191,7 +200,7 @@ router.get('/addresses/:id/edit', async (req, res) => {
 
 router.post('/addresses/:id/update', async (req, res) => {
   await Address.findByIdAndUpdate(req.params.id, req.body);
-  res.redirect('/user/addresses');
+  res.redirect('/addresses');
 });
 
 router.post('/addresses/:id/delete', addressController.deleteAddress);
@@ -201,8 +210,8 @@ router.post('/addresses/:id/default', addressController.setDefaultAddress);
 
 // ── ROOT ROUTE (KEEP THIS LAST ALWAYS) ───────────────────────
 router.get('/', (req, res) => {
-  if (req.session && req.session.user) return res.redirect('/user/dashboard');
-  res.redirect('/user/signup');
+  if (req.session && req.session.userId) return res.redirect('/dashboard');
+  res.redirect('/signup');
 });
 
 module.exports = router;
