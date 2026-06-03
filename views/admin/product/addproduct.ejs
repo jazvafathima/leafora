@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora Admin - Add Product</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>tailwind.config={theme:{extend:{fontFamily:{body:['Poppins','sans-serif']}}}}</script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:'Poppins',sans-serif;background:#f0f0f0;margin:0}
+
+    /* ── Sidebar ── */
+    .sidebar{width:175px;background:#fff;min-height:100vh;flex-shrink:0;border-right:1px solid #e5e7eb;display:flex;flex-direction:column}
+    .sidebar-brand{padding:18px 18px 14px}
+    .sidebar-brand p{color:#1a5c1a;font-size:1.25rem;font-weight:700;margin:0}
+    .sidebar-link{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.78rem;color:#4b5563;text-decoration:none;transition:all .15s}
+    .sidebar-link:hover{color:#1a5c1a;background:#f0faf0}
+    .sidebar-link.active{background:#1a5c1a;color:#fff;font-weight:600;margin:2px 8px;border-radius:8px;padding:9px 10px}
+    .sidebar-link i{width:16px;text-align:center;font-size:0.8rem;flex-shrink:0}
+    .sidebar-logout{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.78rem;color:#ef4444;text-decoration:none;transition:all .15s}
+    .sidebar-logout:hover{background:#fef2f2}
+
+    /* ── Topbar ── */
+    .topbar{background:#1a5c1a;padding:10px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .topbar-title{color:#fff;font-size:0.88rem;font-weight:500}
+
+    /* ── Card ── */
+    .card{background:#fff;border-radius:12px;border:1px solid #e9ecef;padding:22px 24px;margin-bottom:18px}
+    .card-title{font-size:0.85rem;font-weight:600;color:#1f2937;margin-bottom:16px}
+
+    /* ── Form fields ── */
+    .f-label{display:block;font-size:0.72rem;font-weight:500;color:#374151;margin-bottom:5px}
+    .f-label span{color:#ef4444}
+    .f-input{width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:0.8rem;color:#374151;outline:none;font-family:'Poppins',sans-serif;background:#fff;transition:border-color .2s}
+    .f-input:focus{border-color:#1a5c1a;box-shadow:0 0 0 2px rgba(26,92,26,.07)}
+    .f-input::placeholder{color:#adb5bd;font-size:0.77rem}
+    .f-select{width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:0.8rem;color:#374151;outline:none;font-family:'Poppins',sans-serif;background:#fff;appearance:none;cursor:pointer;transition:border-color .2s}
+    .f-select:focus{border-color:#1a5c1a}
+    .f-textarea{width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:0.8rem;color:#374151;outline:none;font-family:'Poppins',sans-serif;background:#fff;resize:vertical;min-height:72px;transition:border-color .2s}
+    .f-textarea:focus{border-color:#1a5c1a}
+    .f-textarea::placeholder{color:#adb5bd;font-size:0.77rem}
+
+    /* ── Toggle ── */
+    .toggle{position:relative;display:inline-block;width:36px;height:20px}
+    .toggle input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;cursor:pointer;inset:0;background:#d1d5db;border-radius:999px;transition:background .2s}
+    .toggle-slider::before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;left:3px;top:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+    .toggle input:checked+.toggle-slider{background:#1a5c1a}
+    .toggle input:checked+.toggle-slider::before{transform:translateX(16px)}
+
+    /* ── Variant chip ── */
+    .variant-chip{display:inline-flex;align-items:center;gap:6px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:5px 10px;font-size:0.72rem;color:#374151;cursor:pointer;transition:all .15s}
+    .variant-chip.selected,.variant-chip:hover{background:#1a5c1a;color:#fff;border-color:#1a5c1a}
+    .variant-chip button{background:transparent;border:none;color:inherit;cursor:pointer;padding:0;display:flex;align-items:center}
+
+    /* ── Image upload zone ── */
+    .img-upload{width:54px;height:54px;border:1.5px dashed #d1d5db;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fafafa;transition:border-color .2s;flex-shrink:0}
+    .img-upload:hover{border-color:#1a5c1a}
+
+    /* ── Popup overlay ── */
+    .popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50}
+
+    /* ── Popup image drop zone ── */
+    .drop-zone{border:1.5px dashed #d1d5db;border-radius:10px;padding:32px 20px;text-align:center;cursor:pointer;transition:border-color .2s;background:#fafafa}
+    .drop-zone:hover{border-color:#1a5c1a}
+  </style>
+</head>
+<body class="min-h-screen">
+<div class="flex min-h-screen">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand"><p>leafora</p></div>
+    <nav class="flex-1 py-2">
+      <a href="/admin/dashboard"  class="sidebar-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="/admin/orders"     class="sidebar-link"><i class="fa-solid fa-bag-shopping"></i> Orders</a>
+      <a href="/admin/products"   class="sidebar-link active"><i class="fa-solid fa-box-open"></i> Products</a>
+      <a href="/admin/categories" class="sidebar-link"><i class="fa-solid fa-layer-group"></i> Categories</a>
+      <a href="/admin/users"      class="sidebar-link"><i class="fa-regular fa-user"></i> Users</a>
+      <a href="/admin/offers"     class="sidebar-link"><i class="fa-regular fa-heart"></i> Offers</a>
+      <a href="/admin/coupons"    class="sidebar-link"><i class="fa-solid fa-ticket"></i> Coupons</a>
+      <a href="/admin/reports"    class="sidebar-link"><i class="fa-solid fa-chart-bar"></i> Reports</a>
+    </nav>
+    <div class="border-t border-gray-100 py-2">
+      <a href="/admin/logout" class="sidebar-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </aside>
+
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <div class="flex-1 flex flex-col">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <span class="topbar-title">Dashboard</span>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full overflow-hidden border-2 border-white/40 bg-green-800 flex items-center justify-center">
+          <% if (typeof admin !== 'undefined' && admin && admin.avatar) { %>
+            <img src="<%= admin.avatar %>" alt="Admin" class="w-full h-full object-cover" />
+          <% } else { %>
+            <i class="fa-regular fa-user text-white text-xs"></i>
+          <% } %>
+        </div>
+        <span class="text-white font-semibold text-sm">3</span>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <main class="flex-1 p-6 overflow-y-auto">
+
+      <h1 class="text-lg font-semibold text-gray-800 mb-5">Add New Product</h1>
+
+      <!-- Flash messages -->
+      <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+        <div class="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation"></i> <%= error[0] %>
+        </div>
+      <% } %>
+
+      <form action="/admin/products" method="POST" enctype="multipart/form-data" id="addProductForm">
+
+        <!-- ── Basic Information ── -->
+        <div class="card">
+          <p class="card-title">Basic Information</p>
+          <div class="grid grid-cols-2 gap-5 mb-4">
+            <div>
+              <label class="f-label">Product Name <span>*</span></label>
+              <input type="text" name="name" placeholder="Enter product name" class="f-input" required />
+            </div>
+            <div>
+              <label class="f-label">Category <span>*</span></label>
+              <div class="relative">
+                <select name="category" class="f-select pr-8" required>
+                  <option value="">Select category</option>
+                  <% if (typeof categories !== 'undefined' && categories) { %>
+                    <% categories.forEach(function(c){ %>
+                      <option value="<%= c._id %>"><%= c.name %></option>
+                    <% }) %>
+                  <% } %>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-5">
+            <div>
+              <label class="f-label">Product Status <span>*</span></label>
+              <div class="relative">
+                <select name="status" class="f-select pr-8">
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+
+        <!-- ── Description ── -->
+        <div class="card">
+          <p class="card-title">Description</p>
+          <div class="mb-4">
+            <label class="f-label">Short Description</label>
+            <textarea name="shortDescription" placeholder="Brief product description" class="f-textarea"></textarea>
+          </div>
+          <div>
+            <label class="f-label">Full Description</label>
+            <textarea name="fullDescription" placeholder="Detailed product description" class="f-textarea" style="min-height:90px"></textarea>
+          </div>
+        </div>
+
+        <!-- ── Product Variants ── -->
+        <div class="card" id="variantsCard">
+          <div class="flex items-center justify-between mb-4">
+            <p class="card-title mb-0">Product Variants</p>
+            <button type="button" onclick="openVariantPopup()"
+              class="flex items-center gap-1.5 text-xs font-semibold text-[#1a5c1a] hover:underline">
+              <i class="fa-solid fa-plus text-xs"></i> Add Variant
+            </button>
+          </div>
+
+          <!-- Variant chips rendered here by JS -->
+          <div id="variantChips" class="flex flex-wrap gap-2 mb-3"></div>
+
+          <!-- Active variant detail panel -->
+          <div id="variantPanel" class="hidden border border-gray-200 rounded-xl p-4">
+            <div class="grid grid-cols-3 gap-4 mb-4">
+              <div>
+                <label class="f-label">Size <span>*</span></label>
+                <div class="relative">
+                  <select id="vSize" class="f-select pr-8">
+                    <option value="Sapling">Sapling</option>
+                    <option value="Small">Small</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Large">Large</option>
+                    
+                  </select>
+                  <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+                </div>
+              </div>
+              <div class="flex items-end gap-3">
+                <div>
+                  <label class="f-label">Status</label>
+                  <div class="flex items-center gap-2 mt-1">
+                    <label class="toggle"><input type="checkbox" id="vStatus" checked /><span class="toggle-slider"></span></label>
+                    <span class="text-xs text-gray-600">Active</span>
+                  </div>
+                </div>
+                <span class="text-xs font-semibold text-[#1a5c1a] bg-green-50 border border-green-200 px-2 py-1 rounded-md mb-0.5">Default Variant</span>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-4 mb-4">
+              <div>
+                <label class="f-label">Price <span>*</span></label>
+                <input type="number" id="vPrice" placeholder="0.00" class="f-input" step="0.01" min="0" />
+              </div>
+              
+              <div>
+                <label class="f-label">Stock Quantity <span>*</span></label>
+                <input type="number" id="vStock" placeholder="0" class="f-input" min="0" />
+              </div>
+            </div>
+            <div>
+              <label class="f-label">Variant Images</label>
+              <div class="flex gap-2 mt-1 flex-wrap" id="variantImgList">
+              <label class="img-upload" title="Add image">
+  <i class="fa-solid fa-plus text-gray-400 text-sm"></i>
+
+  <input
+    type="file"
+    name="images"
+    class="hidden"
+    accept="image/*"
+    multiple
+    onchange="previewImgs(this)"
+  />
+</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hidden inputs for variants (populated by JS) -->
+          <div id="variantInputs"></div>
+        </div>
+
+        <!-- ── Actions ── -->
+        <div class="flex items-center justify-end gap-3 pb-6">
+          <a href="/admin/products"
+            class="px-6 py-2.5 text-xs font-medium border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+            Cancel
+          </a>
+          <button type="submit"
+            class="flex items-center gap-2 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition-colors">
+            <i class="fa-solid fa-circle-check text-xs"></i> Save Changes
+          </button>
+        </div>
+
+      </form>
+    </main>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ADD VARIANT POPUP
+════════════════════════════════════════ -->
+<div id="variantPopup" class="hidden popup-overlay">
+  <div class="bg-white rounded-2xl shadow-2xl w-[420px] max-h-[90vh] overflow-y-auto">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
+      <h2 class="text-sm font-semibold text-gray-800">
+        <i class="fa-solid fa-circle-plus text-[#1a5c1a] mr-1.5"></i> Add Variant
+      </h2>
+      <button onclick="closeVariantPopup()" class="text-gray-400 hover:text-gray-600 transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="px-6 py-5 space-y-4">
+
+      
+
+      <!-- Size -->
+      <div>
+        <label class="f-label">Size <span>*</span></label>
+        <div class="relative">
+          <select id="popSize" class="f-select pr-8">
+            <option value="">Select a Size</option>
+            <option value="Sapling">Sapling</option>
+            <option value="Small">Small</option>
+            <option value="Medium">Medium</option>
+            <option value="Large">Large</option>
+            
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+        </div>
+      </div>
+
+      <!-- Price + Qty -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="f-label">Price <span>*</span></label>
+          <div class="relative">
+            <input type="number" id="popPrice" placeholder="Enter Price" class="f-input pr-8" step="0.01" min="0" />
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+          </div>
+        </div>
+        <div>
+          <label class="f-label">Qty <span>*</span></label>
+          <div class="relative">
+            <input type="number" id="popQty" placeholder="Enter Stock" class="f-input pr-8" min="0" />
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product images drop zone -->
+      <div>
+        <label class="f-label">Product Images</label>
+        <label class="drop-zone block mt-1" for="popImages">
+          <i class="fa-solid fa-cloud-arrow-up text-gray-300 text-2xl mb-2 block"></i>
+          <p class="text-xs text-gray-400">Click to upload or drag and drop</p>
+          <p class="text-gray-300 mt-1" style="font-size:0.65rem">PNG, JPG, WEBP (max 5MB each)</p>
+          <input type="file" id="popImages" class="hidden" accept="image/*" multiple />
+        </label>
+        <div id="popImgPreview" class="flex gap-2 flex-wrap mt-2"></div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="flex items-center gap-3 px-6 pb-6">
+      <button type="button" onclick="saveVariant()"
+        class="bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition-colors">
+        Add
+      </button>
+      <button type="button" onclick="closeVariantPopup()"
+        class="border border-gray-300 hover:border-gray-400 text-gray-600 text-xs font-medium px-6 py-2.5 rounded-lg transition-colors">
+        Cancel
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     CROPPING POPUP
+     ════════════════════════════════════════ -->
+<div id="croppingPopup" class="hidden popup-overlay">
+  <div class="bg-white rounded-2xl shadow-2xl w-[500px] max-h-[90vh] overflow-y-auto p-6">
+    <h2 class="text-sm font-semibold text-gray-800 mb-4">Crop Image</h2>
+    <div class="w-full h-80 bg-gray-100 rounded-lg overflow-hidden mb-4">
+      <img id="croppingImage" src="" alt="To Crop" class="max-w-full" />
+    </div>
+    <div class="flex justify-end gap-3">
+      <button type="button" onclick="closeCroppingPopup()" class="px-4 py-2 text-xs font-medium border border-gray-300 rounded-lg">Cancel</button>
+      <button type="button" onclick="applyCrop()" class="bg-[#1a5c1a] text-white px-4 py-2 text-xs font-semibold rounded-lg">Apply Crop</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let variants = [];
+
+/* ────────────────────────────────────
+   Variant popup
+──────────────────────────────────── */
+function openVariantPopup() {
+  document.getElementById('variantPopup').classList.remove('hidden');
+}
+
+function closeVariantPopup() {
+  document.getElementById('variantPopup').classList.add('hidden');
+  ['popSize', 'popPrice', 'popQty'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('popImgPreview').innerHTML = '';
+  document.getElementById('popImages').value = '';
+}
+
+document.getElementById('variantPopup').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeVariantPopup();
+  }
+});
+
+function renderVariantChips() {
+  const wrap = document.getElementById('variantChips');
+  wrap.innerHTML = '';
+
+  variants.forEach((v, i) => {
+    const chip = document.createElement('span');
+    chip.className = 'variant-chip' + (v === activeVariant ? ' selected' : '');
+    chip.innerHTML = `
+      ${v.size}
+      <button type="button" onclick="event.stopPropagation(); removeVariant(${v.id})">
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </button>
+    `;
+
+    chip.addEventListener('click', function() {
+      document.querySelectorAll('.variant-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      setActiveVariant(v);
+    });
+
+    wrap.appendChild(chip);
+  });
+}
+
+function removeVariant(id) {
+  variants = variants.filter(v => v.id !== id);
+  if (activeVariant && activeVariant.id === id) {
+    activeVariant = null;
+    document.getElementById('variantPanel').classList.add('hidden');
+  }
+  renderVariantChips();
+}
+
+let currentImageToCrop = null;
+let cropper = null;
+let currentTargetList = null; // To know where to add the cropped image
+
+/* ────────────────────────────────────
+   Handle Files
+──────────────────────────────────── */
+
+function processFiles(files) {
+  if (files.length === 0) return;
+  
+  const file = files.shift();
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    openCroppingPopup(e.target.result, files);
+  };
+  reader.readAsDataURL(file);
+}
+
+function openCroppingPopup(src, remainingFiles) {
+  const popup = document.getElementById('croppingPopup');
+  const img = document.getElementById('croppingImage');
+  img.src = src;
+  popup.classList.remove('hidden');
+  
+  if (cropper) cropper.destroy();
+  
+  cropper = new Cropper(img, {
+    aspectRatio: 1,
+    viewMode: 2,
+  });
+  
+  currentImageToCrop = { src, remainingFiles };
+}
+
+function closeCroppingPopup() {
+  document.getElementById('croppingPopup').classList.add('hidden');
+  if (cropper) cropper.destroy();
+}
+
+function applyCrop() {
+  const canvas = cropper.getCroppedCanvas({
+    width: 800,
+    height: 800
+  });
+  
+  canvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const fileName = `cropped-${Date.now()}.jpg`;
+    const file = new File([blob], fileName, { type: 'image/jpeg' });
+    
+    // Handle variant images
+    if (activeVariant) {
+      activeVariant.imageFiles.push(file);
+      renderImages('variantImgList', activeVariant.imageFiles, 'variant');
+    }
+    
+    closeCroppingPopup();
+    
+    // Process next file if any
+    if (currentImageToCrop && currentImageToCrop.remainingFiles && currentImageToCrop.remainingFiles.length > 0) {
+      processFiles(currentImageToCrop.remainingFiles);
+    }
+  }, 'image/jpeg');
+}
+
+function renderImages(containerId, images, type) {
+  const list = document.getElementById(containerId);
+  const uploadBtn = list.querySelector('label');
+  
+  // Clear old previews
+  list.querySelectorAll('.preview-img-container').forEach(el => el.remove());
+  
+  images.forEach((file, index) => {
+    const src = URL.createObjectURL(file);
+    const wrap = document.createElement('div');
+    wrap.className = 'relative preview-img-container group';
+    wrap.innerHTML = `
+      <img src="${src}" class="w-16 h-16 rounded-lg object-cover border border-gray-200" />
+      <button type="button" onclick="removeImage(${index}, '${type}')" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    `;
+    list.insertBefore(wrap, uploadBtn);
+  });
+}
+
+function removeImage(index, type) {
+  if (activeVariant) {
+    activeVariant.imageFiles.splice(index, 1);
+    renderImages('variantImgList', activeVariant.imageFiles, 'variant');
+  }
+}
+
+/* ────────────────────────────────────
+   Variant logic
+──────────────────────────────────── */
+let activeVariant = null;
+
+// Replace old variant logic
+function saveVariant() {
+  const size = document.getElementById('popSize').value;
+  const price = document.getElementById('popPrice').value;
+  const qty = document.getElementById('popQty').value;
+
+  if (!size || !price) {
+    alert('Size and Price are required.');
+    return;
+  }
+
+  const v = {
+    size,
+    price,
+    qty: qty || 0,
+    imageFiles: [], // Store actual file blobs
+    id: Date.now()
+  };
+
+  variants.push(v);
+  renderVariantChips();
+  setActiveVariant(v);
+  document.getElementById('variantPanel').classList.remove('hidden');
+  closeVariantPopup();
+}
+
+function setActiveVariant(v) {
+  activeVariant = v;
+  document.getElementById('vSize').value = v.size;
+  document.getElementById('vPrice').value = v.price;
+  document.getElementById('vStock').value = v.qty;
+  
+  renderImages('variantImgList', v.imageFiles, 'variant');
+}
+
+function previewImgs(input) {
+  const files = Array.from(input.files);
+  if (files.length > 0 && activeVariant) {
+    currentTargetList = 'variant';
+    processFiles(files);
+  }
+}
+
+/* ────────────────────────────────────
+   Form Submission
+──────────────────────────────────── */
+document.getElementById('addProductForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  
+  if (variants.length === 0) {
+    alert('At least one variant is required');
+    return;
+  }
+
+  // Check if at least one variant has images
+  const hasImages = variants.some(v => v.imageFiles.length > 0);
+  if (!hasImages) {
+    alert('At least one variant must have an image');
+    return;
+  }
+
+  const formData = new FormData(this);
+  
+  // Add variant images
+  variants.forEach((v, i) => {
+    v.imageFiles.forEach(file => {
+      formData.append(`variant_${i}_images`, file);
+    });
+  });
+
+  // Actually, I'll send variants as a JSON string
+  const variantData = variants.map((v, i) => ({
+    size: v.size,
+    price: v.price,
+    stock: v.qty,
+    imageIndex: i // Send index to match with `variant_${i}_images`
+  }));
+  formData.append('variantsData', JSON.stringify(variantData));
+
+  try {
+    const response = await fetch('/admin/products', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (response.redirected) {
+      window.location.href = response.url;
+    } else {
+      const result = await response.json();
+      if (!result.success) {
+        alert(result.message || 'Error occurred');
+      }
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Failed to save product');
+  }
+});
+</script>
+</body>
+</html>

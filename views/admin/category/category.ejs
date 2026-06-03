@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora Admin - Categories</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { body: ['Poppins','sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #e8ede8; }
+
+    /* ── Sidebar ── */
+    .sidebar { width: 180px; background: #fff; min-height: 100vh; flex-shrink: 0; border-right: 1px solid #e5e7eb; }
+    .sidebar-brand { padding: 20px 18px 16px; border-bottom: 1px solid #f0f0f0; }
+    .sidebar-brand p { color: #1a5c1a; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.01em; }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 16px; font-size: 0.8rem;
+      color: #4b5563; text-decoration: none;
+      transition: all 0.15s;
+    }
+    .sidebar-link:hover  { color: #1a5c1a; background: #f0faf0; }
+    .sidebar-link.active { background: #1a5c1a; color: #fff; font-weight: 600; margin: 2px 8px; border-radius: 8px; padding: 9px 10px; }
+    .sidebar-link i { width: 15px; text-align: center; font-size: 0.82rem; }
+    .sidebar-logout {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 16px; font-size: 0.8rem;
+      color: #ef4444; text-decoration: none;
+      transition: all 0.15s; margin-top: auto;
+    }
+    .sidebar-logout:hover { background: #fef2f2; }
+    .sidebar-logout i { width: 15px; text-align: center; font-size: 0.82rem; }
+
+    /* ── Top bar ── */
+    .topbar { background: #1a5c1a; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .topbar-title { color: #fff; font-size: 0.88rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+
+    /* ── Table ── */
+    .th { font-size: 0.72rem; color: #6b7280; font-weight: 600; padding: 12px 16px; text-align: left; border-bottom: 1px solid #f3f4f6; }
+    .td { font-size: 0.78rem; color: #374151; padding: 13px 16px; border-bottom: 1px solid #f9fafb; vertical-align: middle; }
+
+  
+   /* ── Status badges ── */
+.badge-active {
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.badge-blocked {
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+    /* ── Action buttons ── */
+    .btn-action {
+      width: 30px; height: 30px; border-radius: 7px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; border: 1px solid #e5e7eb;
+      cursor: pointer; transition: all 0.15s; background: #fff;
+      text-decoration: none;
+    }
+    .btn-edit   { color: #1a5c1a; } .btn-edit:hover   { background: #f0faf0; border-color: #1a5c1a; }
+    .btn-delete { color: #9ca3af; } .btn-delete:hover { background: #fef2f2; border-color: #fca5a5; color: #ef4444; }
+
+    /* ── Search input ── */
+    .search-input {
+      border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 9px 14px 9px 36px; font-size: 0.78rem;
+      color: #374151; outline: none; background: #fff;
+      transition: border-color 0.2s; font-family: 'Poppins', sans-serif;
+      width: 100%;
+    }
+    .search-input:focus { border-color: #1a5c1a; box-shadow: 0 0 0 2px rgba(26,92,26,0.08); }
+    .search-input::placeholder { color: #9ca3af; }
+
+    /* ── Pagination ── */
+    .page-btn { width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; cursor: pointer; border: 1px solid #e5e7eb; background: #fff; color: #374151; transition: all 0.15s; text-decoration: none; }
+    .page-btn:hover  { border-color: #1a5c1a; color: #1a5c1a; }
+    .page-btn.active { background: #1a5c1a; color: #fff; border-color: #1a5c1a; font-weight: 600; }
+    .page-nav { display: flex; align-items: center; gap: 5px; padding: 5px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 0.75rem; color: #374151; cursor: pointer; background: #fff; text-decoration: none; transition: all 0.15s; }
+    .page-nav:hover { border-color: #1a5c1a; color: #1a5c1a; }
+    .page-nav.disabled { opacity: 0.4; pointer-events: none; }
+
+    /* ── Modal ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 50; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<div class="flex min-h-screen">
+
+  <!-- ═══════════════════════════════
+       SIDEBAR
+  ═══════════════════════════════ -->
+  <aside class="sidebar flex flex-col">
+
+    <div class="sidebar-brand">
+      <p>leafora</p>
+    </div>
+
+    <nav class="flex-1 py-3 space-y-0.5">
+      <a href="/admin/dashboard"   class="sidebar-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="/admin/orders"     class="sidebar-link"><i class="fa-solid fa-bag-shopping"></i> Orders</a>
+      <a href="/admin/products"   class="sidebar-link"><i class="fa-solid fa-box"></i> Products</a>
+      <a href="/admin/categories" class="sidebar-link active"><i class="fa-solid fa-list"></i> Categories</a>
+      <a href="/admin/users"      class="sidebar-link"><i class="fa-regular fa-user"></i> Users</a>
+      <a href="/admin/offers"     class="sidebar-link"><i class="fa-regular fa-heart"></i> Offers</a>
+      <a href="/admin/coupons"    class="sidebar-link"><i class="fa-solid fa-ticket"></i> Coupons</a>
+      <a href="/admin/reports"    class="sidebar-link"><i class="fa-solid fa-chart-bar"></i> Reports</a>
+    </nav>
+
+    <div class="border-t border-gray-100 py-3">
+      <a href="/admin/logout" class="sidebar-logout">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+      </a>
+    </div>
+
+  </aside>
+
+  <!-- ═══════════════════════════════
+       RIGHT PANEL
+  ═══════════════════════════════ -->
+  <div class="flex-1 flex flex-col">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-title">
+        <i class="fa-solid fa-layer-group text-sm"></i>
+        Categories
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-full overflow-hidden border-2 border-white border-opacity-40 bg-green-800 flex items-center justify-center flex-shrink-0">
+          <% if (typeof admin !== 'undefined' && admin && admin.avatar) { %>
+            <img src="<%= admin.avatar %>" alt="Admin" class="w-full h-full object-cover" />
+          <% } else { %>
+            <i class="fa-regular fa-user text-white text-sm"></i>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Main Content ── -->
+    <main class="flex-1 p-6">
+
+      <!-- Page heading -->
+      <div class="mb-5">
+        <h1 class="text-lg font-semibold text-gray-800">Category Management</h1>
+        <p class="text-xs text-gray-400 mt-0.5">Manage your product categories</p>
+      </div>
+
+      <!-- Flash messages -->
+      <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+        <div class="bg-green-50 border border-green-200 text-green-700 text-xs rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-circle-check"></i> <%= success[0] %>
+        </div>
+      <% } %>
+      <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+        <div class="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation"></i> <%= error[0] %>
+        </div>
+      <% } %>
+
+      <!-- Search + Add Category bar -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+
+        <!-- Toolbar -->
+        <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100">
+          <div class="relative flex-1 max-w-sm">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style="font-size:11px"></i>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Search categories..."
+              value="<%= typeof search !== 'undefined' ? search : '' %>"
+              class="search-input"
+            />
+          </div>
+        <button
+  onclick="document.getElementById('addModal').classList.remove('hidden')"
+  class="flex items-center gap-2 bg-[#1a5c1a] text-white text-xs font-semibold px-4 py-2.5 rounded-lg">
+  <i class="fa-solid fa-plus text-xs"></i>
+  Add Category
+</button>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-white">
+              <tr>
+                <th class="th">Category Name</th>
+                <th class="th">Products</th>
+                <th class="th">Status</th>
+                <th class="th text-right">Actions</th>
+              </tr>
+            </thead>
+           <tbody>
+
+<% if (categories && categories.length > 0) { %>
+
+  <% categories.forEach(function(cat) { %>
+
+    <tr class="hover:bg-gray-50 transition-colors">
+
+      <!-- Name -->
+      <td class="td font-medium text-gray-800">
+        <%= cat.name %>
+      </td>
+
+     
+
+      <!-- Product Count -->
+      <td class="td">
+        <span class="text-gray-600">
+          <%= cat.productCount || 0 %> products
+        </span>
+      </td>
+
+      <!-- Status -->
+      <td class="td">
+        <% if (cat.isActive) { %>
+          <span class="badge-active">Active</span>
+        <% } else { %>
+          <span class="badge-blocked">Blocked</span>
+        <% } %>
+      </td>
+
+      <!-- Actions -->
+      <td class="td text-right">
+
+        <div class="flex items-center justify-end gap-3">
+
+          <!-- Edit -->
+        <button
+  type="button"
+  onclick="openEditModal('<%= cat._id %>', '<%= cat.name %>')"
+  class="btn-action btn-edit"
+  title="Edit">
+
+  <i class="fa-regular fa-pen-to-square"></i>
+</button>
+
+          <% if (cat.isActive) { %>
+
+            <!-- BLOCK -->
+            <form id="blockForm-<%= cat._id %>"
+                  action="/admin/categories/<%= cat._id %>/block"
+                  method="POST">
+
+              <button
+                type="button"
+                onclick='openModal("Are you sure you want to BLOCK this category?", "<%= cat._id %>")'
+                class="text-red-600 text-xs font-medium">
+                Block
+              </button>
+
+            </form>
+
+          <% } else { %>
+
+            <!-- UNBLOCK -->
+            <form id="unblockForm-<%= cat._id %>"
+                  action="/admin/categories/<%= cat._id %>/unblock"
+                  method="POST">
+
+              <button
+                type="button"
+                onclick='openModal("Are you sure you want to UNBLOCK this category?", "<%= cat._id %>")'
+                class="text-green-600 text-xs font-medium">
+                Unblock
+              </button>
+
+            </form>
+
+          <% } %>
+
+        </div>
+
+      </td>
+
+    </tr>
+
+  <% }); %>
+
+<% } else { %>
+
+  <tr>
+    <td colspan="5"
+        class="text-center text-gray-400 text-xs py-10">
+
+      <i class="fa-solid fa-layer-group text-2xl text-gray-200 mb-2 block"></i>
+
+      No categories found
+
+    </td>
+  </tr>
+
+<% } %>
+
+</tbody>
+</table>
+</div>
+
+      
+
+        <!-- Pagination -->
+         <%
+  const current = currentPage || 1;
+  const limit = 10;
+
+  const start =
+    categories && categories.length > 0
+      ? (current - 1) * limit + 1
+      : 0;
+
+  const end =
+    categories && categories.length > 0
+      ? start + categories.length - 1
+      : 0;
+
+  const total = totalCount || 0;
+%>
+      
+        <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
+
+          <p class="text-xs text-gray-500">
+            Showing
+            <span class="font-semibold text-gray-700"><%= start %>–<%= end %></span>
+            of
+            <span class="font-semibold text-gray-700"><%= total %></span>
+            categories
+          </p>
+
+          <div class="flex items-center gap-2">
+            <!-- Previous -->
+            <a href="<%= current > 1 ? '/admin/categories?page=' + (current - 1) : '#' %>"
+               class="page-nav <%= current > 1 ? '' : 'disabled' %>">
+              <i class="fa-solid fa-chevron-left text-xs"></i> Previous
+            </a>
+
+            <% for (let p = 1; p <= (totalPages || 1); p++) { %>
+              <a href="/admin/categories?page=<%= p %>"
+                 class="page-btn <%= p === current ? 'active' : '' %>">
+                <%= p %>
+              </a>
+            <% } %>
+
+            <!-- Next -->
+            <a href="<%= current < (totalPages || 1) ? '/admin/categories?page=' + (current + 1) : '#' %>"
+               class="page-nav <%= current < total ? '' : 'disabled' %>">
+              Next <i class="fa-solid fa-chevron-right text-xs"></i>
+            </a>
+          </div>
+
+        </div>
+      </div>
+      <!-- /Table Card -->
+
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     DELETE CONFIRM MODAL
+═══════════════════════════════ -->
+<!-- Confirm Modal -->
+<div id="confirmModal"
+     class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+  <div class="bg-white rounded-xl shadow-lg w-[320px] p-5 text-center">
+
+    <h2 class="text-sm font-semibold text-gray-800 mb-2">
+      Confirm Action
+    </h2>
+
+    <p id="modalText" class="text-xs text-gray-500 mb-4">
+      Are you sure?
+    </p>
+
+    <div class="flex justify-center gap-3">
+
+      <button onclick="closeModal()"
+        class="px-4 py-2 text-xs border rounded-lg text-gray-600 hover:bg-gray-100">
+        Cancel
+      </button>
+
+      <button id="confirmBtn"
+        class="px-4 py-2 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700">
+        Yes
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<!-- ================================ -->
+<div id="addModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+  <form action="/admin/categories" method="POST"
+        class="bg-white p-5 rounded-xl w-[300px]">
+
+    <h2 class="text-sm font-semibold mb-3">Add Category</h2>
+
+    <input name="name" placeholder="Category name"
+      class="w-full border p-2 text-xs mb-3 rounded">
+
+  
+
+    <div class="flex justify-end gap-2">
+      <button type="button"
+        onclick="document.getElementById('addModal').classList.add('hidden')"
+        class="text-xs px-3 py-1 border rounded">
+        Cancel
+      </button>
+
+      <button class="bg-green-700 text-white text-xs px-3 py-1 rounded">
+        Save
+      </button>
+    </div>
+
+  </form>
+
+</div>
+<!-- ============================ -->
+
+<!-- ═════════ EDIT MODAL ═════════ -->
+<div id="editModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+  <form id="editForm"
+        method="POST"
+        class="bg-white p-5 rounded-xl w-[300px]">
+
+    <h2 class="text-sm font-semibold mb-3">Edit Category</h2>
+
+    <!-- Name -->
+    <input id="editName"
+      name="name"
+      placeholder="Category name"
+      class="w-full border p-2 text-xs mb-3 rounded">
+
+
+    <div class="flex justify-end gap-2">
+      <button type="button"
+        onclick="closeEditModal()"
+        class="text-xs px-3 py-1 border rounded">
+        Cancel
+      </button>
+
+      <button class="bg-green-700 text-white text-xs px-3 py-1 rounded">
+        Update
+      </button>
+    </div>
+
+  </form>
+
+</div>
+<script>
+  let targetFormId = null;
+
+  function openModal(message, categoryId) {
+    targetFormId = categoryId;
+
+    document.getElementById('modalText').innerText = message;
+
+    document.getElementById('confirmModal')
+      .classList.remove('hidden');
+  }
+
+  function closeModal() {
+    document.getElementById('confirmModal')
+      .classList.add('hidden');
+
+    targetFormId = null;
+  }
+
+  document.getElementById('confirmBtn')
+    .addEventListener('click', function () {
+
+      if (targetFormId) {
+
+        const form =
+          document.getElementById('blockForm-' + targetFormId) ||
+          document.getElementById('unblockForm-' + targetFormId);
+
+        if (form) form.submit();
+      }
+    });
+
+  const searchInput = document.getElementById('searchInput');
+
+  let timeout;
+
+  searchInput.addEventListener('keyup', function () {
+
+    clearTimeout(timeout);
+
+    timeout = setTimeout(() => {
+
+      const search = searchInput.value.trim();
+
+      window.location.href =
+        `/admin/categories?search=${encodeURIComponent(search)}`;
+
+    }, 500);
+
+  });
+
+  
+  function openEditModal(id, name) {
+
+    document.getElementById('editModal').classList.remove('hidden');
+
+    // fill values
+    document.getElementById('editName').value = name;
+    
+
+    // set form action dynamically
+    document.getElementById('editForm').action = `/admin/categories/${id}?_method=PUT`;
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
+  }
+
+</script>
+
+</body>
+</html>

@@ -119,7 +119,7 @@
         </a>
 
 
-        <a href="#" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
+        <a href="/whishlist" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
           <i class="fa-regular fa-heart text-base"></i>
           <span class="text-[10px] text-gray-500">Wishlist</span>
         </a>
@@ -213,11 +213,11 @@
 
         
 
-        <a href="#" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
+        <a href="/wishlist" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
           <i class="fa-regular fa-heart text-base"></i>
           <span class="text-[10px] text-gray-500">Wishlist</span>
         </a>
-        <a href="#" class="flex flex-col items-center gap-0.5 relative hover:text-leaf-500 transition-colors">
+        <a href="/cart" class="flex flex-col items-center gap-0.5 relative hover:text-leaf-500 transition-colors">
           <i class="fa-solid fa-cart-shopping text-base"></i>
           <span class="absolute -top-1 -right-2 bg-orange-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">3</span>
           <span class="text-[10px] text-gray-500">Cart</span>
@@ -247,121 +247,8 @@
 
 
 
-    <!-- Category thumbnail strip -->
-    <div class="bg-white border-b border-gray-100">
-      <div class="max-w-7xl mx-auto px-4 py-4">
-        <div class="flex items-center gap-4 overflow-x-auto scrollbar-hide">
-          <%
-            const catThumb = [
-              {name:'Cactus',    img:'/images/cat-cactus.jpg'},
-              {name:'Ferns',     img:'/images/cat-ferns.jpg'},
-              {name:'Flowering', img:'/images/cat-flowering.jpg'},
-              {name:'Bonsai',    img:'/images/cat-bonsai.jpg'},
-              {name:'Herbs',     img:'/images/cat-herbs.jpg'},
-              {name:'Palms',     img:'/images/cat-palms.jpg'},
-              {name:'Creepers',  img:'/images/cat-creepers.jpg'},
-            ];
-          %>
-          <% catThumb.forEach(c => { %>
-            <!-- ── IMAGE SLOT — Category Circle ────────────────────────────
-                 File: <%= c.img %>   |   Size: 64 × 64 px (square, shown as circle)
-            ──────────────────────────────────────────────────────────── -->
-            <div class="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer group">
-              <div class="img-box w-16 h-16 rounded-full border-2 border-leaf-200 group-hover:border-leaf-500 transition-colors">
-                <img src="<%= c.img %>" alt="<%= c.name %>" class="rounded-full" />
-              </div>
-              <span class="text-[11px] text-gray-600 font-medium"><%= c.name %></span>
-            </div>
-          <% }) %>
-        </div>
-      </div>
-    </div>
-  </section>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       OFFER BANNERS ROW (4 cards)
-  ════════════════════════════════════════════════════════════════════════ -->
-  <section class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-2 md:grid-cols-4 gap-3">
-    <%
-      const offers = [
-        {label:'Combos',              tag:'Get 4 at ₹499', img:'/images/offer-combos.jpg',      color:'bg-green-50',  border:'border-green-200'},
-        {label:'Cactus & Succulents', tag:'upto 40% off',  img:'/images/offer-cactus.jpg',      color:'bg-yellow-50', border:'border-yellow-200'},
-        {label:'Air Purifiers',       tag:'upto 35% off',  img:'/images/offer-airpurifier.jpg', color:'bg-blue-50',   border:'border-blue-200'},
-        {label:'Seasonal Plants',     tag:'New Arrivals',   img:'/images/offer-seasonal.jpg',   color:'bg-pink-50',   border:'border-pink-200'},
-      ];
-    %>
-    <% offers.forEach(o => { %>
-      <div class="<%= o.color %> border <%= o.border %> rounded-xl overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-shadow">
-
-        <!-- ── IMAGE SLOT — Offer Banner ────────────────────────────────
-             File: <%= o.img %>   |   Size: 300 × 112 px
-        ─────────────────────────────────────────────────────────────── -->
-        <div class="img-box h-28 w-full">
-          <img src="<%= o.img %>" alt="<%= o.label %>" />
-        </div>
-
-        <div class="p-3">
-          <p class="text-xs font-semibold text-gray-700"><%= o.label %></p>
-          <span class="offer-badge mt-1 inline-block"><%= o.tag %></span>
-        </div>
-      </div>
-    <% }) %>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       BRAND STORY SECTION
-  ════════════════════════════════════════════════════════════════════════ -->
-  <section class="bg-leaf-900 text-white overflow-hidden">
-    <div class="grid grid-cols-1 md:grid-cols-2">
-
-      <!-- ── IMAGE SLOT ⑥ — Brand Hero (left half) ─────────────────────
-           File: /images/brand-hero.jpg   |   Size: 720 × 340 px
-           The man with sunglasses / "Bindass grow karega" photo
-      ─────────────────────────────────────────────────────────────── -->
-      <div class="img-box min-h-[340px]">
-        <img src="/images/brand-hero.jpg" alt="Bindass grow karega" />
-      </div>
-
-      <!-- Right: text + 2×2 story grid -->
-      <div class="flex flex-col">
-        <div class="p-8 flex flex-col justify-center flex-1">
-          <p class="text-leaf-300 text-xs tracking-widest uppercase font-semibold mb-2">Our Promise</p>
-          <h2 class="font-display text-3xl md:text-4xl font-bold leading-snug mb-4">
-            Grown by skilled<br/><span class="text-leaf-400">women farmers.</span>
-          </h2>
-          <p class="text-gray-300 text-sm leading-relaxed mb-6">
-            Every plant at Leafora is ethically sourced from women-led farms across India.
-            We ensure fair wages, sustainable practices, and the freshest plants to your doorstep.
-          </p>
-          <a href="#" class="inline-flex items-center gap-2 bg-leaf-500 hover:bg-leaf-400 text-white px-5 py-2.5 rounded-full text-sm font-semibold transition-colors w-max">
-            <i class="fa-solid fa-arrow-right"></i> Our Story
-          </a>
-        </div>
-
-        <!-- 2 × 2 story image grid -->
-        <div class="grid grid-cols-2">
-          <%
-            const storyImgs = [
-              {label:'Farm Visit',               img:'/images/story-farm.jpg'},
-              {label:'Pure, homemade & Organic', img:'/images/story-organic.jpg'},
-              {label:'Expert for your plants',   img:'/images/story-expert.jpg'},
-              {label:'Sustainable Fields',       img:'/images/story-fields.jpg'},
-            ];
-          %>
-          <% storyImgs.forEach(s => { %>
-            <!-- ── IMAGE SLOT — Story Grid Tile ──────────────────────────
-                 File: <%= s.img %>   |   Size: 360 × 144 px
-            ──────────────────────────────────────────────────────────── -->
-            <div class="relative img-box h-36 border border-leaf-800">
-              <img src="<%= s.img %>" alt="<%= s.label %>" class="brightness-50" />
-              <span class="absolute bottom-2 left-2 right-2 text-white text-[11px] font-semibold leading-tight z-10"><%= s.label %></span>
-            </div>
-          <% }) %>
-        </div>
-      </div>
-    </div>
-  </section>
-
+ 
   <!-- ═══════════════════════════════════════════════════════════════════════
        PLANTS GRID — "A Plant for Every Space"
   ════════════════════════════════════════════════════════════════════════ -->
@@ -371,111 +258,108 @@
       <h2 class="font-display text-2xl md:text-3xl font-bold text-leaf-800 mt-1">Featured Plants</h2>
     </div>
 
+   
     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-      <%
-        const plants = [
-          {name:'Areca Palm',         price:'₹799',   oldPrice:'₹999',   tag:'Best Seller', img:'/images/plant-areca-palm.jpg'},
-          {name:'Bird of Paradise',   price:'₹1,799', oldPrice:'₹2,200', tag:'Trending',    img:'/images/plant-bird-of-paradise.jpg'},
-          {name:'Monstera Deliciosa', price:'₹799',   oldPrice:'₹1,100', tag:'Popular',     img:'/images/plant-monstera.jpg'},
-          {name:'Peace Lily',         price:'₹249',   oldPrice:'₹399',   tag:'Sale',        img:'/images/plant-peace-lily.jpg'},
-          {name:'Snake Plant',        price:'₹349',   oldPrice:'₹499',   tag:'Air Purifier',img:'/images/plant-snake-plant.jpg'},
-        ];
-      %>
-      <% plants.forEach(p => { %>
-        <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group border border-gray-100">
 
-          <!-- ── IMAGE SLOT — Plant Card ──────────────────────────────────
-               File: <%= p.img %>   |   Size: 300 × 176 px
-               Zoom-on-hover is applied automatically via group-hover
-          ──────────────────────────────────────────────────────────── -->
-          <div class="relative img-box h-44 w-full group-hover:scale-105 transition-transform duration-300">
-            <img src="<%= p.img %>" alt="<%= p.name %>" />
-            <span class="absolute top-2 left-2 bg-leaf-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full z-10"><%= p.tag %></span>
-            <button class="absolute top-2 right-2 bg-white rounded-full w-7 h-7 flex items-center justify-center shadow text-gray-400 hover:text-red-500 transition-colors z-10">
-              <i class="fa-regular fa-heart text-xs"></i>
-            </button>
-          </div>
+  <% products.forEach(p => {
+    // ProductVariant fields: productId, color, size, sku, price, discountPrice, stock, images, status
+    // images[] stores filenames only → full URL = /uploads/products/<filename>
+    const mainVariant = p.variants[0]; // already filtered to active variants in controller
+    const currentPrice  = mainVariant.discountPrice ? mainVariant.discountPrice : mainVariant.price;
+    const originalPrice = mainVariant.discountPrice ? mainVariant.price : null;
+    const hasDiscount   = !!mainVariant.discountPrice;
+    const discountPct   = hasDiscount ? Math.round((1 - mainVariant.discountPrice / mainVariant.price) * 100) : 0;
+    const imageFile     = (mainVariant.images && mainVariant.images.length > 0) ? mainVariant.images[0] : null;
+    const productImage  = imageFile ? '/uploads/products/' + imageFile : 'https://placehold.co/400x500/2e9e2e/white?text=No+Image';
+    const variantSize   = mainVariant.size || '';
+    const variantColor  = mainVariant.color || '';
+    const inStock       = mainVariant.stockQuantity > 0;
+    
+  %>
+<a href="/product/<%= p._id %>" class="block">
+    <div class="relative h-80 rounded-2xl overflow-hidden group shadow-md">
 
-          <div class="p-3">
-            <h3 class="text-sm font-semibold text-gray-800 mb-1 truncate"><%= p.name %></h3>
-            <div class="flex items-center gap-1 mb-1">
-              <% for(let i=0;i<5;i++){ %><i class="fa-solid fa-star text-yellow-400 text-[10px]"></i><% } %>
-              <span class="text-[10px] text-gray-400">(128)</span>
-            </div>
-            <div class="flex items-center gap-1.5 mb-3">
-              <span class="text-leaf-700 font-bold text-sm"><%= p.price %></span>
-              <span class="text-gray-400 text-xs line-through"><%= p.oldPrice %></span>
-            </div>
-            <div class="flex gap-1.5">
-              <button class="add-to-cart-btn flex-1 py-1.5 rounded-lg text-[11px]">
-                <i class="fa-solid fa-cart-plus mr-1"></i> Add
-              </button>
-              <button class="wishlist-btn px-2 py-1.5 rounded-lg">
-                <i class="fa-regular fa-heart text-xs"></i>
-              </button>
-            </div>
-          </div>
+      <!-- Background Image -->
+      <img
+        src="<%= productImage %>"
+        alt="<%= p.name %>"
+        class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+      />
+
+      <!-- Dark Overlay -->
+      <div class="absolute inset-0 bg-black/35"></div>
+
+      <!-- Badge: Discount % or "New Arrival" -->
+      <span class="absolute top-3 left-3 text-white text-[10px] font-bold px-2 py-1 rounded-full z-10 <%= hasDiscount ? 'bg-orange-500' : 'bg-leaf-600' %>">
+        <%= hasDiscount ? discountPct + '% OFF' : 'New Arrival' %>
+      </span>
+
+      
+      <% if (!inStock) { %>
+        <div class="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+          <span class="text-white font-bold text-sm tracking-widest uppercase">Out of Stock</span>
         </div>
-      <% }) %>
+      <% } %>
+
+      <!-- Wishlist -->
+   <button
+  type="button"
+  onclick="event.preventDefault();event.stopPropagation();toggleWishlist('<%= p._id %>', this)"
+  class="absolute top-3 right-3 bg-white/90 rounded-full w-8 h-8 flex items-center justify-center shadow z-10"
+>
+  <i class="<%= wishlistIds.includes(p._id.toString())
+      ? 'fa-solid text-red-500'
+      : 'fa-regular text-gray-500' %> fa-heart text-xs"></i>
+</button>
+      <!-- Content -->
+      <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
+
+        <h3 class="text-lg font-bold mb-0.5"><%= p.name %></h3>
+
+        <% if (variantSize || variantColor) { %>
+          <p class="text-[10px] text-gray-300 mb-1">
+            <%= [variantSize, variantColor].filter(Boolean).join(' · ') %>
+          </p>
+        <% } %>
+
+        <div class="flex items-center gap-2 mb-3">
+          <span class="font-bold text-lg">
+            ₹<%= currentPrice.toLocaleString('en-IN') %>
+          </span>
+          <% if (originalPrice) { %>
+            <span class="text-sm line-through text-gray-300">
+              ₹<%= originalPrice.toLocaleString('en-IN') %>
+            </span>
+          <% } %>
+        </div>
+
+        <button
+  class="w-full bg-white text-leaf-700 py-2 rounded-lg text-sm font-semibold hover:bg-leaf-600 hover:text-white transition <%= p.stockQty === 0 ? 'opacity-50 cursor-not-allowed' : '' %>"
+  <%= p.stockQty === 0 ? 'disabled' : '' %>>
+  <i class="fa-solid fa-cart-plus mr-1"></i>
+  view product
+</button>
+
+
+      </div>
     </div>
 
+  <% }) %>
+
+
+
+</div>
+      </a>
+
     <div class="text-center mt-8">
-      <a href="#" class="inline-flex items-center gap-2 border-2 border-leaf-600 text-leaf-700 px-8 py-2.5 rounded-full text-sm font-semibold hover:bg-leaf-600 hover:text-white transition-all">
+      <a href="/productlist" class="inline-flex items-center gap-2 border-2 border-leaf-600 text-leaf-700 px-8 py-2.5 rounded-full text-sm font-semibold hover:bg-leaf-600 hover:text-white transition-all">
         View All Plants <i class="fa-solid fa-arrow-right"></i>
       </a>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       POTS & CERAMICS
-  ════════════════════════════════════════════════════════════════════════ -->
-  <section class="bg-leaf-50 py-10">
-    <div class="max-w-7xl mx-auto px-4">
-      <div class="text-center mb-8">
-        <p class="section-title mb-1">★ CERAMIC FOR DÉCOR ★</p>
-        <h2 class="font-display text-2xl md:text-3xl font-bold text-leaf-800 mt-1">Pots & Planters</h2>
-      </div>
-
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        <%
-          const pots = [
-            {name:'Terracotta Pot',     price:'₹289',   oldPrice:'₹399',   img:'/images/pot-terracotta.jpg'},
-            {name:'Ceramic Blue Pot',   price:'₹1,799', oldPrice:'₹2,499', img:'/images/pot-ceramic-blue.jpg'},
-            {name:'Textured Green Pot', price:'₹799',   oldPrice:'₹999',   img:'/images/pot-textured-green.jpg'},
-            {name:'Mini Pot Set',       price:'₹193',   oldPrice:'₹299',   img:'/images/pot-mini-set.jpg'},
-          ];
-        %>
-        <% pots.forEach(pot => { %>
-          <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100">
-
-            <!-- ── IMAGE SLOT — Pot Card ──────────────────────────────────
-                 File: <%= pot.img %>   |   Size: 300 × 160 px
-            ──────────────────────────────────────────────────────────── -->
-            <div class="img-box h-40 w-full">
-              <img src="<%= pot.img %>" alt="<%= pot.name %>" />
-            </div>
-
-            <div class="p-3">
-              <h3 class="text-sm font-semibold text-gray-800 mb-1"><%= pot.name %></h3>
-              <div class="flex items-center gap-1.5 mb-3">
-                <span class="text-leaf-700 font-bold text-sm"><%= pot.price %></span>
-                <span class="text-gray-400 text-xs line-through"><%= pot.oldPrice %></span>
-              </div>
-              <div class="flex gap-1.5">
-                <button class="add-to-cart-btn flex-1 py-1.5 rounded-lg text-[11px]">
-                  <i class="fa-solid fa-cart-plus mr-1"></i> Add to Cart
-                </button>
-                <button class="wishlist-btn px-2 py-1.5 rounded-lg">
-                  <i class="fa-regular fa-heart text-xs"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        <% }) %>
-      </div>
-    </div>
-  </section>
-
+  
+            
   <!-- ═══════════════════════════════════════════════════════════════════════
        TRUST BADGES
   ════════════════════════════════════════════════════════════════════════ -->
@@ -533,12 +417,8 @@
       </div>
     </div>
 
-    <!-- ── IMAGE SLOT — About Photo ──────────────────────────────────────
-         File: /images/about-leafora.jpg   |   Size: 600 × 288 px
-    ─────────────────────────────────────────────────────────────────── -->
-    <div class="img-box rounded-2xl h-72 w-full">
-      <img src="/images/about-leafora.jpg" alt="About Leafora" class="rounded-2xl" />
-    </div>
+
+   
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════════════════
@@ -641,6 +521,69 @@
     class="fixed bottom-6 right-6 bg-leaf-600 text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center hover:bg-leaf-700 transition-colors z-50">
     <i class="fa-solid fa-chevron-up text-sm"></i>
   </button>
+
+<script>
+async function toggleWishlist(productId, btn) {
+  try {
+    const res = await fetch('/wishlist/toggle', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ productId })
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      showToast(data.message, 'error');
+      return;
+    }
+
+    const icon = btn.querySelector('i');
+
+    if (data.inWishlist) {
+      icon.classList.remove('fa-regular');
+      icon.classList.add('fa-solid', 'text-red-500');
+
+      showToast('Added to wishlist ❤️', 'success');
+    } else {
+      icon.classList.remove('fa-solid', 'text-red-500');
+      icon.classList.add('fa-regular');
+
+      showToast('Removed from wishlist', 'info');
+    }
+
+  } catch (err) {
+    console.error(err);
+    showToast('Something went wrong', 'error');
+  }
+}
+</script>
+<div id="toast-container"
+     class="fixed top-5 right-5 z-[9999]"></div>
+     <script>
+function showToast(message, type = 'success') {
+
+  const toast = document.createElement('div');
+
+  let bg = 'bg-green-600';
+
+  if (type === 'error') bg = 'bg-red-600';
+  if (type === 'info') bg = 'bg-blue-600';
+
+  toast.className =
+    `${bg} text-white px-4 py-3 rounded-lg shadow-lg mb-2`;
+
+  toast.textContent = message;
+
+  document.getElementById('toast-container').appendChild(toast);
+
+  setTimeout(() => {
+    toast.remove();
+  }, 2500);
+}
+</script>
 
 </body>
 </html>

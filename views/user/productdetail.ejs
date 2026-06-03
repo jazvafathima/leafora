@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= typeof product !== 'undefined' && product ? product.name + ' - Leafora' : 'Leafora' %></title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leaf:  { 50:'#f0faf0',100:'#dcf5dc',600:'#1f7a1f',700:'#185c18',800:'#124512',900:'#0b2f0b' },
+            cream: '#f5f0e8',
+          },
+          fontFamily: {
+            display: ['"Playfair Display"','serif'],
+            body:    ['Poppins','sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  
+
+  <style>
+    *  { box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f8f7f4; margin: 0; }
+
+    /* ════════════ NAVBAR ════════════ */
+    .navbar { background: #fff; border-bottom: 1px solid #e9ecef; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+    .nav-logo { display: flex; align-items: center; gap: 6px; text-decoration: none; }
+    .nav-logo img { height: 36px; }
+    .nav-logo span { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; color: #1a5c1a; }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a { font-size: 0.8rem; color: #374151; text-decoration: none; font-weight: 500; transition: color .15s; }
+    .nav-links a:hover { color: #1a5c1a; }
+    .nav-icons { display: flex; align-items: center; gap: 18px; }
+    .nav-icons a { color: #374151; font-size: 0.95rem; text-decoration: none; transition: color .15s; position: relative; }
+    .nav-icons a:hover { color: #1a5c1a; }
+    .cart-badge { position: absolute; top: -6px; right: -7px; background: #1a5c1a; color: #fff; font-size: 0.55rem; font-weight: 700; width: 15px; height: 15px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    /* ════════════ BREADCRUMB ════════════ */
+    .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: #9ca3af; flex-wrap: wrap; }
+    .breadcrumb a { color: #9ca3af; text-decoration: none; transition: color .15s; }
+    .breadcrumb a:hover { color: #1a5c1a; }
+    .breadcrumb .sep { color: #d1d5db; }
+    .breadcrumb .current { color: #374151; font-weight: 500; }
+
+    /* ════════════ ZOOM ════════════ */
+    .zoom-container { position: relative; overflow: hidden; cursor: zoom-in; border-radius: 14px; background: #f0f4f0; }
+    .zoom-container img { width: 100%; display: block; transition: transform .3s ease; transform-origin: 0 0; }
+    .zoom-container:hover img { transform: scale(2); }
+    .zoom-container.zoomed { cursor: zoom-out; }
+
+    /* ════════════ THUMBNAILS ════════════ */
+    .thumb { width: 72px; height: 72px; border-radius: 10px; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: all .2s; flex-shrink: 0; background: #f0f4f0; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .thumb.active { border-color: #1a5c1a; }
+    .thumb:hover { border-color: #5a9a5a; }
+
+    /* ════════════ SIZE CHIPS ════════════ */
+    .size-chip { padding: 6px 18px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 0.75rem; font-weight: 500; cursor: pointer; transition: all .15s; color: #374151; background: #fff; }
+    .size-chip:hover { border-color: #1a5c1a; color: #1a5c1a; }
+    .size-chip.selected { border-color: #1a5c1a; background: #f0faf0; color: #1a5c1a; font-weight: 600; }
+    .size-chip.out { border-color: #e5e7eb; color: #d1d5db; cursor: not-allowed; text-decoration: line-through; }
+
+    /* ════════════ QTY ════════════ */
+    .qty-btn { width: 32px; height: 32px; border: 1px solid #d1d5db; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.9rem; background: #fff; color: #374151; transition: all .15s; user-select: none; }
+    .qty-btn:hover { border-color: #1a5c1a; color: #1a5c1a; }
+    .qty-input { width: 48px; text-align: center; border: 1px solid #d1d5db; border-radius: 6px; height: 32px; font-size: 0.85rem; font-family: 'Poppins', sans-serif; color: #374151; outline: none; }
+    .qty-input:focus { border-color: #1a5c1a; }
+
+    /* ════════════ STARS ════════════ */
+    .stars { color: #f59e0b; font-size: 0.75rem; }
+    .stars .empty { color: #e5e7eb; }
+
+    /* ════════════ HIGHLIGHT CHIPS ════════════ */
+    .highlight { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+    .highlight i { font-size: 1.3rem; color: #1a5c1a; }
+    .highlight p { font-size: 0.67rem; color: #374151; font-weight: 500; line-height: 1.3; max-width: 80px; }
+
+    /* ════════════ COUPON BADGE ════════════ */
+    .coupon-badge { display: inline-flex; align-items: center; gap: 5px; background: #f0faf0; border: 1px dashed #5a9a5a; border-radius: 6px; padding: 4px 10px; font-size: 0.7rem; font-weight: 600; color: #185c18; cursor: pointer; transition: background .15s; }
+    .coupon-badge:hover { background: #dcf5dc; }
+
+    /* ════════════ STOCK BADGE ════════════ */
+    .stock-in  { background: #dcfce7; color: #15803d; font-size: 0.65rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+    .stock-low { background: #fef9c3; color: #a16207; font-size: 0.65rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+    .stock-out { background: #fee2e2; color: #991b1b; font-size: 0.65rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+
+    /* ════════════ REVIEW CARD ════════════ */
+    .review-card { background: #fff; border-radius: 12px; border: 1px solid #f0f0f0; padding: 16px 18px; min-width: 260px; max-width: 300px; flex-shrink: 0; }
+
+    /* ════════════ RELATED CARD ════════════ */
+    .related-card { background: #fff; border-radius: 14px; border: 1px solid #f0f0f0; overflow: hidden; transition: box-shadow .2s; flex-shrink: 0; width: 180px; }
+    .related-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.08); }
+    .related-img { width: 100%; height: 140px; background: #f0f4f0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .related-img img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ════════════ FEATURE ROW ════════════ */
+    .feature-row { display: flex; align-items: center; gap: 32px; padding: 18px 0; border-bottom: 1px solid #f0f0f0; justify-content: center; flex-wrap: wrap; }
+
+    /* ════════════ TOAST ════════════ */
+    .toast { position: fixed; top: 1rem; right: 1rem; z-index: 9999; display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 10px; font-size: 0.82rem; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,.12); animation: slideIn .3s ease; }
+    @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ════════════ SOLD OUT OVERLAY ════════════ */
+    .sold-out-overlay { position: absolute; inset: 0; background: rgba(255,255,255,.7); display: flex; align-items: center; justify-content: center; border-radius: 14px; }
+    .sold-out-label { background: #991b1b; color: #fff; font-size: 0.75rem; font-weight: 700; padding: 8px 20px; border-radius: 6px; letter-spacing: .05em; }
+
+    /* ════════════ SCROLLBAR HIDDEN ════════════ */
+    .no-scrollbar { scrollbar-width: none; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+
+    /* ════════════ ZOOM LENS MOVE ════════════ */
+    #mainImgWrap { user-select: none; }
+  </style>
+</head>
+
+<%
+  /* ── Server-side availability guard ── */
+  const p = typeof product !== 'undefined' ? product : null;
+  const isUnavailable = !p || p.isBlocked || p.status === 'inactive' || p.status === 'blocked';
+%>
+
+<% if (isUnavailable) { %>
+  <script>
+    /* Redirect to shop listing immediately */
+    window.location.replace('/products');
+  </script>
+<% } %>
+
+<body class="min-h-screen" id="pageBody">
+
+<!-- ════════════════════════════════════════
+     FLASH TOASTS
+════════════════════════════════════════ -->
+<% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+  <div class="toast bg-green-50 border border-green-200 text-green-700" id="flashToast">
+    <i class="fa-solid fa-circle-check"></i> <%= success[0] %>
+  </div>
+<% } %>
+<% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+  <div class="toast bg-red-50 border border-red-200 text-red-700" id="flashToast">
+    <i class="fa-solid fa-circle-exclamation"></i> <%= error[0] %>
+  </div>
+<% } %>
+
+<!-- ════════════════════════════════════════
+     NAVBAR
+════════════════════════════════════════ -->
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <!-- Logo image slot: replace src with your logo -->
+    <img src="/images/leafora logo.png" alt="Leafora" onerror="this.style.display='none'" />
+    <span>Leafora</span>
+  </a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/blog">Blog</a>
+    <a href="/products">Products</a>
+    <a href="/pages">Pages</a>
+  </div>
+  <div class="nav-icons">
+    <a href="/search"  title="Search"><i class="fa-solid fa-magnifying-glass"></i></a>
+    <a href="/account" title="Account"><i class="fa-regular fa-user"></i></a>
+    <a href="/wishlist" title="Wishlist"><i class="fa-regular fa-heart"></i></a>
+    <a href="/location" title="Store Locator"><i class="fa-solid fa-location-dot"></i></a>
+    <a href="/cart" title="Cart" style="position:relative">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+        <span class="cart-badge"><%= cartCount %></span>
+      <% } %>
+    </a>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════
+     MAIN PRODUCT SECTION
+════════════════════════════════════════ -->
+<div class="max-w-6xl mx-auto px-4 py-7">
+
+  <%
+    /* Helpers */
+    const variants  = p && p.variants ? p.variants : [];
+    const firstVar  = variants.length > 0 ? variants[0] : null;
+    const allImages = p && p.images ? p.images : [];
+    const basePrice = firstVar ? (firstVar.price || 0) : (p ? p.price || 0 : 0);
+    const discPrice = firstVar ? (firstVar.discountPrice || firstVar.discount || null) : null;
+    const stock= variants.reduce ? variants.reduce((s,v)=>s+(v.stockQuantity||v.stock||0),0) : 0;
+    const avgRating = p && p.avgRating ? p.avgRating : (p && p.rating ? p.rating : 4.3);
+    const reviewCount= p && p.reviewCount ? p.reviewCount : (p && p.reviews ? p.reviews.length : 0);
+    const discPct   = basePrice && discPrice ? Math.round((1 - discPrice/basePrice)*100) : 0;
+  %>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb mb-5">
+    <a href="/">Home</a>
+    <span class="sep">/</span>
+    <a href="/products">Plants</a>
+    <% if (p && p.category) { %>
+      <span class="sep">/</span>
+      <a href="/products?category=<%= p.category._id || p.category %>"><%= p.category.name || p.category %></a>
+    <% } %>
+    <span class="sep">/</span>
+    <span class="current"><%= p ? p.name : 'Product' %></span>
+  </div>
+
+  <!-- Product grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+
+    <!-- ── LEFT: Images ── -->
+    <div>
+      <!-- Main zoom image -->
+      <div class="zoom-container mb-3" id="mainImgWrap" style="height:350px  width:267px; " >
+        <% if (allImages.length > 0) { %>
+          <img id="mainImg" src="<%= allImages[0] %>" alt="<%= p ? p.name : 'Product' %>"
+               style="height:100%;width:100%;object-fit:cover;border-radius:14px" />
+        <% } else { %>
+          <!-- Image placeholder — same size as real image -->
+          <div style="height:380px;display:flex;align-items:center;justify-content:center;background:#e8ede8;border-radius:14px">
+            <i class="fa-solid fa-seedling text-5xl" style="color:#c0d8c0;opacity:.6"></i>
+          </div>
+        <% } %>
+        <!-- Sold-out overlay -->
+        <% if (stock === 0) { %>
+          <div class="sold-out-overlay">
+            <span class="sold-out-label">SOLD OUT</span>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Thumbnails -->
+      <div class="flex gap-2 flex-wrap">
+        <% if (allImages.length > 0) { %>
+          <% allImages.forEach(function(img, i){ %>
+            <div class="thumb <%= i===0?'active':'' %>" onclick="switchImg(this,'<%= img %>')">
+              <img src="<%= img %>" alt="View <%= i+1 %>" />
+            </div>
+          <% }) %>
+        <% } else { %>
+          <!-- Thumbnail placeholders -->
+          <% for(let i=0;i<3;i++){ %>
+            <div class="thumb" style="background:#e8ede8;display:flex;align-items:center;justify-content:center">
+              <i class="fa-solid fa-image" style="color:#c0d0c0;font-size:1.1rem"></i>
+            </div>
+          <% } %>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Info ── -->
+    <div>
+
+      <!-- Title + wishlist -->
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <h1 class="font-display text-2xl font-semibold text-gray-900 leading-tight">
+          <%= p ? p.name : 'Product Name' %>
+        </h1>
+        <button onclick="toggleWishlist('<%= product._id %>')">
+  <i class="fa-regular fa-heart"></i>
+</button>
+      </div>
+
+      <!-- Ratings -->
+      <div class="flex items-center gap-2 mb-3">
+        <div class="stars">
+          <% for(let s=1;s<=5;s++){ %>
+            <i class="fa-<%= s <= Math.round(avgRating) ? 'solid' : 'regular' %> fa-star <%= s > Math.round(avgRating) ? 'empty' : '' %>"></i>
+          <% } %>
+        </div>
+        <span class="text-xs text-gray-500 font-medium">
+          <%= Number(avgRating).toFixed(1) %>
+          <span class="text-gray-300 mx-1">·</span>
+          <%= reviewCount %> reviews
+        </span>
+      </div>
+
+      <% if (typeof unavailable !== 'undefined' && unavailable) { %>
+  <div class="max-w-4xl mx-auto mt-6">
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+      <strong>Unavailable:</strong>
+      This product is currently unavailable.
+    </div>
+  </div>
+<% } %>
+
+      <!-- Price block -->
+      <div class="flex items-center gap-3 mb-1">
+      <span id="displayPrice" class="font-display text-2xl font-bold text-gray-900">
+  ₹<%= Number(discPrice || basePrice).toLocaleString('en-IN') %>
+</span>
+      </div>
+
+      <!-- Stock info -->
+      <div class="flex items-center gap-3 mb-4">
+        <% if (stock > 10) { %>
+          <span class="stock-in"><i class="fa-solid fa-circle-check mr-1"></i>In Stock</span>
+          <span id="stockText" class="text-xs text-gray-400">
+  <%= stock %> units available
+</span>
+        <% } else if (stock > 0) { %>
+          <span class="stock-low"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Low Stock</span>
+          <span class="text-xs text-orange-500 font-medium">Only <%= stock %> left!</span>
+        <% } else { %>
+          <span class="stock-out"><i class="fa-solid fa-circle-xmark mr-1"></i>Out of Stock</span>
+        <% } %>
+
+        <!-- Coupons -->
+        <% if (typeof coupons !== 'undefined' && coupons && coupons.length > 0) { %>
+          <% coupons.forEach(function(c){ %>
+            <span class="coupon-badge" onclick="copyCoupon('<%= c.code %>')" title="Click to copy">
+              <i class="fa-solid fa-tag"></i> <%= c.code %>
+            </span>
+          <% }) %>
+        <% } %>
+      </div>
+
+      <!-- Select Size -->
+      <% if (variants.length > 0) { %>
+        <div class="mb-4">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Select size</p>
+          <div class="flex flex-wrap gap-2" id="sizeWrap">
+            <% variants.forEach(function(v, vi){ %>
+
+              <%
+                const vStock = v.stockQuantity || v.stock || 0;
+                const isOut  = vStock === 0;
+              %>
+             <button
+  type="button"
+  class="size-chip <%= vi===0?'selected':'' %>"
+  data-variant="<%= v._id %>"
+  data-price="<%= v.price || 0 %>"
+  data-discount="<%= v.discountPrice || 0 %>"
+  data-stock="<%= v.stockQuantity || 0 %>"
+  data-images='<%- JSON.stringify(
+    (v.images || []).map(img => `/uploads/products/${img}`)
+  ) %>'
+  onclick="selectVariant(this)">
+  <%= v.size %>
+</button>
+            <% }) %>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Quantity -->
+      <% if (stock > 0) { %>
+        <div class="flex items-center gap-3 mb-5">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Quantity</p>
+          <div class="flex items-center gap-2">
+            <button class="qty-btn" onclick="changeQty(-1)"><i class="fa-solid fa-minus" style="font-size:10px"></i></button>
+            <input type="number" id="qtyInput" value="1" min="1" max="<%= stock %>" class="qty-input" readonly />
+            <button class="qty-btn" onclick="changeQty(1)"><i class="fa-solid fa-plus" style="font-size:10px"></i></button>
+          </div>
+        </div>
+
+        <!-- CTA buttons -->
+        <div class="flex gap-3 mb-5">
+          <form id="addToCartForm" action="/cart/add" method="POST" class="flex-1">
+            <input type="hidden" name="productId" value="<%= p ? p._id : '' %>" />
+            <input type="hidden" name="variantId" id="cartVariantId" value="<%= firstVar ? firstVar._id : '' %>" />
+            <input type="hidden" name="quantity"  id="cartQty" value="1" />
+          <% if (typeof unavailable !== 'undefined' && unavailable) { %>
+  <button
+    class="w-full bg-gray-400 text-white py-3 rounded cursor-not-allowed"
+    disabled>
+    Product Unavailable
+  </button>
+<% } else { %>
+<button
+
+  id="addToCartBtn"
+  class="w-full bg-green-600 text-white py-3 rounded">
+  Add to Cart
+</button>
+<% } %>
+
+          </form>
+          <form action="/checkout/buy-now" method="POST" class="flex-1">
+            <input type="hidden" name="productId" value="<%= p ? p._id : '' %>" />
+            <input type="hidden" name="variantId" id="buyVariantId" value="<%= firstVar ? firstVar._id : '' %>" />
+            <input type="hidden" name="quantity"  id="buyQty" value="1" />
+            <button type="submit"
+              class="w-full border-2 border-[#1a5c1a] text-[#1a5c1a] hover:bg-[#1a5c1a] hover:text-white font-semibold text-sm py-3 rounded-lg transition-colors">
+              BUY IT NOW
+            </button>
+          </form>
+        </div>
+      <% } else { %>
+        <div class="mb-5">
+          <button disabled
+            class="w-full bg-gray-200 text-gray-400 font-semibold text-sm py-3 rounded-lg cursor-not-allowed flex items-center justify-center gap-2">
+            <i class="fa-solid fa-circle-xmark text-xs"></i> SOLD OUT
+          </button>
+          <p class="text-xs text-gray-400 text-center mt-2">This item is currently unavailable</p>
+        </div>
+      <% } %>
+
+      <!-- Delivery info -->
+      <div class="border border-gray-100 rounded-xl p-3 bg-gray-50 text-xs text-gray-500 space-y-1.5 mb-4">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-truck text-[#1a5c1a] w-4 text-center"></i>
+          <span>By <strong class="text-gray-700">Leafora Delivery</strong> on <strong class="text-gray-700">May 31</strong></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-leaf text-[#1a5c1a] w-4 text-center"></i>
+          <span>Free Shipping between <strong class="text-gray-700">₹500 – ₹1,500</strong></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-rotate-left text-[#1a5c1a] w-4 text-center"></i>
+          <span>Easy Returns within 14 days</span>
+        </div>
+      </div>
+
+      <!-- Payment icons -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <i class="fa-brands fa-cc-visa text-gray-400 text-xl"></i>
+        <i class="fa-brands fa-cc-mastercard text-gray-400 text-xl"></i>
+        <i class="fa-brands fa-cc-amex text-gray-400 text-xl"></i>
+        <i class="fa-brands fa-cc-paypal text-gray-400 text-xl"></i>
+        <span class="text-[9px] font-bold text-gray-400 border border-gray-200 px-1.5 py-0.5 rounded">RuPay</span>
+        <span class="text-[9px] text-gray-400 ml-1">Guaranteed safe &amp; secure checkout</span>
+      </div>
+
+    </div>
+  </div>
+  <!-- /grid -->
+
+  <!-- ════════════════════════════════════════
+       FEATURE HIGHLIGHTS ROW
+  ════════════════════════════════════════ -->
+  <div class="bg-white rounded-2xl border border-gray-100 mt-10 px-6">
+    <div class="feature-row">
+      <div class="highlight">
+        <i class="fa-solid fa-rotate-left"></i>
+        <p>14 Days Replacement</p>
+      </div>
+      <div class="highlight">
+        <i class="fa-solid fa-hand-holding-heart"></i>
+        <p>Expert Care Guidance</p>
+      </div>
+      <div class="highlight">
+        <i class="fa-solid fa-shield-halved"></i>
+        <p>Plant Parents Trust Us</p>
+      </div>
+      <div class="highlight">
+        <i class="fa-solid fa-truck-fast"></i>
+        <p>Fast & Safe Delivery</p>
+      </div>
+      <div class="highlight">
+        <i class="fa-brands fa-whatsapp"></i>
+        <p>10M+ Happy Customers</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       REVIEWS SECTION
+  ════════════════════════════════════════ -->
+  <div class="mt-12">
+    <h2 class="font-display text-xl font-semibold text-gray-900 mb-6 text-center">From Happy Plant Parents</h2>
+    <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+
+      <% if (typeof reviews !== 'undefined' && reviews && reviews.length > 0) { %>
+        <% reviews.forEach(function(r){ %>
+          <div class="review-card">
+            <div class="flex items-center gap-1 mb-2">
+              <% for(let s=1;s<=5;s++){ %>
+                <i class="fa-solid fa-star" style="font-size:.65rem;color:<%= s<=r.rating ? '#f59e0b' : '#e5e7eb' %>"></i>
+              <% } %>
+            </div>
+            <p class="text-xs text-gray-600 leading-relaxed mb-3 line-clamp-4"><%= r.comment %></p>
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <% if (r.user && r.user.avatar) { %>
+                  <img src="<%= r.user.avatar %>" class="w-full h-full object-cover" />
+                <% } else { %>
+                  <i class="fa-regular fa-user text-gray-400" style="font-size:.65rem"></i>
+                <% } %>
+              </div>
+              <div>
+                <p class="text-xs font-semibold text-gray-700"><%= r.user ? (r.user.firstName + ' ' + (r.user.lastName||'')) : 'Anonymous' %></p>
+                <p class="text-gray-400" style="font-size:0.62rem"><%= r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) : '' %></p>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <!-- Placeholder review cards when no reviews -->
+        <% for(let i=0;i<3;i++){ %>
+          <div class="review-card opacity-60">
+            <div class="flex items-center gap-1 mb-2">
+              <% for(let s=1;s<=5;s++){ %>
+                <i class="fa-solid fa-star" style="font-size:.65rem;color:#f59e0b"></i>
+              <% } %>
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed mb-3">Absolutely love this plant! It arrived healthy and has been growing beautifully. The packaging was excellent and care guide was helpful.</p>
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center">
+                <i class="fa-regular fa-user text-gray-400" style="font-size:.65rem"></i>
+              </div>
+              <p class="text-xs font-semibold text-gray-700">Happy Customer</p>
+            </div>
+          </div>
+        <% } %>
+      <% } %>
+
+    </div>
+
+    <!-- Write a review link -->
+    <div class="flex items-center justify-center gap-4 mt-4">
+      <a href="/products/<%= p ? p._id : '' %>/review"
+         class="text-xs text-[#1a5c1a] font-medium hover:underline flex items-center gap-1">
+        <i class="fa-regular fa-pen-to-square"></i> Write a Review
+      </a>
+      <span class="text-gray-200">|</span>
+      <a href="/products/<%= p ? p._id : '' %>#reviews"
+         class="text-xs text-gray-500 hover:text-gray-700">
+        View all <%= reviewCount %> reviews
+      </a>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       PRODUCT DESCRIPTION
+  ════════════════════════════════════════ -->
+  <div class="bg-white rounded-2xl border border-gray-100 mt-10 px-7 py-7">
+    <h3 class="font-display text-lg font-semibold text-gray-900 mb-3">
+      The Importance of the <%= p ? p.name : 'This Plant' %>:
+    </h3>
+    <p class="text-sm text-gray-600 leading-relaxed">
+      <%= p && p.description ? p.description : 'A beautiful and meaningful houseplant that brings life and joy to your home. Easy to care for and perfect for all spaces.' %>
+    </p>
+
+    <!-- Specs if available -->
+    <% if (p && p.specifications && p.specifications.length > 0) { %>
+      <div class="mt-5 border-t border-gray-100 pt-5">
+        <h4 class="text-sm font-semibold text-gray-700 mb-3">Specifications</h4>
+        <div class="grid grid-cols-2 gap-2">
+          <% p.specifications.forEach(function(spec){ %>
+            <div class="flex gap-2 text-xs">
+              <span class="text-gray-400 font-medium min-w-24"><%= spec.name %></span>
+              <span class="text-gray-700"><%= spec.value %></span>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- ════════════════════════════════════════
+       RELATED PRODUCTS
+  ════════════════════════════════════════ -->
+  <% if (typeof relatedProducts !== 'undefined' && relatedProducts && relatedProducts.length > 0) { %>
+    <div class="mt-12 mb-6">
+      <h2 class="font-display text-xl font-semibold text-gray-900 mb-5">You May Also Like</h2>
+      <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+        <% relatedProducts.forEach(function(rp){ %>
+          <%
+            const rpVar   = rp.variants && rp.variants.length > 0 ? rp.variants[0] : null;
+            const rpPrice = rpVar ? (rpVar.price || 0) : (rp.price || 0);
+            const rpDisc  = rpVar ? (rpVar.discountPrice || rpVar.discount || null) : null;
+          %>
+          <a href="/products/<%= rp._id %>" class="related-card" style="text-decoration:none">
+            <div class="related-img">
+              <% if (rp.images && rp.images.length > 0) { %>
+                <img src="<%= rp.images[0] %>" alt="<%= rp.name %>" />
+              <% } else { %>
+                <i class="fa-solid fa-seedling text-3xl" style="color:#c0d8c0"></i>
+              <% } %>
+            </div>
+            <div class="p-3">
+              <p class="text-xs font-semibold text-gray-800 mb-1 leading-tight line-clamp-2"><%= rp.name %></p>
+              <div class="flex items-center gap-1.5">
+                <% if (rpDisc) { %>
+                  <span class="text-xs font-bold text-gray-900">₹<%= Number(rpDisc).toLocaleString('en-IN') %></span>
+                  <span class="text-gray-400 line-through" style="font-size:0.65rem">₹<%= Number(rpPrice).toLocaleString('en-IN') %></span>
+                <% } else { %>
+                  <span class="text-xs font-bold text-gray-900">₹<%= Number(rpPrice).toLocaleString('en-IN') %></span>
+                <% } %>
+              </div>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+</div>
+<!-- /max-w -->
+
+<!-- ════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
+<footer style="background-color:#1a2e1a;font-family:'Poppins',sans-serif;margin-top:40px">
+  <div class="max-w-6xl mx-auto px-6 pt-10 pb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
+
+      <!-- App Download -->
+      <div>
+        <p class="text-white text-2xl font-bold tracking-wide mb-4" style="font-family:'Playfair Display',serif">Leafora</p>
+        <p class="text-xs text-gray-300 mb-3">Download the Leafora App Now</p>
+        <div class="w-24 h-24 bg-white rounded-lg mb-4 flex items-center justify-center">
+          <!-- QR code slot — replace with real QR img -->
+          <i class="fa-solid fa-qrcode text-3xl text-gray-400"></i>
+        </div>
+        <div class="flex gap-2">
+          <a href="#" class="flex items-center gap-1.5 bg-black text-white text-[10px] px-3 py-2 rounded-lg">
+            <i class="fa-brands fa-google-play text-sm"></i>
+            <span><span class="block text-[8px] text-gray-400">Get it on</span>Play Store</span>
+          </a>
+          <a href="#" class="flex items-center gap-1.5 bg-black text-white text-[10px] px-3 py-2 rounded-lg">
+            <i class="fa-brands fa-apple text-sm"></i>
+            <span><span class="block text-[8px] text-gray-400">Download on</span>App Store</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Helpful Links -->
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Helpful Links</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Care Guide</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Shipping Policy</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Returns &amp; Refunds</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Track Order</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Locate Stores</a></li>
+        </ul>
+      </div>
+
+      <!-- Information -->
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Information</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Blog</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Care Tips</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">FAQs</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">About Us</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact -->
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Contact Us</h4>
+        <ul class="space-y-2">
+          <li class="text-gray-300 text-xs">+91 9000000000</li>
+          <li><a href="mailto:support@leafora.com" class="text-gray-300 text-xs hover:text-white">Email Us: support@leafora.com</a></li>
+        </ul>
+        <div class="flex gap-3 mt-4">
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-brands fa-whatsapp text-sm"></i></a>
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-regular fa-envelope text-sm"></i></a>
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-brands fa-telegram text-sm"></i></a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="border-t border-gray-600 mx-6"></div>
+
+  <div class="max-w-6xl mx-auto px-6 py-5">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-gray-300 text-xs font-medium mr-1">Social</span>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-instagram text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-x-twitter text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-facebook-f text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-youtube text-white text-xs"></i></a>
+      </div>
+      <div class="flex items-center gap-2">
+        <i class="fa-brands fa-cc-visa text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-mastercard text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-amex text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-paypal text-gray-300 text-xl"></i>
+        <span class="text-[9px] font-bold text-gray-300 border border-gray-500 px-1.5 py-0.5 rounded">RuPay</span>
+      </div>
+    </div>
+    <div class="border-t border-gray-600 mt-4 mb-4"></div>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+      <p class="text-gray-400 text-[11px]">© 2026 Leafora – All Rights Reserved.</p>
+      <div class="flex gap-4">
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Terms &amp; Conditions</a>
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Privacy Policy</a>
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Disclaimer</a>
+      </div>
+    </div>
+    <p class="text-right mt-3 text-sm font-medium" style="color:#6aaa6a;font-family:'Playfair Display',serif">Grow Green, Live Fresh 🌿</p>
+  </div>
+</footer>
+
+<!-- ════════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════ -->
+<script>
+document.getElementById("addToCartForm").addEventListener("submit", async function(e) {
+    e.preventDefault(); // Prevent normal form submit
+
+    const data = {
+    productId: this.productId.value,
+    variantId: document.getElementById('cartVariantId').value,
+    quantity: document.getElementById('qtyInput').value
+};
+
+    const res = await fetch("/cart/add", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        },
+        body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+        showToast(result.message, "success");
+    } else {
+        showToast(result.message, "error");
+    }
+});
+</script>
+<script>
+  /* ── Redirect guard: if product unavailable ── */
+  <% if (isUnavailable) { %>
+    window.location.replace('/products');
+  <% } %>
+
+  /* ── Image zoom on mouse move ── */
+  const wrap = document.getElementById('mainImgWrap');
+  const mainImg = document.getElementById('mainImg');
+  if (wrap && mainImg) {
+    wrap.addEventListener('mousemove', function(e) {
+      const rect = wrap.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width)  * 100;
+      const y = ((e.clientY - rect.top)  / rect.height) * 100;
+      mainImg.style.transformOrigin = x + '% ' + y + '%';
+    });
+    wrap.addEventListener('mouseleave', function() {
+      mainImg.style.transformOrigin = '0 0';
+    });
+  }
+
+  /* ── Thumbnail switch ── */
+  function switchImg(el, src) {
+    document.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    if (mainImg) mainImg.src = src;
+  }
+
+  /* ── Size / variant selection ── */
+ function selectVariant(btn) {
+          console.log("DATASET:", btn.dataset);
+
+    const images = JSON.parse(btn.dataset.images || "[]");
+
+    console.log("IMAGES:", images);
+
+  
+
+   
+
+    document.querySelectorAll('.size-chip')
+      .forEach(chip => chip.classList.remove('selected'));
+
+    btn.classList.add('selected');
+
+    const price = btn.dataset.price;
+    const discount = btn.dataset.discount;
+    const stock = btn.dataset.stock;
+    const variantId = btn.dataset.variant;
+
+   
+
+    // Update Price
+  const priceEl = document.getElementById('displayPrice');
+
+if (priceEl) {
+  console.log("priceEl:", document.getElementById('displayPrice'));
+console.log("stockEl:", document.getElementById('stockText'));
+    if (discount && Number(discount) > 0) {
+        priceEl.textContent =
+            '₹' + Number(discount).toLocaleString('en-IN');
+    } else {
+        priceEl.textContent =
+            '₹' + Number(price).toLocaleString('en-IN');
+    }
+}
+    // Update Stock
+    const stockEl = document.getElementById('stockText');
+
+    if (stockEl) {
+        stockEl.textContent = stock + ' units available';
+    }
+
+    // Update Hidden Inputs
+    document.getElementById('cartVariantId').value = variantId;
+    document.getElementById('buyVariantId').value = variantId;
+
+    // Update Main Image
+    if (images.length > 0) {
+        document.getElementById('mainImg').src = images[0];
+    }
+
+    // Update Thumbnail Gallery
+    const thumbContainer =
+      document.querySelector('.flex.gap-2.flex-wrap');
+
+    if (thumbContainer && images.length > 0) {
+
+        thumbContainer.innerHTML = '';
+
+        images.forEach((img, index) => {
+
+            thumbContainer.innerHTML += `
+                <div class="thumb ${index === 0 ? 'active' : ''}"
+                     onclick="switchImg(this,'${img}')">
+                    <img src="${img}">
+                </div>
+            `;
+        });
+    }
+}
+  /* ── Quantity ── */
+  function changeQty(delta) {
+    const inp = document.getElementById('qtyInput');
+    if (!inp) return;
+    let val = parseInt(inp.value) + delta;
+    const max = parseInt(inp.max) || 99;
+    val = Math.max(1, Math.min(val, max));
+    inp.value = val;
+    ['cartQty','buyQty'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = val;
+    });
+  }
+
+  /* ── Wishlist toggle ── */
+  function toggleWish(btn) {
+    const icon = btn.querySelector('i');
+    const isSolid = icon.classList.contains('fa-solid');
+    icon.classList.toggle('fa-solid',   !isSolid);
+    icon.classList.toggle('fa-regular',  isSolid);
+    icon.style.color = isSolid ? '' : '#ef4444';
+
+    fetch('/wishlist/toggle', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId: '<%= p ? p._id : "" %>' })
+    }).catch(() => {});
+  }
+
+  /* ── Copy coupon code ── */
+  function copyCoupon(code) {
+    navigator.clipboard.writeText(code).then(() => {
+      showToast('Coupon "' + code + '" copied!', 'success');
+    }).catch(() => {});
+  }
+
+  /* ── Mini toast ── */
+  function showToast(msg, type) {
+    const old = document.getElementById('miniToast');
+    if (old) old.remove();
+    const t = document.createElement('div');
+    t.id = 'miniToast';
+    t.className = 'toast ' + (type === 'success'
+      ? 'bg-green-50 border border-green-200 text-green-700'
+      : 'bg-red-50 border border-red-200 text-red-700');
+    t.innerHTML = '<i class="fa-solid fa-' + (type==='success'?'circle-check':'circle-exclamation') + '"></i> ' + msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  /* ── Auto dismiss flash toast ── */
+  const flashToast = document.getElementById('flashToast');
+  if (flashToast) setTimeout(() => flashToast.remove(), 5000);
+</script>
+<% if (success_msg && success_msg.length > 0) { %>
+<script>
+Swal.fire({
+  toast: true,
+  position: 'top-end',
+  icon: 'success',
+  title: '<%= success_msg[0] %>',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true
+});
+</script>
+<% } %>
+
+<% if (error_msg && error_msg.length > 0) { %>
+<script>
+Swal.fire({
+  toast: true,
+  position: 'top-end',
+  icon: 'error',
+  title: '<%= error_msg[0] %>',
+  showConfirmButton: false,
+  timer: 3000,
+  timerProgressBar: true
+});
+</script>
+<% } %>
+
+</body>
+</html>

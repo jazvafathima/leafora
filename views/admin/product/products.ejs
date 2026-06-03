@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora Admin - Products</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>tailwind.config={theme:{extend:{fontFamily:{body:['Poppins','sans-serif']}}}}</script>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:'Poppins',sans-serif;background:#f0f0f0;margin:0}
+
+    /* ── Sidebar ── */
+    .sidebar{width:175px;background:#fff;min-height:100vh;flex-shrink:0;border-right:1px solid #e5e7eb;display:flex;flex-direction:column}
+    .sidebar-brand{padding:18px 18px 14px}
+    .sidebar-brand p{color:#1a5c1a;font-size:1.25rem;font-weight:700;margin:0}
+    .sidebar-link{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.78rem;color:#4b5563;text-decoration:none;transition:all .15s}
+    .sidebar-link:hover{color:#1a5c1a;background:#f0faf0}
+    .sidebar-link.active{background:#1a5c1a;color:#fff;font-weight:600;margin:2px 8px;border-radius:8px;padding:9px 10px}
+    .sidebar-link i{width:16px;text-align:center;font-size:0.8rem;flex-shrink:0}
+    .sidebar-logout{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.78rem;color:#ef4444;text-decoration:none;transition:all .15s}
+    .sidebar-logout:hover{background:#fef2f2}
+    .sidebar-logout i{width:16px;text-align:center}
+
+    /* ── Topbar ── */
+    .topbar{background:#1a5c1a;padding:10px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .topbar-title{color:#fff;font-size:0.88rem;font-weight:500}
+
+    /* ── Filter inputs ── */
+    .f-select{border:1px solid #e5e7eb;border-radius:8px;padding:8px 28px 8px 12px;font-size:0.78rem;color:#374151;outline:none;background:#fff;cursor:pointer;font-family:'Poppins',sans-serif;appearance:none;min-width:140px}
+    .f-select:focus{border-color:#1a5c1a}
+    .f-input{border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;font-size:0.78rem;color:#374151;outline:none;background:#fff;font-family:'Poppins',sans-serif;flex:1}
+    .f-input:focus{border-color:#1a5c1a}
+    .f-input::placeholder{color:#adb5bd}
+
+    /* ── Table ── */
+    .th{font-size:0.7rem;color:#6b7280;font-weight:600;padding:12px 14px;text-align:left;border-bottom:1px solid #f0f0f0;white-space:nowrap}
+    .td{font-size:0.78rem;color:#374151;padding:13px 14px;border-bottom:1px solid #f9fafb;vertical-align:middle}
+    tbody tr:last-child .td{border-bottom:none}
+    tbody tr:hover{background:#fafafa}
+
+    /* ── Badges ── */
+    .badge{display:inline-block;font-size:0.65rem;font-weight:600;padding:3px 12px;border-radius:999px;border:1px solid transparent}
+    .badge-stock{color:#1a5c1a;border-color:#1a5c1a;background:#fff}
+    .badge-out{color:#dc2626;border-color:#dc2626;background:#fff}
+       /* ── Status badges ── */
+.badge-active {
+  background: #d1fae5;
+  color: #065f46;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.badge-blocked {
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+
+    /* ── Action icons ── */
+    .btn-icon{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;font-size:0.82rem;cursor:pointer;transition:background .15s;border:none;background:transparent;text-decoration:none;color:inherit}
+    .btn-icon:hover{background:#f3f4f6}
+    .icon-edit{color:#374151}
+    .icon-del{color:#9ca3af}
+
+    /* ── Pagination ── */
+    .page-nav{display:flex;align-items:center;gap:4px;padding:5px 12px;font-size:0.75rem;color:#374151;cursor:pointer;text-decoration:none;transition:color .15s;border:1px solid #e5e7eb;border-radius:6px;background:#fff}
+    .page-nav:hover{color:#1a5c1a;border-color:#1a5c1a}
+    .page-nav.disabled{opacity:.35;pointer-events:none}
+    .page-btn{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.78rem;cursor:pointer;border:1px solid #e5e7eb;background:#fff;color:#374151;transition:all .15s;text-decoration:none}
+    .page-btn:hover{border-color:#1a5c1a;color:#1a5c1a}
+    .page-btn.active{background:#1a5c1a;color:#fff;border-color:#1a5c1a;font-weight:600}
+
+    /* ── Image slot ── */
+    .img-slot{width:40px;height:40px;border-radius:8px;background:#e9ecef;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+    .img-slot img{width:100%;height:100%;object-fit:cover}
+  </style>
+</head>
+<body class="min-h-screen">
+<div class="flex min-h-screen">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand"><p>leafora</p></div>
+    <nav class="flex-1 py-2">
+      <a href="/admin/dashboard"  class="sidebar-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="/admin/orders"     class="sidebar-link"><i class="fa-solid fa-bag-shopping"></i> Orders</a>
+      <a href="/admin/products"   class="sidebar-link active"><i class="fa-solid fa-box-open"></i> Products</a>
+      <a href="/admin/categories" class="sidebar-link"><i class="fa-solid fa-layer-group"></i> Categories</a>
+      <a href="/admin/users"      class="sidebar-link"><i class="fa-regular fa-user"></i> Users</a>
+      <a href="/admin/offers"     class="sidebar-link"><i class="fa-regular fa-heart"></i> Offers</a>
+      <a href="/admin/coupons"    class="sidebar-link"><i class="fa-solid fa-ticket"></i> Coupons</a>
+      <a href="/admin/reports"    class="sidebar-link"><i class="fa-solid fa-chart-bar"></i> Reports</a>
+    </nav>
+    <div class="border-t border-gray-100 py-2">
+      <a href="/admin/logout" class="sidebar-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </aside>
+
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <div class="flex-1 flex flex-col">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <span class="topbar-title">Dashboard</span>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full overflow-hidden border-2 border-white/40 bg-green-800 flex items-center justify-center flex-shrink-0">
+          <% if (typeof admin !== 'undefined' && admin && admin.avatar) { %>
+            <img src="<%= admin.avatar %>" alt="Admin" class="w-full h-full object-cover" />
+          <% } else { %>
+            <i class="fa-regular fa-user text-white text-xs"></i>
+          <% } %>
+        </div>
+        <span class="text-white font-semibold text-sm">3</span>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <main class="flex-1 p-6">
+
+      <!-- Heading + Add button -->
+      <div class="flex items-start justify-between mb-5">
+        <div>
+          <h1 class="text-lg font-semibold text-gray-800">Products Management</h1>
+          <p class="text-xs text-gray-400 mt-0.5">Manage mobile phones and accessories</p>
+        </div>
+        <a href="/admin/products/add"
+           class="flex items-center gap-2 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition-colors whitespace-nowrap">
+          <i class="fa-solid fa-circle-plus"></i> Add New Product
+        </a>
+      </div>
+
+      <!-- Flash messages -->
+      <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+        <div class="bg-green-50 border border-green-200 text-green-700 text-xs rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-circle-check"></i> <%= success[0] %>
+        </div>
+      <% } %>
+      <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+        <div class="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation"></i> <%= error[0] %>
+        </div>
+      <% } %>
+
+      <!-- Filter bar -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
+        <form method="GET" action="/admin/products" id="filterForm">
+          <div class="flex flex-wrap items-center gap-3">
+
+            <!-- Category -->
+            <div class="relative">
+              <select name="category" class="f-select pr-8" onchange="document.getElementById('filterForm').submit()">
+                <option value="">Category</option>
+                <% if (typeof categories !== 'undefined' && categories) { %>
+                  <% categories.forEach(function(cat){ %>
+                    <option value="<%= cat._id %>" <%= (typeof selectedCategory !== 'undefined' && selectedCategory == cat._id) ? 'selected' : '' %>>
+                      <%= cat.name %>
+                    </option>
+                  <% }) %>
+                <% } %>
+              </select>
+              <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+            </div>
+
+            <!-- Stock Status -->
+
+            <div class="relative">
+  <select
+    name="stock"
+    class="f-select pr-8"
+    onchange="document.getElementById('filterForm').submit()"
+  >
+    <option value="">Stock Status</option>
+
+    <option value="instock"
+      <%= selectedStock === 'instock' ? 'selected' : '' %>>
+      In Stock
+    </option>
+
+    <option value="outstock"
+      <%= selectedStock === 'outstock' ? 'selected' : '' %>>
+      Out of Stock
+    </option>
+  </select>
+
+  <i
+    class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+    style="font-size:9px">
+  </i>
+</div>
+
+            <!-- Search -->
+            <input type="text" name="search" id="searchInput"
+              placeholder="Search products"
+              value="<%= typeof search !== 'undefined' ? search : '' %>"
+              class="f-input" style="min-width:200px" />
+
+            <button type="submit"
+              class="bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-5 py-2 rounded-lg transition-colors">
+              Search
+            </button>
+           
+
+          </div>
+        </form>
+      </div>
+
+      <!-- Products Table -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr>
+                <th class="th">product</th>
+                <th class="th"> Name</th>
+                <th class="th">Category</th>
+                <th class="th">Price Range</th>
+                <th class="th">Total Stock</th>
+                 <th class="th">Stock status</th>
+                <th class="th">Status</th>
+                <th class="th text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (typeof products !== 'undefined' && products && products.length > 0) { %>
+                <% products.forEach(function(p) { %>
+                  <tr>
+                    <!-- Image -->
+                    <td class="td">
+  <div class="img-slot">
+    <% if (p.variants && p.variants.length > 0 && p.variants[0].images && p.variants[0].images.length > 0) { %>
+      <img src="/uploads/products/<%= p.variants[0].images[0] %>" alt="<%= p.name %>" />
+    <% } else { %>
+      <i class="fa-regular fa-image text-gray-400 text-sm"></i>
+    <% } %>
+  </div>
+</td>
+
+                    <!-- Name + variants -->
+                    <td class="td">
+                      <p class="font-semibold text-gray-800 text-xs mb-0.5"><%= p.name %></p>
+                      <p class="text-gray-400" style="font-size:0.68rem">
+                        <%= p.variants ? p.variants.length : 0 %> variants available
+                        <a href="#"
+   onclick='openVariantsModal(`<%- JSON.stringify(p.variants || []) %>`, "<%= p.name %>")'
+   class="text-[#1a5c1a] font-medium hover:underline ml-1">
+   View variants
+</a>
+                      </p>
+                    </td>
+
+                    <!-- Category -->
+                    <td class="td">
+                      <span class="text-[#1a5c1a] font-medium text-xs">
+                        <%= p.category ? p.category.name : '—' %>
+                      </span>
+                    </td>
+
+                    <!-- Price Range -->
+                    <td class="td text-xs text-gray-600">
+                      <% if (p.variants && p.variants.length > 0) {
+                           const prices = p.variants.map(v => v.price).filter(Boolean);
+                           const minP = Math.min(...prices);
+                           const maxP = Math.max(...prices);
+                      %>
+                        ₹<%= minP.toLocaleString('en-IN') %>
+                        <% if (minP !== maxP) { %> – ₹<%= maxP.toLocaleString('en-IN') %><% } %>
+                      <% } else { %>
+                        <% if (p.price) { %>₹<%= p.price.toLocaleString('en-IN') %><% } else { %>—<% } %>
+                      <% } %>
+                    </td>
+
+                    <!-- Total Stock -->
+                    <td class="td text-center text-xs">
+                     <%
+const totalStock = p.variants
+  ? p.variants.reduce((s,v)=>s+(v.stockQuantity||0),0)
+  : 0;
+%>
+
+<%= totalStock %>
+                    </td>
+
+
+                    <!-- Stock -->
+                    <td class="td">
+                      <%
+const totalStk = p.variants
+  ? p.variants.reduce((s,v)=>s+(v.stockQuantity||0),0)
+  : 0;
+%>
+                      <% if (totalStk > 0 && p.isActive !== false) { %>
+                        <span class="badge badge-stock">In Stock</span>
+                      <% } else { %>
+                        <span class="badge badge-out">Out of Stock</span>
+                      <% } %>
+                    </td>
+                    <!-- Status -->
+
+ <td class="td">
+        <% if (!p.isDeleted) { %>
+          <span class="badge-active">Active</span>
+        <% } else { %>
+          <span class="badge-blocked">Blocked</span>
+        <% } %>
+      </td>
+
+
+                    <!-- Actions -->
+                    <td class="td text-right">
+                      <div class="flex items-center justify-end gap-1">
+                        <a href="/admin/products/<%= p._id %>/edit" class="btn-icon icon-edit" title="Edit">
+                          <i class="fa-regular fa-pen-to-square"></i>
+                        </a>
+                        
+      
+
+                <% if (!p.isDeleted) { %>
+
+            <!-- BLOCK -->
+            <form id="blockForm-<%= p._id %>"
+                  action="/admin/products/<%= p._id %>/block"
+                  method="POST">
+
+              <button
+                type="button"
+                onclick='openModal("Are you sure you want to BLOCK this category?", "<%= p._id %>")'
+                class="text-red-600 text-xs font-medium">
+                Block
+              </button>
+
+            </form>
+
+          <% } else { %>
+
+            <!-- UNBLOCK -->
+            <form id="unblockForm-<%= p._id %>"
+                  action="/admin/products/<%= p._id %>/unblock"
+                  method="POST">
+
+              <button
+                type="button"
+                onclick='openModal("Are you sure you want to UNBLOCK this category?", "<%= p._id %>")'
+                class="text-green-600 text-xs font-medium">
+                Unblock
+              </button>
+
+            </form>
+
+          <% } %>
+
+      
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="7" class="text-center text-gray-400 text-xs py-12">
+                    <i class="fa-solid fa-box-open text-3xl text-gray-200 block mb-2"></i>
+                    No products found
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer: count + pagination -->
+        <%
+          const cur   = currentPage  || 1;
+          const totPg = totalPages   || 1;
+          const totPr = totalProducts|| 0;
+          const lim   = 5;
+          const st    = products && products.length > 0 ? (cur-1)*lim+1 : 0;
+          const en    = products && products.length > 0 ? st+products.length-1 : 0;
+        %>
+        <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
+          <p class="text-xs text-gray-400">
+            Showing <%= st %>-<%= en %> of <span class="font-semibold text-gray-600"><%= totPr %></span> products
+          </p>
+          <div class="flex items-center gap-2">
+            <a href="<%= cur > 1 ? '/admin/products?page='+(cur-1) : '#' %>"
+               class="page-nav <%= cur>1?'':'disabled' %>">
+              <i class="fa-solid fa-chevron-left text-xs"></i> Previous
+            </a>
+            <% for(let p=1;p<=totPg;p++){ %>
+              <a href="/admin/products?page=<%= p %>"
+                 class="page-btn <%= p===cur?'active':'' %>"><%= p %></a>
+            <% } %>
+            <a href="<%= cur < totPg ? '/admin/products?page='+(cur+1) : '#' %>"
+               class="page-nav <%= cur<totPg?'':'disabled' %>">
+              Next <i class="fa-solid fa-chevron-right text-xs"></i>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+
+<div id="confirmModal"
+     class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+  <div class="bg-white rounded-xl shadow-lg w-[320px] p-5 text-center">
+
+    <h2 class="text-sm font-semibold text-gray-800 mb-2">
+      Confirm Action
+    </h2>
+
+    <p id="modalText" class="text-xs text-gray-500 mb-4">
+      Are you sure?
+    </p>
+
+    <div class="flex justify-center gap-3">
+
+      <button onclick="closeModal()"
+        class="px-4 py-2 text-xs border rounded-lg text-gray-600 hover:bg-gray-100">
+        Cancel
+      </button>
+
+      <button id="confirmBtn"
+        class="px-4 py-2 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700">
+        Yes
+      </button>
+
+    </div>
+  </div>
+</div>
+
+
+<script>
+
+
+ 
+
+
+  // debounced search
+  let _st;
+  document.getElementById('searchInput').addEventListener('input',function(){
+    clearTimeout(_st);
+    _st=setTimeout(()=>document.getElementById('filterForm').submit(),500);
+  });
+</script>
+<!-- Variants Modal -->
+<div id="variantsModal"
+     class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+  <div class="bg-white rounded-xl shadow-xl w-[700px] max-h-[85vh] overflow-hidden">
+
+    <!-- Header -->
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div>
+        <h2 class="text-sm font-semibold text-gray-800">
+          Product Variants
+        </h2>
+        <p id="variantProductName"
+           class="text-xs text-gray-400 mt-1"></p>
+      </div>
+
+      
+
+      <button onclick="closeVariantsModal()"
+              class="text-gray-400 hover:text-gray-600">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="overflow-y-auto max-h-[65vh]">
+
+      <table class="w-full">
+        <thead>
+          <tr>
+            <th class="th">Image</th>
+            <th class="th">Size</th>
+            <th class="th">Price</th>
+            <th class="th">Stock</th>
+            <th class="th">Status</th>
+          </tr>
+        </thead>
+
+        <tbody id="variantTableBody">
+        </tbody>
+      </table>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
+      <button
+        onclick="closeVariantsModal()"
+        class="px-5 py-2 text-xs font-medium border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+        Close
+      </button>
+    </div>
+
+  </div>
+</div>
+<script>
+function openVariantsModal(variantsJson, productName) {
+
+  const variants = JSON.parse(variantsJson);
+
+  document.getElementById('variantProductName').textContent =
+    productName;
+
+  const tbody = document.getElementById('variantTableBody');
+
+  tbody.innerHTML = '';
+
+  variants.forEach(v => {
+
+    const image =
+      v.images && v.images.length
+        ? `/uploads/products/${v.images[0]}`
+        : null;
+
+    tbody.innerHTML += `
+      <tr>
+        <td class="td">
+          ${
+            image
+            ? `<img src="${image}"
+                    class="w-10 h-10 rounded-lg object-cover border border-gray-200">`
+            : `<div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                <i class="fa-regular fa-image text-gray-400 text-xs"></i>
+              </div>`
+          }
+        </td>
+
+        <td class="td">${v.size || '-'}</td>
+
+        <td class="td">
+          ₹${Number(v.price || 0).toLocaleString('en-IN')}
+        </td>
+
+        <td class="td">
+          ${v.stockQuantity || 0}
+        </td>
+
+        <td class="td">
+          ${
+            (v.stockQuantity || 0) > 0
+              ? '<span class="badge badge-stock">In Stock</span>'
+              : '<span class="badge badge-out">Out of Stock</span>'
+          }
+        </td>
+      </tr>
+    `;
+  });
+
+  document
+    .getElementById('variantsModal')
+    .classList.remove('hidden');
+}
+
+function closeVariantsModal() {
+  document
+    .getElementById('variantsModal')
+    .classList.add('hidden');
+}
+
+document
+  .getElementById('variantsModal')
+  .addEventListener('click', function(e) {
+
+    if (e.target === this) {
+      closeVariantsModal();
+    }
+  });
+</script>
+<script>
+let currentProductId = null;
+
+function openModal(message, productId) {
+  currentProductId = productId;
+
+  document.getElementById("modalText").textContent = message;
+
+  document.getElementById("confirmModal")
+    .classList.remove("hidden");
+}
+
+function closeModal() {
+  currentProductId = null;
+
+  document.getElementById("confirmModal")
+    .classList.add("hidden");
+}
+
+document.getElementById("confirmBtn")
+  .addEventListener("click", function () {
+
+    if (!currentProductId) return;
+
+    const blockForm =
+      document.getElementById(`blockForm-${currentProductId}`);
+
+    const unblockForm =
+      document.getElementById(`unblockForm-${currentProductId}`);
+
+    if (blockForm) {
+      blockForm.submit();
+    }
+
+    if (unblockForm) {
+      unblockForm.submit();
+    }
+  });
+</script>
+</body>
+</html>

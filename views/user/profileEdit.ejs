@@ -78,7 +78,7 @@
 
       <a href="/" class="flex items-center gap-2">
         <%# IMAGE SLOT: Logo /images/leafora-logo.png — 130x36px %>
-        <img src="/images/leafora-logo.png" alt="Leafora" class="h-8 w-auto" />
+        <img src="/images/leafora logo.png" alt="Leafora" class="h-8 w-auto" />
         <span class="font-display text-lg font-bold text-leaf-900">Leafora</span>
       </a>
 
@@ -110,8 +110,13 @@
   <%# MAIN CARD %>
   <main class="max-w-6xl mx-auto px-6 pb-10">
     <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
-
-      <form id="editProfileForm" action="/profile/update" method="POST"  novalidate>
+    <form
+  id="editProfileForm"
+  action="/profileEdit"
+  method="POST"
+  enctype="multipart/form-data"
+  novalidate
+>
 
         <div class="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100">
 
@@ -155,7 +160,7 @@
               <label for="fullName" class="field-label">Full Name</label>
               <input type="text" id="fullName" name="fullName"
                 placeholder="Enter your full name"
-                value="<% if (typeof user !== 'undefined' && user) { %><%= user.firstName %> <%= user.lastName %><% } %>"
+                value="<%= user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '' %>"
                 class="field-input <% if (typeof errors !== 'undefined' && errors && errors.fullName) { %>is-error<% } %>" />
               <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.fullName) { %>
                 <p class="field-error">

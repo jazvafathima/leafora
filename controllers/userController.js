@@ -1,128 +1,89 @@
+const userService = require("../services/userService");
+const Product = require("../models/Product");
+const ProductVariant = require("../models/productvariant");
 const User = require('../models/User');
-const bcrypt = require('bcrypt');
-const { generateOTP, sendOTP, createAndSendOTP } = require('../utils/otp');
 
 
 
 // ── GET SIGNUP ─────────────────────────────
+
+
+
+
 exports.getSignup = (req, res) => {
-  res.render('user/signup');
+  res.render("user/signup");
 };
 
 
 // ── POST SIGNUP ────────────────────────────
 exports.postSignup = async (req, res) => {
+
   try {
-    const { firstName, lastName, email, password } = req.body;
 
-    let errors = {};
-    if (!firstName) errors.firstName = "First name is required";
-    if (!email) errors.email = "Email is required";
-    if (!password) errors.password = "Password is required";
+    const result = await userService.signupUser(req.body);
 
-    if (Object.keys(errors).length > 0) {
-      return res.render("user/signup", { errors, formData: req.body });
-    }
-
-    const existingUser = await User.findOne({ email });
-
-    if (existingUser) {
+    if (result.errors) {
       return res.render("user/signup", {
-        errors: { email: "This email is already registered" },
+        errors: result.errors,
         formData: req.body
       });
     }
 
-    // ✅ NO manual hash (schema handles it)
-    const newUser = new User({
-      firstName,
-      lastName,
-      email,
-      password,
-      isVerified: false
-    });
+    req.session.tempUser = result.user._id;
 
-    await newUser.save();
-
-    // ✅ send OTP once
-    await createAndSendOTP(newUser);
-
-    req.session.tempUser = newUser._id;
-
-    res.redirect('/verify-otp');
+    res.redirect("/verify-otp");
 
   } catch (err) {
+
     console.log(err);
-    res.render("user/signup", { error: "Something went wrong" });
+
+    res.render("user/signup", {
+      error: "Something went wrong"
+    });
   }
 };
 
 
 // ── GET LOGIN ─────────────────────────────
 exports.getLogin = (req, res) => {
-  res.render('user/login');
+  res.render("user/login");
 };
 
 
 // ── POST LOGIN ────────────────────────────
 exports.postLogin = async (req, res) => {
+
   try {
-    const email = req.body.email?.trim();
-    const password = req.body.password?.trim();
 
-    let errors = {};
-    if (!email) errors.email = "Email is required";
-    if (!password) errors.password = "Password is required";
+    const result = await userService.loginUser({
+      email: req.body.email?.trim(),
+      password: req.body.password?.trim()
+    });
 
-    if (Object.keys(errors).length > 0) {
+    if (result.errors) {
+
       return res.render("user/login", {
-        errors,
-        formData: { email }
+        errors: result.errors,
+        formData: { email: req.body.email }
       });
     }
 
-    const user = await User.findOne({ email });
+    if (result.error) {
 
-    if (!user) {
       return res.render("user/login", {
-        error: "No account found with this email",
-        formData: { email }
+        error: result.error,
+        formData: { email: req.body.email }
       });
     }
 
-    if (user.isBlocked) {
-      return res.render("user/login", {
-        error: "Your account is blocked by admin"
-      });
-    }
+    req.session.userId = result.user._id;
 
-    if (!user.password) {
-      return res.render("user/login", {
-        error: "Please login using Google"
-      });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return res.render("user/login", {
-        error: "Incorrect password",
-        formData: { email }
-      });
-    }
-
-    if (!user.isVerified) {
-      return res.render("user/login", {
-        error: "Please verify your email first"
-      });
-    }
-
-    req.session.userId = user._id;
-
-    res.redirect('/dashboard');
+    res.redirect("/dashboard");
 
   } catch (err) {
+
     console.log(err);
+
     res.render("user/login", {
       error: "Something went wrong"
     });
@@ -135,40 +96,24 @@ exports.resendOtp = async (req, res) => {
 
   try {
 
-    console.log("RESEND CLICKED");
+    const result = await userService.resendOtp(
+      req.session.tempUser
+    );
 
-    const userId = req.session.tempUser;
-
-    console.log("SESSION USER:", userId);
-
-    if (!userId) {
+    if (result.error) {
       return res.status(400).json({
         success: false,
-        message: "Session expired"
+        message: result.error
       });
     }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      });
-    }
-
-    await createAndSendOTP(user);
-    
-
-    console.log("NEW OTP SENT");
 
     return res.json({
-      success: true,
+      success: true
     });
 
   } catch (err) {
 
-    console.log("RESEND OTP ERROR:", err);
+    console.log(err);
 
     return res.status(500).json({
       success: false,
@@ -176,34 +121,32 @@ exports.resendOtp = async (req, res) => {
     });
   }
 };
-  
 
 
+// ── GET VERIFY OTP ─────────────────────────
 exports.getVerifyOtp = async (req, res) => {
 
   try {
 
-    if (!req.session.tempUser) {
-      return res.redirect('/signup');
+    const result = await userService.getVerifyOtp(
+      req.session.tempUser
+    );
+
+    if (result.redirect) {
+      return res.redirect("/signup");
     }
 
-    const user = await User.findById(req.session.tempUser);
-
-    if (!user) {
-      return res.redirect('/signup');
-    }
-
-    return res.render('user/verify-otp', {
-      email: req.session.tempEmail || user.email,
+    return res.render("user/verify-otp", {
+      email: req.session.tempEmail || result.user.email,
       timerSeconds: 45,
       error: null
     });
 
   } catch (err) {
 
-    console.log("GET VERIFY OTP ERROR:", err);
+    console.log(err);
 
-    return res.redirect('/signup');
+    return res.redirect("/signup");
   }
 };
 
@@ -213,109 +156,79 @@ exports.verifyOtp = async (req, res) => {
 
   try {
 
-    const { otp } = req.body;
+    const result = await userService.verifyOtp({
+      userId: req.session.tempUser,
+      otp: req.body.otp
+    });
 
-    const user = await User.findById(req.session.tempUser);
+    if (result.error) {
 
-    if (!otp) {
-      return res.render('user/verify-otp', {
-        error: "Please enter OTP"
+      return res.render("user/verify-otp", {
+        error: result.error
       });
     }
 
-    if (!user) {
-      return res.render('user/verify-otp', {
-        error: "User not found"
-      });
-    }
+    const user = result.user;
 
-    if (user.otpExpiry < Date.now()) {
-      return res.render('user/verify-otp', {
-        error: "OTP expired"
-      });
-    }
-
-    if (user.otp !== otp) {
-      return res.render('user/verify-otp', {
-        error: "Incorrect OTP"
-      });
-    }
-
-    // ✅ EMAIL CHANGE FLOW
+    // EMAIL CHANGE FLOW
     if (req.session.otpPurpose === "email-change") {
 
-      const tempData = req.session.tempProfileData;
-
-      await User.findByIdAndUpdate(user._id, {
-        email: req.session.tempEmail,
-        ...tempData
+      await userService.completeEmailChange({
+        user,
+        tempEmail: req.session.tempEmail,
+        tempData: req.session.tempProfileData
       });
-
-      user.otp = null;
-      user.otpExpiry = null;
-
-      await user.save();
-
-      console.log("EMAIL CHANGE FLOW RUNNING");
-      console.log("NEW EMAIL:", req.session.tempEmail);
 
       req.session.tempEmail = null;
       req.session.tempProfileData = null;
       req.session.otpPurpose = null;
 
-      return res.redirect('/profile');
+      return res.redirect("/profile");
     }
 
-    // ✅ NORMAL SIGNUP FLOW
-    user.isVerified = true;
-    user.otp = null;
-    user.otpExpiry = null;
-
-    await user.save();
+    // NORMAL SIGNUP FLOW
+    await userService.completeSignupVerification(user);
 
     req.session.userId = user._id;
 
-    return res.redirect('/dashboard');
+    return res.redirect("/dashboard");
 
   } catch (err) {
 
-    console.log("VERIFY OTP ERROR:", err);
+    console.log(err);
 
-    return res.render('user/verify-otp', {
+    return res.render("user/verify-otp", {
       error: "Something went wrong"
     });
   }
 };
 
+
 // ── FORGOT PASSWORD ───────────────────────
 exports.forgotPassword = async (req, res) => {
+
   try {
-    const { email } = req.body;
 
-    const user = await User.findOne({ email });
+    const result = await userService.forgotPassword(
+      req.body.email
+    );
 
-    if (!user) {
-      return res.render('user/forgot-password', {
-        error: "User not found"
+    if (result.error) {
+
+      return res.render("user/forgot-password", {
+        error: result.error
       });
     }
 
-    const otp = generateOTP().toString();
+    req.session.tempUser = result.user._id;
 
-    user.otp = otp;
-    user.otpExpiry = Date.now() + 5 * 60 * 1000;
-
-    await user.save();
-
-    await sendOTP(email, otp);
-
-    req.session.tempUser = user._id;
-
-    res.redirect('/verify-otp');
+    res.redirect("/verify-otp");
 
   } catch (err) {
+
     console.log(err);
-    res.render('user/forgot-password', {
+
+    res.render("user/forgot-password", {
       error: "Something went wrong"
     });
   }
@@ -327,25 +240,16 @@ exports.verifyResetOtp = async (req, res) => {
 
   try {
 
-    const userId = req.session.tempUser;
+    const result = await userService.resendOtp(
+      req.session.tempUser
+    );
 
-    if (!userId) {
+    if (result.error) {
       return res.status(400).json({
         success: false,
-        message: "Session expired"
+        message: result.error
       });
     }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      });
-    }
-
-    await createAndSendOTP(user);
 
     return res.status(200).json({
       success: true,
@@ -354,7 +258,7 @@ exports.verifyResetOtp = async (req, res) => {
 
   } catch (err) {
 
-    console.log("RESEND OTP ERROR:", err);
+    console.log(err);
 
     return res.status(500).json({
       success: false,
@@ -362,40 +266,34 @@ exports.verifyResetOtp = async (req, res) => {
     });
   }
 };
+
+
 // ── RESET PASSWORD ────────────────────────
 exports.resetPassword = async (req, res) => {
+
   try {
-    const newPassword = req.body.newPassword?.trim();
-    const confirmPassword = req.body.confirmPassword?.trim();
 
-    if (!newPassword || !confirmPassword) {
-      return res.render('user/reset-password', {
-        error: "All fields are required"
+    const result = await userService.resetPassword({
+      userId: req.session.resetUserId,
+      newPassword: req.body.newPassword?.trim(),
+      confirmPassword: req.body.confirmPassword?.trim()
+    });
+
+    if (result.error) {
+
+      return res.render("user/reset-password", {
+        error: result.error
       });
     }
-
-    if (newPassword !== confirmPassword) {
-      return res.render('user/reset-password', {
-        error: "Passwords do not match"
-      });
-    }
-
-    const user = await User.findById(req.session.resetUserId);
-
-    if (!user) {
-      return res.redirect('/forgot-password');
-    }
-
-    user.password = newPassword; // pre-save hook hashes
-
-    await user.save();
 
     req.session.resetUserId = null;
 
-    res.redirect('/login');
+    res.redirect("/login");
 
   } catch (err) {
+
     console.log(err);
+
     res.status(500).send("Error resetting password");
   }
 };
@@ -403,191 +301,156 @@ exports.resetPassword = async (req, res) => {
 
 // ── CHANGE PASSWORD ───────────────────────
 exports.updatePassword = async (req, res) => {
+
   try {
-    const userId = req.session.userId;
 
-    const currentPassword = req.body.currentPassword?.trim();
-    const newPassword = req.body.newPassword?.trim();
-    const confirmPassword = req.body.confirmPassword?.trim();
+    const result = await userService.updatePassword({
+      userId: req.session.userId,
+      currentPassword: req.body.currentPassword?.trim(),
+      newPassword: req.body.newPassword?.trim(),
+      confirmPassword: req.body.confirmPassword?.trim()
+    });
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      return res.render('user/change-password', {
-        error: "All fields are required"
+    if (result.redirect) {
+      return res.redirect("/login");
+    }
+
+    if (result.error) {
+
+      return res.render("user/change-password", {
+        error: result.error
       });
     }
 
-    if (newPassword !== confirmPassword) {
-      return res.render('user/change-password', {
-        error: "New passwords do not match"
-      });
-    }
+    req.session.success =
+      "Password updated successfully";
 
-    if (currentPassword === newPassword) {
-      return res.render('user/change-password', {
-        error: "New password must be different"
-      });
-    }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.redirect('/login');
-    }
-
-    if (!user.password) {
-      return res.render('user/change-password', {
-        error: "You signed up with Google. Set a password first."
-      });
-    }
-
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-
-    if (!isMatch) {
-      return res.render('user/change-password', {
-        error: "Current password is incorrect"
-      });
-    }
-
-    user.password = newPassword;
-
-    await user.save();
-
-    req.session.success = "Password updated successfully";
-
-    res.redirect('/change-password');
+    res.redirect("/change-password");
 
   } catch (err) {
-    console.log("CHANGE PASSWORD ERROR:", err);
-    res.render('user/change-password', {
+
+    console.log(err);
+
+    res.render("user/change-password", {
       error: "Something went wrong"
     });
   }
 };
 
+
+// ── UPDATE PROFILE ────────────────────────
 exports.updateProfile = async (req, res) => {
+
   try {
 
-    const userId = req.session.userId;
-
-    const {
-      fullName = "",
-      email = "",
-      phone = "",
-      dob = "",
-      gender = "",
-      country = ""
-    } = req.body || {};
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.redirect('/login');
-    }
-
-    // ===============================
-    // NAME VALIDATION
-    // ===============================
-
-    const cleanName = fullName.trim();
-
-    if (!cleanName) {
-      return res.render('user/profileEdit', {
-        user,
-        errors: { fullName: "Name is required" }
-      });
-    }
-
-    const nameRegex = /^[A-Za-z]+(\s[A-Za-z]+)*$/;
-
-    if (!nameRegex.test(cleanName)) {
-      return res.render('user/profileEdit', {
-        user,
-        errors: { fullName: "Enter a valid name (letters only)" }
-      });
-    }
-
-    const parts = cleanName.split(" ");
-    const firstName = parts[0];
-    const lastName = parts.slice(1).join(" ");
-
-    // ===============================
-    // EMAIL CHANGE FLOW
-    // ===============================
-
-    if (email.trim() && email !== user.email) {
-
-      const exists = await User.findOne({
-        email,
-        _id: { $ne: userId }
-      });
-
-      if (exists) {
-        return res.render('user/profileEdit', {
-          user,
-          errors: { email: "Email already in use" }
-        });
-      }
-
-      await createAndSendOTP(user, email);
-
-      req.session.tempUser = user._id;
-      req.session.otpPurpose = "email-change";
-      req.session.tempEmail = email;
-
-      req.session.tempProfileData = {
-        firstName,
-        lastName,
-        phone,
-        dob,
-        gender,
-        country
-      };
-
-      return res.redirect('/verify-otp');
-    }
-
-    // ===============================
-    // NORMAL UPDATE
-    // ===============================
-
-    await User.findByIdAndUpdate(userId, {
-      firstName,
-      lastName,
-      phone,
-      dob,
-      gender,
-      country
+    const result = await userService.updateProfile({
+      userId: req.session.userId,
+      body: req.body,
+      file: req.file
     });
 
-    return res.redirect('/profile');
+    if (result.redirect) {
+      return res.redirect("/login");
+    }
+
+    if (result.errors) {
+
+      return res.render("user/profileEdit", {
+        user: result.user,
+        errors: result.errors
+      });
+    }
+
+    if (result.emailChange) {
+
+      req.session.tempUser = result.user._id;
+      req.session.otpPurpose = "email-change";
+      req.session.tempEmail = result.newEmail;
+
+      req.session.tempProfileData =
+        result.tempProfileData;
+
+      return res.redirect("/verify-otp");
+    }
+
+    return res.redirect("/profile");
 
   } catch (err) {
-    console.log("PROFILE UPDATE ERROR:", err);
+
+    console.log(err);
+
     return res.status(500).send("Something went wrong");
   }
+
+ 
+
 };
 
 // ── LOGOUT ────────────────────────────────
-
-  exports.logout = (req, res) => {
+exports.logout = (req, res) => {
 
   req.session.destroy((err) => {
 
     if (err) {
-      return res.redirect('/profile');
+      return res.redirect("/profile");
     }
 
-    res.clearCookie('connect.sid');
+    res.clearCookie("connect.sid");
 
-    res.redirect('/login');
+    res.redirect("/login");
   });
-
 };
-    
 
 
 // ── DASHBOARD ─────────────────────────────
-exports.getDashboard = (req, res) => {
-  res.render('user/home');
+exports.getDashboard = async (req, res) => {
+  try {
+    let wishlistIds = [];
+
+    const userId = req.session.userId || req.session.user?._id;
+
+    if (userId) {
+      const user = await User.findById(userId)
+        .select("wishlist")
+        .lean();
+
+      wishlistIds = (user?.wishlist || []).map(id => id.toString());
+    }
+
+    const allProducts = await Product.find({
+      status: "active",
+      isDeleted: false
+    })
+      .populate({
+        path: "variants",
+        model: "ProductVariant",
+        match: { status: "active" }
+      })
+      .sort({ createdAt: -1 });
+
+    const products = allProducts
+      .filter(p => p.variants?.length > 0)
+      .slice(0, 5);
+
+    return res.render("user/home", {
+      products,
+      wishlistIds
+    });
+
+  } catch (err) {
+    console.error("DASHBOARD ERROR:", err);
+
+    return res.render("user/home", {
+      products: [],
+      wishlistIds: []
+    });
+  }
 };
 
+exports.getUserProducts = async (req, res) => {
+  const products = await Product.find({
+    isDeleted: false
+  }).populate('category');
+
+  res.render('user/productList', { products });
+};

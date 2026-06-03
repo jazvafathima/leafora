@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Favorites - Leafora</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leaf:  { 50:'#f0faf0',100:'#dcf5dc',600:'#1f7a1f',700:'#185c18',800:'#124512' },
+            cream: '#f5f0e8',
+          },
+          fontFamily: {
+            display: ['"Playfair Display"','serif'],
+            body:    ['Poppins','sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f5f0e8; margin: 0; }
+
+    /* ── Navbar ── */
+    .navbar { background: #f5f0e8; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 58px; border-bottom: 1px solid #e8e2d8; position: sticky; top: 0; z-index: 100; }
+    .nav-logo { display: flex; align-items: center; gap: 6px; text-decoration: none; }
+    .nav-logo img { height: 34px; }
+    .nav-logo span { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; color: #1a5c1a; }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a { font-size: 0.8rem; color: #374151; text-decoration: none; font-weight: 500; transition: color .15s; padding-bottom: 2px; }
+    .nav-links a:hover { color: #1a5c1a; }
+    .nav-links a.active { color: #374151; font-weight: 600; border-bottom: 2px solid #374151; }
+    .nav-icons { display: flex; align-items: center; gap: 16px; }
+    .nav-icons a { color: #374151; font-size: 0.9rem; text-decoration: none; transition: color .15s; position: relative; }
+    .nav-icons a:hover { color: #1a5c1a; }
+    .cart-badge { position: absolute; top: -6px; right: -7px; background: #1a5c1a; color: #fff; font-size: 0.5rem; font-weight: 700; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    /* ── Wishlist card ── */
+    .wish-card { background: #fff; border-radius: 14px; border: 1px solid #f0ece4; padding: 18px 22px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: box-shadow .2s; }
+    .wish-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.07); }
+
+    /* ── Product image slot ── */
+    .prod-img { width: 72px; height: 72px; border-radius: 10px; overflow: hidden; background: #e8ede8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .prod-img img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ── Badges ── */
+    .badge-out { background: #fee2e2; color: #991b1b; font-size: 0.58rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; display: inline-block; }
+
+    /* ── Toast ── */
+    .toast { position: fixed; top: 1rem; right: 1rem; z-index: 9999; display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 10px; font-size: 0.82rem; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,.12); animation: slideIn .3s ease; }
+    @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ── Highlight ── */
+    .highlight { display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; }
+    .highlight i { font-size: 1.3rem; color: #1a5c1a; }
+    .highlight p { font-size: 0.67rem; color: #374151; font-weight: 500; max-width: 80px; line-height: 1.3; }
+  </style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- ════════ FLASH TOASTS ════════ -->
+<% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+  <div class="toast bg-green-50 border border-green-200 text-green-700" id="flashToast">
+    <i class="fa-solid fa-circle-check"></i> <%= success[0] %>
+  </div>
+<% } %>
+<% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+  <div class="toast bg-red-50 border border-red-200 text-red-700" id="flashToast">
+    <i class="fa-solid fa-circle-exclamation"></i> <%= error[0] %>
+  </div>
+<% } %>
+
+<!-- ════════ NAVBAR ════════ -->
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <img src="/images/leafora logo.png" alt="Leafora" onerror="this.style.display='none'" />
+    <span>Leafora</span>
+  </a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/shop" class="active">Shop</a>
+    <a href="/products">Products</a>
+    <a href="/pages">Pages <i class="fa-solid fa-chevron-down" style="font-size:.6rem"></i></a>
+  </div>
+  <div class="nav-icons">
+    <a href="/search"   title="Search"><i class="fa-solid fa-magnifying-glass"></i></a>
+    <a href="/account"  title="Account"><i class="fa-regular fa-user"></i></a>
+    <a href="/wishlist" title="Wishlist"><i class="fa-regular fa-heart"></i></a>
+    <a href="/cart" title="Cart" style="position:relative">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+        <span class="cart-badge"><%= cartCount %></span>
+      <% } %>
+    </a>
+  </div>
+</nav>
+
+<!-- ════════ MAIN CONTENT ════════ -->
+<div class="max-w-3xl mx-auto px-4 py-8">
+
+  <!-- Page heading -->
+  <h1 class="font-display text-2xl font-bold text-[#1a5c1a] mb-1">Favorites</h1>
+  <p class="text-xs text-gray-400 mb-6">
+    <% const total = typeof wishlistItems !== 'undefined' && wishlistItems ? wishlistItems.length : 0; %>
+    <%= total %> item<%= total !== 1 ? 's' : '' %> saved for later
+  </p>
+
+  <% if (typeof wishlistItems !== 'undefined' && wishlistItems && wishlistItems.length > 0) { %>
+
+    <div id="wishlistContainer">
+      <% wishlistItems.forEach(function(item) {
+          
+
+const product = item.product || item;
+const variant = item.variant || (product.variants && product.variants[0]) || null;
+
+const stock = Number(
+  variant?.stockQuantity ??
+  product?.stockQuantity ??
+  0
+);
+
+const isOut = stock === 0;
+
+
+const isBlocked =
+  product.isBlocked ||
+  product.status === 'inactive' ||
+  product.status === 'blocked';
+
+           const price     = variant ? (variant.discountPrice || variant.price || 0) : (product.price || 0);
+           const origPrice = variant && variant.discountPrice && variant.price ? variant.price : null;
+
+           // Format date added
+           let dateStr = '';
+           if (item.addedAt || item.createdAt) {
+             const d = new Date(item.addedAt || item.createdAt);
+             dateStr = d.toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
+           }
+      %>
+
+      <div class="wish-card" id="wish-<%= product._id %>"
+           style="<%= (isBlocked || isOut) ? 'opacity:.65' : '' %>">>
+
+        <!-- Left: date + image + info -->
+        <div class="flex items-center gap-4 flex-1 min-w-0">
+
+          <!-- Product image slot -->
+          <a href="<%= isBlocked ? '#' : '/products/' + product._id %>" class="prod-img flex-shrink-0">
+            <% if (product.images && product.images.length > 0) { %>
+              <img src="/uploads/products/<%= variant.images[0] %>" alt="<%= product.name %>" />
+            <% } else { %>
+              <i class="fa-solid fa-seedling text-xl" style="color:#b8d4b8"></i>
+            <% } %>
+          </a>
+
+          <!-- Info -->
+          <div class="min-w-0">
+            <!-- Date -->
+            <% if (dateStr) { %>
+              <p class="text-gray-400 mb-0.5" style="font-size:0.65rem"><%= dateStr %></p>
+            <% } %>
+
+            <!-- Name -->
+            <a href="<%= isBlocked ? '#' : '/products/' + product._id %>"
+               class="font-semibold text-[#1a5c1a] text-sm hover:underline leading-tight block mb-0.5 truncate">
+              <%= product.name %>
+            </a>
+
+            <!-- Variant info -->
+            <% if (variant && (variant.size || variant.color)) { %>
+              <p class="text-gray-400 text-xs mb-0.5">
+                Size: <%= variant.size || variant.color %>
+              </p>
+            <% } %>
+
+            <!-- Status badges -->
+            <% if (isBlocked) { %>
+              <span class="badge-out"><i class="fa-solid fa-ban mr-1"></i>Unavailable</span>
+            <% } else if (isOut) { %>
+              <span class="badge-out"><i class="fa-solid fa-circle-xmark mr-1"></i>Out of Stock</span>
+            <% } %>
+
+            <!-- Price -->
+            <div class="flex items-center gap-2 mt-1">
+              <span class="font-bold text-gray-900 text-sm">₹<%= Number(price).toLocaleString('en-IN') %></span>
+              <% if (origPrice && origPrice !== price) { %>
+                <span class="text-gray-400 line-through text-xs">₹<%= Number(origPrice).toLocaleString('en-IN') %></span>
+              <% } %>
+            </div>
+
+            <!-- Remove link -->
+            <button
+              onclick="removeFromWishlist('<%= product._id %>', this)"
+              class="text-red-400 hover:text-red-600 text-xs mt-1.5 flex items-center gap-1 transition-colors">
+              <i class="fa-regular fa-trash-can" style="font-size:0.6rem"></i> Remove
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: Order Now button -->
+        <div class="flex-shrink-0">
+          <% if (isBlocked || isOut) { %>
+            <button disabled
+              class="bg-gray-200 text-gray-400 text-xs font-semibold px-6 py-2.5 rounded-lg cursor-not-allowed whitespace-nowrap">
+              Order Now
+            </button>
+          <% } else { %>
+            <button
+              onclick="addToCartFromWishlist('<%= product._id %>',
+                '<%= variant ? variant._id : '' %>',
+                '<%= product.name %>',
+                this)"
+              class="bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">
+              Add to cart
+            </button>
+          <% } %>
+        </div>
+
+      </div>
+      <% }) %>
+    </div>
+
+  <% } else { %>
+
+    <!-- ── Empty wishlist ── -->
+    <div class="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <i class="fa-regular fa-heart text-6xl mb-4 block" style="color:#d1e8d1"></i>
+      <p class="font-display text-xl font-semibold text-gray-700 mb-2">No favorites yet</p>
+      <p class="text-xs text-gray-400 mb-6">Save plants you love to find them easily later</p>
+      <a href="/products"
+         class="inline-flex items-center gap-2 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-sm font-semibold px-6 py-3 rounded-xl transition-colors">
+        <i class="fa-solid fa-seedling text-xs"></i> Browse Plants
+      </a>
+    </div>
+
+  <% } %>
+
+</div>
+<!-- /max-w -->
+
+<!-- ════════ FOOTER ════════ -->
+<footer style="background-color:#1a2e1a;font-family:'Poppins',sans-serif;margin-top:40px">
+  <div class="max-w-6xl mx-auto px-6 pt-10 pb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
+      <div>
+        <p class="text-white text-2xl font-bold mb-4" style="font-family:'Playfair Display',serif">Leafora</p>
+        <p class="text-xs text-gray-300 mb-3">Download the Leafora App Now</p>
+        <div class="w-24 h-24 bg-white rounded-lg mb-4 flex items-center justify-center">
+          <i class="fa-solid fa-qrcode text-3xl text-gray-400"></i>
+        </div>
+        <div class="flex gap-2">
+          <a href="#" class="flex items-center gap-1.5 bg-black text-white text-[10px] px-3 py-2 rounded-lg">
+            <i class="fa-brands fa-google-play text-sm"></i>
+            <span><span class="block text-[8px] text-gray-400">Get it on</span>Play Store</span>
+          </a>
+          <a href="#" class="flex items-center gap-1.5 bg-black text-white text-[10px] px-3 py-2 rounded-lg">
+            <i class="fa-brands fa-apple text-sm"></i>
+            <span><span class="block text-[8px] text-gray-400">Download on</span>App Store</span>
+          </a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Helpful Links</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Care Guide</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Shipping Policy</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Returns &amp; Refunds</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Track Order</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Locate Stores</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Information</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Blog</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Care Tips</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">FAQs</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">About Us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Contact Us</h4>
+        <ul class="space-y-2 mb-4">
+          <li class="text-gray-300 text-xs">+91 9000000000</li>
+          <li><a href="mailto:support@leafora.com" class="text-gray-300 text-xs hover:text-white">Email Us: support@leafora.com</a></li>
+        </ul>
+        <div class="flex gap-2">
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-brands fa-whatsapp text-sm"></i></a>
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-regular fa-envelope text-sm"></i></a>
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-brands fa-telegram text-sm"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="border-t border-gray-600 mx-6"></div>
+
+  <div class="max-w-6xl mx-auto px-6 py-5">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-gray-300 text-xs font-medium mr-1">Social</span>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-instagram text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-x-twitter text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-facebook-f text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-youtube text-white text-xs"></i></a>
+      </div>
+      <div class="flex items-center gap-2">
+        <i class="fa-brands fa-cc-visa text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-mastercard text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-amex text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-paypal text-gray-300 text-xl"></i>
+        <span class="text-[9px] font-bold text-gray-300 border border-gray-500 px-1.5 py-0.5 rounded">RuPay</span>
+      </div>
+    </div>
+    <div class="border-t border-gray-600 mt-4 mb-4"></div>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+      <p class="text-gray-400 text-[11px]">© 2026 Leafora – All Rights Reserved.</p>
+      <div class="flex gap-4">
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Terms &amp; Conditions</a>
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Privacy Policy</a>
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Disclaimer</a>
+      </div>
+    </div>
+    <p class="text-right mt-3 text-sm font-medium" style="color:#6aaa6a;font-family:'Playfair Display',serif">Grow Green, Live Fresh 🌿</p>
+  </div>
+</footer>
+
+<!-- ════════ SCRIPTS ════════ -->
+<script>
+  /* ─────────────────────────────────────────────────
+     Add to Cart FROM Wishlist
+     → Adds to cart via AJAX
+     → Removes from wishlist automatically (backend)
+     → Fades card out on success
+  ───────────────────────────────────────────────── */
+  async function addToCartFromWishlist(productId, variantId, productName, btn) {
+    btn.disabled  = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs mr-1"></i> Adding...';
+
+    try {
+      const res  = await fetch('/cart/add', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ productId, variantId, quantity: 1 }),
+      });
+      const data = await res.json();
+window.location.reload();
+
+      if (data.success) {
+        // Update cart badge in navbar
+        const badge = document.querySelector('.cart-badge');
+        if (badge && data.cartCount !== undefined) {
+          badge.textContent = data.cartCount;
+          badge.style.display = 'flex';
+        } else if (!badge && data.cartCount > 0) {
+          const cartIcon = document.querySelector('a[href="/cart"]');
+          if (cartIcon) {
+            const span = document.createElement('span');
+            span.className    = 'cart-badge';
+            span.textContent  = data.cartCount;
+            cartIcon.appendChild(span);
+          }
+        }
+
+        // Fade and remove the wishlist card
+        const card = document.getElementById('wish-' + productId);
+        if (card) {
+          card.style.transition = 'opacity .35s, transform .35s';
+          card.style.opacity    = '0';
+          card.style.transform  = 'translateX(20px)';
+          setTimeout(() => {
+            card.remove();
+            // Update count display
+            const remaining = document.querySelectorAll('[id^="wish-"]').length;
+            const countEl   = document.querySelector('p.text-gray-400');
+            if (countEl) {
+              countEl.textContent = remaining + ' item' + (remaining !== 1 ? 's' : '') + ' saved for later';
+            }
+            // Show empty state if no items left
+            if (remaining === 0) {
+              document.getElementById('wishlistContainer').innerHTML = `
+                <div class="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                  <i class="fa-regular fa-heart text-6xl mb-4 block" style="color:#d1e8d1"></i>
+                  <p class="font-semibold text-gray-700 mb-2 text-lg">No favorites yet</p>
+                  <p class="text-xs text-gray-400 mb-6">Your wishlist is empty now.</p>
+                  <a href="/products" class="inline-flex items-center gap-2 bg-[#1a5c1a] text-white text-sm font-semibold px-6 py-3 rounded-xl">
+                    <i class="fa-solid fa-seedling text-xs"></i> Browse Plants
+                  </a>
+                </div>`;
+            }
+          }, 360);
+        }
+
+        showToast('"' + productName + '" added to cart!', 'success');
+      } else {
+        showToast(data.message || 'Could not add to cart.', 'error');
+        btn.disabled  = false;
+        btn.innerHTML = 'Order Now';
+      }
+    } catch {
+      showToast('Network error. Please try again.', 'error');
+      btn.disabled  = false;
+      btn.innerHTML = 'Order Now';
+    }
+  }
+
+  /* ─────────────────────────────────────────────────
+     Remove from Wishlist
+  ───────────────────────────────────────────────── */
+  async function removeFromWishlist(productId, btn) {
+    btn.disabled = true;
+    try {
+      const res  = await fetch('/wishlist/remove', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ productId }),
+      });
+      const data = await res.json();
+window.location.reload();
+
+      if (data.success) {
+        const card = document.getElementById('wish-' + productId);
+        if (card) {
+          card.style.transition = 'opacity .3s';
+          card.style.opacity    = '0';
+          setTimeout(() => {
+            card.remove();
+            const remaining = document.querySelectorAll('[id^="wish-"]').length;
+            const countEl   = document.querySelector('p.text-gray-400');
+            if (countEl) {
+              countEl.textContent = remaining + ' item' + (remaining !== 1 ? 's' : '') + ' saved for later';
+            }
+            if (remaining === 0) window.location.reload();
+          }, 300);
+        }
+        showToast('Removed from favorites.', 'success');
+      } else {
+        showToast(data.message || 'Could not remove item.', 'error');
+        btn.disabled = false;
+      }
+    } catch {
+      showToast('Network error. Please try again.', 'error');
+      btn.disabled = false;
+    }
+  }
+
+  /* ── Mini toast ── */
+  function showToast(msg, type) {
+    const old = document.getElementById('miniToast');
+    if (old) old.remove();
+    const t = document.createElement('div');
+    t.id = 'miniToast';
+    t.className = 'toast ' + (type === 'success'
+      ? 'bg-green-50 border border-green-200 text-green-700'
+      : 'bg-red-50 border border-red-200 text-red-700');
+    t.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'circle-check' : 'circle-exclamation'}"></i> ${msg}`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  /* ── Auto-dismiss flash toast ── */
+  const flashToast = document.getElementById('flashToast');
+  if (flashToast) setTimeout(() => flashToast.remove(), 5000);
+</script>
+
+</body>
+</html>

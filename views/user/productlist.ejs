@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= typeof pageTitle !== 'undefined' ? pageTitle : 'Plants' %> - Leafora</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leaf:  { 50:'#f0faf0',100:'#dcf5dc',600:'#1f7a1f',700:'#185c18',800:'#124512' },
+            cream: '#f5f0e8',
+          },
+          fontFamily: {
+            display: ['"Playfair Display"','serif'],
+            body:    ['Poppins','sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    *  { box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f8f7f4; margin: 0; }
+
+    /* ── Navbar ── */
+    .navbar { background:#fff; border-bottom:1px solid #e9ecef; padding:0 32px; display:flex; align-items:center; justify-content:space-between; height:56px; position:sticky; top:0; z-index:100; }
+    .nav-logo { display:flex; align-items:center; gap:6px; text-decoration:none; }
+    .nav-logo img { height:36px; }
+    .nav-logo span { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:700; color:#1a5c1a; }
+    .nav-links a { font-size:0.8rem; color:#374151; text-decoration:none; font-weight:500; margin-left:24px; transition:color .15s; }
+    .nav-links a:hover { color:#1a5c1a; }
+    .nav-icons a { color:#374151; font-size:0.95rem; text-decoration:none; margin-left:16px; transition:color .15s; position:relative; }
+    .nav-icons a:hover { color:#1a5c1a; }
+    .cart-badge { position:absolute; top:-6px; right:-7px; background:#1a5c1a; color:#fff; font-size:0.55rem; font-weight:700; width:15px; height:15px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+
+    /* ── Sidebar filters ── */
+    .filter-section { margin-bottom:20px; }
+    .filter-title { font-size:0.72rem; font-weight:700; color:#374151; text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+    .filter-option { display:flex; align-items:center; gap:8px; font-size:0.75rem; color:#4b5563; cursor:pointer; padding:3px 0; }
+    .filter-option input[type=checkbox] { accent-color:#1a5c1a; width:14px; height:14px; cursor:pointer; }
+    .filter-option label { cursor:pointer; }
+    .filter-option:hover label { color:#1a5c1a; }
+
+    /* ── Price range ── */
+    input[type=range] { accent-color:#1a5c1a; width:100%; }
+
+    /* ── Product card ── */
+    .product-card { background:#fff; border-radius:14px; overflow:hidden; border:1px solid #f0f0f0; transition:box-shadow .2s,transform .2s; }
+    .product-card:hover { box-shadow:0 8px 30px rgba(0,0,0,.1); transform:translateY(-2px); }
+    .card-img { width:100%; height:190px; background:#f0f4f0; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+    .card-img img { width:100%; height:100%; object-fit:cover; }
+    .card-badge { position:absolute; top:10px; left:10px; background:#1a5c1a; color:#fff; font-size:0.6rem; font-weight:700; padding:3px 8px; border-radius:999px; }
+    .card-badge-out { position:absolute; top:10px; right:10px; background:#fee2e2; color:#991b1b; font-size:0.6rem; font-weight:700; padding:3px 8px; border-radius:999px; }
+    .stars { color:#f59e0b; font-size:0.65rem; }
+    .stars .off { color:#e5e7eb; }
+    .btn-view { width:100%; background:#1a5c1a; color:#fff; font-size:0.72rem; font-weight:600; padding:10px; text-align:center; border:none; cursor:pointer; transition:background .15s; text-decoration:none; display:block; letter-spacing:.04em; }
+    .btn-view:hover { background:#144d14; }
+
+    /* ── Search bar ── */
+    .search-wrap { position:relative; }
+    .search-input { border:1px solid #e5e7eb; border-radius:8px; padding:8px 36px 8px 14px; font-size:0.8rem; color:#374151; outline:none; font-family:'Poppins',sans-serif; background:#fff; width:200px; transition:border-color .2s; }
+    .search-input:focus { border-color:#1a5c1a; box-shadow:0 0 0 2px rgba(26,92,26,.07); width:240px; }
+    .search-clear { position:absolute; right:10px; top:50%; transform:translateY(-50%); color:#9ca3af; cursor:pointer; font-size:0.8rem; transition:color .15s; }
+    .search-clear:hover { color:#374151; }
+
+    /* ── Sort select ── */
+    .sort-select { border:1px solid #e5e7eb; border-radius:8px; padding:8px 32px 8px 12px; font-size:0.78rem; color:#374151; outline:none; background:#fff; appearance:none; cursor:pointer; font-family:'Poppins',sans-serif; transition:border-color .2s; }
+    .sort-select:focus { border-color:#1a5c1a; }
+
+    /* ── Pagination ── */
+    .page-btn { width:32px; height:32px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:0.78rem; cursor:pointer; border:1px solid #e5e7eb; background:#fff; color:#374151; transition:all .15s; text-decoration:none; }
+    .page-btn:hover  { border-color:#1a5c1a; color:#1a5c1a; }
+    .page-btn.active { background:#1a5c1a; color:#fff; border-color:#1a5c1a; font-weight:600; }
+    .page-nav { display:flex; align-items:center; gap:5px; padding:6px 14px; border:1px solid #e5e7eb; border-radius:7px; font-size:0.75rem; color:#374151; cursor:pointer; background:#fff; text-decoration:none; transition:all .15s; }
+    .page-nav:hover { border-color:#1a5c1a; color:#1a5c1a; }
+    .page-nav.disabled { opacity:.35; pointer-events:none; }
+
+    /* ── FAQ accordion ── */
+    .faq-item { border-bottom:1px solid #e9ecef; }
+    .faq-q { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; cursor:pointer; font-size:0.82rem; font-weight:500; color:#374151; }
+    .faq-q:hover { color:#1a5c1a; }
+    .faq-a { display:none; padding:0 16px 14px; font-size:0.78rem; color:#6b7280; line-height:1.6; }
+    .faq-a.open { display:block; }
+
+    /* ── Active filter chip ── */
+    .active-chip { display:inline-flex; align-items:center; gap:5px; background:#f0faf0; border:1px solid #b8d8b8; border-radius:999px; padding:4px 12px; font-size:0.7rem; color:#185c18; font-weight:500; }
+    .active-chip button { background:transparent; border:none; color:#5a9a5a; cursor:pointer; font-size:0.7rem; padding:0; line-height:1; }
+    .active-chip button:hover { color:#991b1b; }
+
+    /* ── Highlight ── */
+    .highlight { display:flex; flex-direction:column; align-items:center; gap:5px; text-align:center; }
+    .highlight i { font-size:1.4rem; color:#1a5c1a; }
+    .highlight p { font-size:0.68rem; color:#374151; font-weight:500; max-width:80px; line-height:1.3; }
+
+    /* ── No-scrollbar ── */
+    .no-scrollbar { scrollbar-width:none; }
+    .no-scrollbar::-webkit-scrollbar { display:none; }
+  </style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- ════════════════════════════════════════
+     NAVBAR
+════════════════════════════════════════ -->
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <img src="/images/leafora logo.png" alt="Leafora" onerror="this.style.display='none'" />
+    <span>Leafora</span>
+  </a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/blog">Blog</a>
+    <a href="/products" class="text-leaf-700 font-semibold">Products</a>
+    <a href="/pages">Pages</a>
+  </div>
+  <div class="nav-icons" style="display:flex;align-items:center">
+    <a href="/search"  title="Search"><i class="fa-solid fa-magnifying-glass"></i></a>
+    <a href="/account" title="Account"><i class="fa-regular fa-user"></i></a>
+    <a href="/wishlist" title="Wishlist"><i class="fa-regular fa-heart"></i></a>
+    <a href="/store-locator" title="Stores"><i class="fa-solid fa-location-dot"></i></a>
+    <a href="/cart" title="Cart" style="position:relative">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+        <span class="cart-badge"><%= cartCount %></span>
+      <% } %>
+    </a>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════
+     MAIN LAYOUT
+════════════════════════════════════════ -->
+<div class="max-w-7xl mx-auto px-4 py-7 flex gap-7">
+
+  <!-- ═══ LEFT SIDEBAR FILTERS ═══ -->
+  <aside style="width:200px;flex-shrink:0">
+
+    <div class="filter-section">
+      <p class="filter-title">Filters</p>
+
+      <!-- Active filters chips -->
+      <div id="activeFilters" class="flex flex-wrap gap-1.5 mb-3">
+        <% if (typeof selectedCategory !== 'undefined' && selectedCategory) { %>
+          <span class="active-chip">
+            <%= typeof categories !== 'undefined' ? (categories.find(c=>c._id.toString()===selectedCategory)||{name:selectedCategory}).name : selectedCategory %>
+            <button onclick="clearFilter('category')"><i class="fa-solid fa-xmark"></i></button>
+          </span>
+        <% } %>
+        <% if (typeof search !== 'undefined' && search) { %>
+          <span class="active-chip">
+            "<%= search %>"
+            <button onclick="clearFilter('search')"><i class="fa-solid fa-xmark"></i></button>
+          </span>
+        <% } %>
+        <% if (typeof minPrice !== 'undefined' && minPrice) { %>
+          <span class="active-chip">
+            ₹<%= minPrice %>–₹<%= typeof maxPrice !== 'undefined' ? maxPrice : '∞' %>
+            <button onclick="clearFilter('price')"><i class="fa-solid fa-xmark"></i></button>
+          </span>
+        <% } %>
+      </div>
+
+      <% const hasFilters = (typeof selectedCategory !== 'undefined' && selectedCategory) ||
+                             (typeof search !== 'undefined' && search) ||
+                             (typeof minPrice !== 'undefined' && minPrice); %>
+      <% if (hasFilters) { %>
+        <a href="/productlist" class="text-xs text-red-400 hover:text-red-600 flex items-center gap-1 mb-3">
+          <i class="fa-solid fa-rotate-left"></i> Clear all filters
+        </a>
+      <% } %>
+    </div>
+
+    <!-- Category filter -->
+    <form method="GET" action="/productlist" id="filterForm">
+      <!-- Preserve sort + search across filter changes -->
+      <input type="hidden" name="sort"   value="<%= typeof sort   !== 'undefined' ? sort   : '' %>" />
+      <input type="hidden" name="search" id="hiddenSearch" value="<%= typeof search !== 'undefined' ? search : '' %>" />
+      <input type="hidden" name="page"   value="1" />
+
+      <div class="filter-section">
+        <p class="filter-title">Category</p>
+        <div class="space-y-1">
+          <div class="filter-option">
+            <input type="radio" name="category" id="catAll" value=""
+              <%= (!selectedCategory) ? 'checked' : '' %>
+              onchange="document.getElementById('filterForm').submit()" />
+            <label for="catAll">All Plants</label>
+          </div>
+          <% if (typeof categories !== 'undefined' && categories) { %>
+            <% categories.forEach(function(cat){ %>
+              <div class="filter-option">
+                <input type="radio" name="category"
+                  id="cat-<%= cat._id %>"
+                  value="<%= cat._id %>"
+                  <%= (typeof selectedCategory !== 'undefined' && selectedCategory == cat._id.toString()) ? 'checked' : '' %>
+                  onchange="document.getElementById('filterForm').submit()" />
+                <label for="cat-<%= cat._id %>"><%= cat.name %></label>
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Price Range -->
+      <div class="filter-section">
+        <p class="filter-title">Price Range</p>
+        <div class="flex gap-2 mb-2">
+          <input type="number" name="minPrice" id="minPrice" placeholder="Min"
+            value="<%= typeof minPrice !== 'undefined' ? minPrice : '' %>"
+            class="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-leaf-700"
+            min="0" />
+          <input type="number" name="maxPrice" id="maxPrice" placeholder="Max"
+            value="<%= typeof maxPrice !== 'undefined' ? maxPrice : '' %>"
+            class="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:border-leaf-700"
+            min="0" />
+        </div>
+        <button type="submit"
+          class="w-full bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold py-1.5 rounded-lg transition-colors">
+          Apply
+        </button>
+      </div>
+
+      <!-- Brand filter (optional) -->
+      <% if (typeof brands !== 'undefined' && brands && brands.length > 0) { %>
+        <div class="filter-section">
+          <p class="filter-title">Brand</p>
+          <div class="space-y-1">
+            <% brands.forEach(function(b){ %>
+              <div class="filter-option">
+                <input type="checkbox" name="brand" id="brand-<%= b._id %>" value="<%= b._id %>"
+                  <%= (typeof selectedBrands !== 'undefined' && selectedBrands && selectedBrands.includes(b._id.toString())) ? 'checked' : '' %>
+                  onchange="document.getElementById('filterForm').submit()" />
+                <label for="brand-<%= b._id %>"><%= b.name %></label>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% } %>
+
+    </form>
+  </aside>
+
+  <!-- ═══ RIGHT: Products ═══ -->
+  <div class="flex-1 min-w-0">
+
+    <!-- Page heading -->
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+      <div>
+        <h1 class="font-display text-xl font-bold text-gray-900 tracking-wide uppercase">
+          <%= typeof pageTitle !== 'undefined' ? pageTitle : 'Indoor Plants' %>
+        </h1>
+        <p class="text-xs text-gray-400 mt-0.5">
+          Showing <%= typeof totalProducts !== 'undefined' ? totalProducts : 0 %> products
+        </p>
+      </div>
+
+      <!-- Search + Sort -->
+      <div class="flex items-center gap-3 flex-wrap">
+
+        <!-- Search bar -->
+        <form method="GET" action="/productlist" id="searchForm" class="flex items-center gap-2">
+          <input type="hidden" name="category" value="<%= typeof selectedCategory !== 'undefined' ? selectedCategory : '' %>" />
+          <input type="hidden" name="sort"     value="<%= typeof sort !== 'undefined' ? sort : '' %>" />
+          <input type="hidden" name="minPrice" value="<%= typeof minPrice !== 'undefined' ? minPrice : '' %>" />
+          <input type="hidden" name="maxPrice" value="<%= typeof maxPrice !== 'undefined' ? maxPrice : '' %>" />
+          <input type="hidden" name="page"     value="1" />
+          <div class="search-wrap">
+            <input type="text" name="search" id="searchInput"
+              placeholder="Search plants..."
+              value="<%= typeof search !== 'undefined' ? search : '' %>"
+              class="search-input" />
+            <% if (typeof search !== 'undefined' && search) { %>
+              <span class="search-clear" onclick="clearSearch()" title="Clear search">
+                <i class="fa-solid fa-xmark"></i>
+              </span>
+            <% } else { %>
+              <span class="search-clear" style="pointer-events:none">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </span>
+            <% } %>
+          </div>
+          <button type="submit"
+            class="bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+            Search
+          </button>
+        </form>
+
+        <!-- Sort -->
+        <form method="GET" action="/productlist" id="sortForm">
+          <input type="hidden" name="category" value="<%= typeof selectedCategory !== 'undefined' ? selectedCategory : '' %>" />
+          <input type="hidden" name="search"   value="<%= typeof search !== 'undefined' ? search : '' %>" />
+          <input type="hidden" name="minPrice" value="<%= typeof minPrice !== 'undefined' ? minPrice : '' %>" />
+          <input type="hidden" name="maxPrice" value="<%= typeof maxPrice !== 'undefined' ? maxPrice : '' %>" />
+          <input type="hidden" name="page"     value="1" />
+          <div class="relative">
+            <select name="sort" class="sort-select pr-8"
+              onchange="document.getElementById('sortForm').submit()">
+              <option value="">Relevance</option>
+              <option value="price_asc"  <%= (typeof sort !== 'undefined' && sort==='price_asc')  ? 'selected' : '' %>>Price: Low to High</option>
+              <option value="price_desc" <%= (typeof sort !== 'undefined' && sort==='price_desc') ? 'selected' : '' %>>Price: High to Low</option>
+              <option value="name_asc"   <%= (typeof sort !== 'undefined' && sort==='name_asc')   ? 'selected' : '' %>>Name: A–Z</option>
+              <option value="name_desc"  <%= (typeof sort !== 'undefined' && sort==='name_desc')  ? 'selected' : '' %>>Name: Z–A</option>
+              <option value="newest"     <%= (typeof sort !== 'undefined' && sort==='newest')     ? 'selected' : '' %>>Newest</option>
+              <option value="rating"     <%= (typeof sort !== 'undefined' && sort==='rating')     ? 'selected' : '' %>>Top Rated</option>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+    <!-- Flash messages -->
+    <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+      <div class="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-circle-exclamation"></i> <%= error[0] %>
+      </div>
+    <% } %>
+
+    <!-- ── Product Grid ── -->
+    <% if (typeof products !== 'undefined' && products && products.length > 0) { %>
+
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <% products.forEach(function(p) {
+             const variants     = p.variants || [];
+             const firstVar     = variants.length > 0 ? variants[0] : null;
+             const currentPrice = firstVar ? (firstVar.discountPrice || firstVar.price || 0) : (p.price || 0);
+             const origPrice    = firstVar && firstVar.discountPrice ? firstVar.price : null;
+             const hasDiscount  = !!(firstVar && firstVar.discountPrice);
+             const discPct      = hasDiscount ? Math.round((1 - firstVar.discountPrice / firstVar.price) * 100) : 0;
+             const stock   = variants.reduce ? variants.reduce((s,v)=>s+(v.stock||v.stockQuantity||0),0) : 0;
+             const inStock      = stock > 0;
+             const productImage = (p.images && p.images.length > 0)
+                                    ? p.images[0]
+                                    : 'https://placehold.co/400x500/2e9e2e/white?text=No+Image';
+             const variantSize  = firstVar ? (firstVar.size  || '') : '';
+             const variantColor = firstVar ? (firstVar.color || '') : '';
+        %>
+          <a href="/product/<%= p._id %>" class="block">
+            <div class="relative h-80 rounded-2xl overflow-hidden group shadow-md">
+
+              <!-- Background Image -->
+              <img
+                src="<%= productImage %>"
+                alt="<%= p.name %>"
+                class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+
+              <!-- Dark Overlay -->
+              <div class="absolute inset-0 bg-black/35"></div>
+
+              <!-- Badge: Discount % or "New Arrival" -->
+              <span class="absolute top-3 left-3 text-white text-[10px] font-bold px-2 py-1 rounded-full z-10 <%= hasDiscount ? 'bg-orange-500' : 'bg-green-700' %>">
+                <%= hasDiscount ? discPct + '% OFF' : 'New Arrival' %>
+              </span>
+
+              <!-- Out of Stock overlay -->
+              <% if (!inStock) { %>
+                <div class="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+                  <span class="text-white font-bold text-sm tracking-widest uppercase">Out of Stock</span>
+                </div>
+              <% } %>
+
+              <!-- Wishlist -->
+              <button onclick="event.preventDefault()" class="absolute top-3 right-3 bg-white/90 rounded-full w-8 h-8 flex items-center justify-center shadow text-gray-500 hover:text-red-500 z-10">
+                <i class="<%= wishlistIds.includes(p._id.toString())
+      ? 'fa-solid text-red-500'
+      : 'fa-regular text-gray-500' %> fa-heart text-xs"></i>
+              </button>
+
+              <!-- Content -->
+              <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
+
+                <h3 class="text-base font-bold mb-0.5"><%= p.name %></h3>
+
+                <% if (variantSize || variantColor) { %>
+                  <p class="text-[10px] text-gray-300 mb-1">
+                    <%= [variantSize, variantColor].filter(Boolean).join(' · ') %>
+                  </p>
+                <% } %>
+
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="font-bold text-lg">₹<%= Number(currentPrice).toLocaleString('en-IN') %></span>
+                  <% if (origPrice) { %>
+                    <span class="text-sm line-through text-gray-300">₹<%= Number(origPrice).toLocaleString('en-IN') %></span>
+                  <% } %>
+                </div>
+
+                <button
+                  onclick="event.preventDefault()"
+                  class="w-full bg-white text-green-700 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 hover:text-white transition <%= !inStock ? 'opacity-50 cursor-not-allowed' : '' %>"
+                  <%= !inStock ? 'disabled' : '' %>>
+                  <i class="fa-solid fa-cart-plus mr-1"></i>
+                  <%= inStock ? 'Add to Cart' : 'Out of Stock' %>
+                </button>
+
+              </div>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+
+      <!-- ── Pagination ── -->
+      <%
+        const cur    = currentPage  || 1;
+        const totPg  = totalPages   || 1;
+        const totPr  = totalProducts|| 0;
+        const lim    = limit || 9;
+        const st     = totPr > 0 ? (cur-1)*lim+1 : 0;
+        const en     = totPr > 0 ? Math.min(st+products.length-1, totPr) : 0;
+
+        // build query string helper (keep all filters)
+        function buildPageUrl(pg) {
+          const params = new URLSearchParams();
+          if (typeof selectedCategory !== 'undefined' && selectedCategory) params.set('category', selectedCategory);
+          if (typeof search !== 'undefined' && search) params.set('search', search);
+          if (typeof sort !== 'undefined' && sort) params.set('sort', sort);
+          if (typeof minPrice !== 'undefined' && minPrice) params.set('minPrice', minPrice);
+          if (typeof maxPrice !== 'undefined' && maxPrice) params.set('maxPrice', maxPrice);
+          params.set('page', pg);
+          return '/productlist?' + params.toString();
+        }
+      %>
+
+      <div class="flex items-center justify-between mt-8 flex-wrap gap-3">
+        <p class="text-xs text-gray-400">
+          Showing <span class="font-semibold text-gray-600"><%= st %>–<%= en %></span>
+          of <span class="font-semibold text-gray-600"><%= totPr %></span> products
+        </p>
+        <div class="flex items-center gap-2">
+          <a href="<%= buildPageUrl(cur-1) %>"
+             class="page-nav <%= cur>1?'':'disabled' %>">
+            <i class="fa-solid fa-chevron-left text-xs"></i> Previous
+          </a>
+          <% for(let pg=Math.max(1,cur-2); pg<=Math.min(totPg,cur+2); pg++){ %>
+            <a href="<%= buildPageUrl(pg) %>"
+               class="page-btn <%= pg===cur?'active':'' %>"><%= pg %></a>
+          <% } %>
+          <a href="<%= buildPageUrl(cur+1) %>"
+             class="page-nav <%= cur<totPg?'':'disabled' %>">
+            Next <i class="fa-solid fa-chevron-right text-xs"></i>
+          </a>
+        </div>
+      </div>
+
+    <% } else { %>
+      <!-- No products found -->
+      <div class="text-center py-20">
+        <i class="fa-solid fa-seedling text-6xl mb-4" style="color:#d1e8d1;display:block"></i>
+        <p class="text-gray-500 font-semibold mb-1">No plants found</p>
+        <p class="text-xs text-gray-400 mb-4">Try adjusting your filters or search term</p>
+        <a href="/productlist"
+          class="inline-flex items-center gap-2 bg-leaf-700 hover:bg-leaf-800 text-white text-xs font-semibold px-5 py-2.5 rounded-lg transition-colors">
+          <i class="fa-solid fa-rotate-left"></i> Clear Filters
+        </a>
+      </div>
+    <% } %>
+
+  </div>
+  <!-- /right -->
+
+</div>
+<!-- /layout -->
+
+<!-- ════════════════════════════════════════
+     FEATURE HIGHLIGHTS
+════════════════════════════════════════ -->
+<div class="bg-white border-t border-gray-100 mt-4">
+  <div class="max-w-4xl mx-auto px-4 py-6 flex items-center justify-around flex-wrap gap-6">
+    <div class="highlight">
+      <i class="fa-solid fa-rotate-left"></i>
+      <p>14 Days Replacement</p>
+    </div>
+    <div class="highlight">
+      <i class="fa-solid fa-hand-holding-heart"></i>
+      <p>Expert Care Guidance</p>
+    </div>
+    <div class="highlight">
+      <i class="fa-brands fa-whatsapp"></i>
+      <p>Plant Parents Trust Us</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     INSTAGRAM SECTION
+════════════════════════════════════════ -->
+<div class="bg-white border-t border-gray-100 py-10 text-center">
+  <h2 class="font-display text-xl font-semibold text-gray-900 mb-1">Follow Us On Instagram</h2>
+  <p class="text-xs text-gray-400 mb-6">@leafora.in • Share your plant journey with us</p>
+  <!-- Instagram image grid placeholder -->
+  <div class="flex gap-3 justify-center flex-wrap max-w-3xl mx-auto">
+    <% for(let i=0; i<5; i++){ %>
+      <div style="width:120px;height:120px;border-radius:12px;background:#e8ede8;display:flex;align-items:center;justify-content:center;overflow:hidden">
+        <!-- Replace with real instagram images -->
+        <i class="fa-brands fa-instagram text-3xl" style="color:#c0d8c0"></i>
+      </div>
+    <% } %>
+  </div>
+  <a href="https://instagram.com/leafora" target="_blank"
+     class="inline-flex items-center gap-2 mt-5 text-xs font-semibold text-[#1a5c1a] border border-[#1a5c1a] px-5 py-2 rounded-lg hover:bg-leaf-50 transition-colors">
+    <i class="fa-brands fa-instagram"></i> Follow @leafora
+  </a>
+</div>
+
+<!-- ════════════════════════════════════════
+     FAQ SECTION
+════════════════════════════════════════ -->
+<div class="max-w-3xl mx-auto px-4 py-10">
+  <h2 class="font-display text-xl font-semibold text-gray-900 mb-5">FAQs</h2>
+  <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <%
+      const faqs = [
+        { q: 'Where should I place my indoor plants?', a: 'Most indoor plants thrive in bright, indirect sunlight. Avoid placing them in direct harsh sun or completely dark corners. A spot near a north or east-facing window usually works best.' },
+        { q: 'How can I make my indoor plants grow faster?', a: 'Ensure your plants get adequate indirect light, water them on schedule (let soil dry slightly between watering), and use a balanced liquid fertilizer every 2–4 weeks during the growing season.' },
+        { q: 'How do I keep my houseplants bug free?', a: 'Regularly inspect leaves (top and bottom) for pests. Wipe leaves with a damp cloth, use neem oil spray weekly as a preventive, and avoid overwatering which attracts fungus gnats.' },
+        { q: 'How often do I water my indoor plants?', a: 'This depends on the plant and season. As a general rule, water when the top 1–2 inches of soil feel dry. Most plants need watering once or twice a week in summer and less in winter.' },
+        { q: 'Do indoor plants purify the air?', a: 'Yes! Many indoor plants like Peace Lily, Snake Plant, and Pothos can help filter common pollutants. While they don\'t replace air purifiers, they do improve air quality and humidity.' },
+      ];
+    %>
+    <% faqs.forEach(function(faq, fi){ %>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(<%= fi %>)">
+          <span><%= faq.q %></span>
+          <i class="fa-solid fa-chevron-down text-gray-400" id="faqIcon-<%= fi %>" style="font-size:0.75rem;transition:transform .2s"></i>
+        </div>
+        <div class="faq-a" id="faqA-<%= fi %>"><%= faq.a %></div>
+      </div>
+    <% }) %>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
+<footer style="background-color:#1a2e1a;font-family:'Poppins',sans-serif">
+  <div class="max-w-6xl mx-auto px-6 pt-10 pb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
+      <div>
+        <p class="text-white text-2xl font-bold mb-4" style="font-family:'Playfair Display',serif">Leafora</p>
+        <p class="text-xs text-gray-300 mb-3">Download the Leafora App Now</p>
+        <div class="w-24 h-24 bg-white rounded-lg mb-4 flex items-center justify-center">
+          <i class="fa-solid fa-qrcode text-3xl text-gray-400"></i>
+        </div>
+        <div class="flex gap-2">
+          <a href="#" class="flex items-center gap-1.5 bg-black text-white text-[10px] px-3 py-2 rounded-lg">
+            <i class="fa-brands fa-google-play text-sm"></i>
+            <span><span class="block text-[8px] text-gray-400">Get it on</span>Play Store</span>
+          </a>
+          <a href="#" class="flex items-center gap-1.5 bg-black text-white text-[10px] px-3 py-2 rounded-lg">
+            <i class="fa-brands fa-apple text-sm"></i>
+            <span><span class="block text-[8px] text-gray-400">Download on</span>App Store</span>
+          </a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Helpful Links</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Care Guide</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Shipping Policy</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Returns &amp; Refunds</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Track Order</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Locate Stores</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Information</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Blog</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Care Tips</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">FAQs</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">About Us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Contact Us</h4>
+        <ul class="space-y-2 mb-4">
+          <li class="text-gray-300 text-xs">+91 9000000000</li>
+          <li><a href="mailto:support@leafora.com" class="text-gray-300 text-xs hover:text-white">support@leafora.com</a></li>
+        </ul>
+        <div class="flex gap-2">
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-brands fa-whatsapp text-sm"></i></a>
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-regular fa-envelope text-sm"></i></a>
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-brands fa-telegram text-sm"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="border-t border-gray-600 mx-6"></div>
+  <div class="max-w-6xl mx-auto px-6 py-5">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-gray-300 text-xs font-medium mr-1">Social</span>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-instagram text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-x-twitter text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-facebook-f text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-youtube text-white text-xs"></i></a>
+      </div>
+      <div class="flex items-center gap-2">
+        <i class="fa-brands fa-cc-visa text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-mastercard text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-amex text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-paypal text-gray-300 text-xl"></i>
+        <span class="text-[9px] font-bold text-gray-300 border border-gray-500 px-1.5 py-0.5 rounded">RuPay</span>
+      </div>
+    </div>
+    <div class="border-t border-gray-600 mt-4 mb-4"></div>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+      <p class="text-gray-400 text-[11px]">© 2026 Leafora – All Rights Reserved.</p>
+      <div class="flex gap-4">
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Terms &amp; Conditions</a>
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Privacy Policy</a>
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Disclaimer</a>
+      </div>
+    </div>
+    <p class="text-right mt-3 text-sm font-medium" style="color:#6aaa6a;font-family:'Playfair Display',serif">Grow Green, Live Fresh 🌿</p>
+  </div>
+</footer>
+
+<script>
+  /* ── Clear search ── */
+  function clearSearch() {
+    const form  = document.getElementById('searchForm');
+    const input = document.getElementById('searchInput');
+    input.value = '';
+    document.getElementById('hiddenSearch').value = '';
+    form.submit();
+  }
+
+  /* ── Clear individual filter ── */
+  function clearFilter(type) {
+    const params = new URLSearchParams(window.location.search);
+    if (type === 'category') params.delete('category');
+    if (type === 'search')   params.delete('search');
+    if (type === 'price')    { params.delete('minPrice'); params.delete('maxPrice'); }
+    params.set('page', '1');
+    window.location.href = '/productlist?' + params.toString();
+  }
+
+  /* ── FAQ accordion ── */
+  function toggleFaq(idx) {
+    const ans  = document.getElementById('faqA-'    + idx);
+    const icon = document.getElementById('faqIcon-' + idx);
+    const open = ans.classList.contains('open');
+    // close all
+    document.querySelectorAll('.faq-a').forEach(a => a.classList.remove('open'));
+    document.querySelectorAll('[id^=faqIcon-]').forEach(i => i.style.transform = '');
+    if (!open) {
+      ans.classList.add('open');
+      icon.style.transform = 'rotate(180deg)';
+    }
+  }
+
+  /* ── Debounced search ── */
+  const searchInput = document.getElementById('searchInput');
+  let _st;
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      clearTimeout(_st);
+      _st = setTimeout(() => {
+        if (this.value.length === 0 || this.value.length >= 2) {
+          document.getElementById('searchForm').submit();
+        }
+      }, 500);
+    });
+  }
+</script>
+
+</body>
+</html>

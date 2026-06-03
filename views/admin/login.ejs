@@ -162,8 +162,8 @@
             </button>
           </div>
 
-          <!-- Inline error (EJS) -->
-          <% if (typeof errors !== 'undefined' && errors.password) { %>
+        
+           <% if (typeof errors !== 'undefined' && errors.password) { %>
             <p class="text-xs text-red-500 mt-0.5">
               <i class="fa-solid fa-circle-exclamation mr-1"></i>
               <%= errors.password %>
@@ -172,13 +172,13 @@
         </div>
 
         <!-- Flash / General Error Message -->
-        <% if (typeof error !== 'undefined' && error) { %>
+        <!-- <% if (typeof error !== 'undefined' && error) { %>
           <div class="flex items-center gap-2 bg-red-50 border border-red-200
                       text-red-600 text-sm rounded-lg px-4 py-3">
             <i class="fa-solid fa-triangle-exclamation"></i>
             <span><%= error %></span>
           </div>
-        <% } %>
+        <% } %> -->
 
         <!-- Login Button -->
         <button

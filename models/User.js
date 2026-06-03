@@ -32,6 +32,10 @@ const UserSchema = new mongoose.Schema(
       trim: true,
       default: null,
     },
+    avatar: {
+  type: String,
+  default: null
+},
     password: {
       type: String,
       required: true,
@@ -40,6 +44,7 @@ const UserSchema = new mongoose.Schema(
        return !this.googleId;
   }
     },
+   
    
     role: {
       type: String,
@@ -62,6 +67,10 @@ isVerified: {
   type: Boolean,
   default: false
 },
+wishlist: [{
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Product'
+}],
     // // ── For future SSO (next steps) ─────────────────────────────────────
     googleId:   { type: String, default: null },
     facebookId: { type: String, default: null },
@@ -70,16 +79,24 @@ isVerified: {
     resetPasswordToken:   { type: String, default: null },
     resetPasswordExpires: { type: Date,   default: null },
   },
+  
   { timestamps: true }
 );
 
 // ─── Hash password before saving ─────────────────────────────────────────
 UserSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
+
+  if (!this.isModified('password')) {
+    return;
+  }
 
   const salt = await bcrypt.genSalt(12);
+
   this.password = await bcrypt.hash(this.password, salt);
+
 });
+
+
 // ─── Instance method: compare password ───────────────────────────────────
 UserSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);

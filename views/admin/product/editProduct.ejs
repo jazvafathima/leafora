@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora Admin - Edit Product</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>tailwind.config={theme:{extend:{fontFamily:{body:['Poppins','sans-serif']}}}}</script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:'Poppins',sans-serif;background:#f0f0f0;margin:0}
+
+    .sidebar{width:175px;background:#fff;min-height:100vh;flex-shrink:0;border-right:1px solid #e5e7eb;display:flex;flex-direction:column}
+    .sidebar-brand{padding:18px 18px 14px}
+    .sidebar-brand p{color:#1a5c1a;font-size:1.25rem;font-weight:700;margin:0}
+    .sidebar-link{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.78rem;color:#4b5563;text-decoration:none;transition:all .15s}
+    .sidebar-link:hover{color:#1a5c1a;background:#f0faf0}
+    .sidebar-link.active{background:#1a5c1a;color:#fff;font-weight:600;margin:2px 8px;border-radius:8px;padding:9px 10px}
+    .sidebar-link i{width:16px;text-align:center;font-size:0.8rem;flex-shrink:0}
+    .sidebar-logout{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.78rem;color:#ef4444;text-decoration:none;transition:all .15s}
+    .sidebar-logout:hover{background:#fef2f2}
+
+    .topbar{background:#1a5c1a;padding:10px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .topbar-title{color:#fff;font-size:0.88rem;font-weight:500}
+
+    .card{background:#fff;border-radius:12px;border:1px solid #e9ecef;padding:22px 24px;margin-bottom:18px}
+    .card-title{font-size:0.85rem;font-weight:600;color:#1f2937;margin-bottom:16px}
+
+    .f-label{display:block;font-size:0.72rem;font-weight:500;color:#374151;margin-bottom:5px}
+    .f-label span{color:#ef4444}
+    .f-input{width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:0.8rem;color:#374151;outline:none;font-family:'Poppins',sans-serif;background:#fff;transition:border-color .2s}
+    .f-input:focus{border-color:#1a5c1a;box-shadow:0 0 0 2px rgba(26,92,26,.07)}
+    .f-input::placeholder{color:#adb5bd;font-size:0.77rem}
+    .f-select{width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:0.8rem;color:#374151;outline:none;font-family:'Poppins',sans-serif;background:#fff;appearance:none;cursor:pointer;transition:border-color .2s}
+    .f-select:focus{border-color:#1a5c1a}
+    .f-textarea{width:100%;border:1px solid #e5e7eb;border-radius:8px;padding:9px 12px;font-size:0.8rem;color:#374151;outline:none;font-family:'Poppins',sans-serif;background:#fff;resize:vertical;min-height:72px;transition:border-color .2s}
+    .f-textarea:focus{border-color:#1a5c1a}
+    .f-textarea::placeholder{color:#adb5bd;font-size:0.77rem}
+
+    /* ── Toggle ── */
+    .toggle{position:relative;display:inline-block;width:36px;height:20px}
+    .toggle input{opacity:0;width:0;height:0}
+    .toggle-slider{position:absolute;cursor:pointer;inset:0;background:#d1d5db;border-radius:999px;transition:background .2s}
+    .toggle-slider::before{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;left:3px;top:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+    .toggle input:checked+.toggle-slider{background:#1a5c1a}
+    .toggle input:checked+.toggle-slider::before{transform:translateX(16px)}
+
+    /* ── Variant row card ── */
+    .variant-row{display:flex;align-items:center;gap:12px;background:#f9fafb;border:1px solid #f0f0f0;border-radius:10px;padding:10px 14px;margin-bottom:8px;transition:all .15s}
+    .variant-row:hover{border-color:#c8d8c8;background:#f4faf4}
+    .variant-row.active-row{border-color:#1a5c1a;background:#f0faf0}
+    .variant-num{width:24px;height:24px;background:#1a5c1a;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;font-weight:700;flex-shrink:0}
+    .variant-thumb{width:40px;height:40px;border-radius:8px;overflow:hidden;background:#e8ede8;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .variant-thumb img{width:100%;height:100%;object-fit:cover}
+    .vbadge-active{background:#dcfce7;color:#15803d;font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:999px}
+    .vbadge-inactive{background:#f3f4f6;color:#6b7280;font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:999px}
+    .vbadge-default{background:#dbeafe;color:#1d4ed8;font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:999px}
+
+    /* ── Edit panel ── */
+    .edit-panel{border:1.5px solid #1a5c1a;border-radius:12px;padding:18px;margin-top:8px;background:#fafffe;display:none}
+    .edit-panel.open{display:block}
+
+    /* ── Img upload ── */
+    .img-upload{width:54px;height:54px;border:1.5px dashed #d1d5db;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fafafa;transition:border-color .2s;flex-shrink:0}
+    .img-upload:hover{border-color:#1a5c1a}
+
+    /* ── Popup ── */
+    .popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:50}
+    .drop-zone{border:1.5px dashed #d1d5db;border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;transition:border-color .2s;background:#fafafa}
+    .drop-zone:hover{border-color:#1a5c1a}
+
+    /* ── New variant chip (pending save) ── */
+    .pending-chip{display:inline-flex;align-items:center;gap:5px;background:#fef9c3;border:1px dashed #ca8a04;border-radius:8px;padding:4px 10px;font-size:0.7rem;color:#92400e;font-weight:500}
+  </style>
+</head>
+
+<body class="min-h-screen">
+<div class="flex min-h-screen">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand"><p>leafora</p></div>
+    <nav class="flex-1 py-2">
+      <a href="/admin/dashboard"  class="sidebar-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="/admin/orders"     class="sidebar-link"><i class="fa-solid fa-bag-shopping"></i> Orders</a>
+      <a href="/admin/products"   class="sidebar-link active"><i class="fa-solid fa-box-open"></i> Products</a>
+      <a href="/admin/categories" class="sidebar-link"><i class="fa-solid fa-layer-group"></i> Categories</a>
+      <a href="/admin/users"      class="sidebar-link"><i class="fa-regular fa-user"></i> Users</a>
+      <a href="/admin/offers"     class="sidebar-link"><i class="fa-regular fa-heart"></i> Offers</a>
+      <a href="/admin/coupons"    class="sidebar-link"><i class="fa-solid fa-ticket"></i> Coupons</a>
+      <a href="/admin/reports"    class="sidebar-link"><i class="fa-solid fa-chart-bar"></i> Reports</a>
+    </nav>
+    <div class="border-t border-gray-100 py-2">
+      <a href="/admin/logout" class="sidebar-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </aside>
+
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <div class="flex-1 flex flex-col">
+
+    <div class="topbar">
+      <span class="topbar-title">Dashboard</span>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full overflow-hidden border-2 border-white/40 bg-green-800 flex items-center justify-center">
+          <% if (typeof admin !== 'undefined' && admin && admin.avatar) { %>
+            <img src="<%= admin.avatar %>" alt="Admin" class="w-full h-full object-cover" />
+          <% } else { %>
+            <i class="fa-regular fa-user text-white text-xs"></i>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <main class="flex-1 p-6 overflow-y-auto">
+
+      <!-- Back link -->
+      <a href="/admin/products" class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#1a5c1a] mb-4 transition-colors">
+        <i class="fa-solid fa-chevron-left text-xs"></i> Back to Products
+      </a>
+
+      <h1 class="text-lg font-semibold text-gray-800 mb-5">Edit Product</h1>
+
+      <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+        <div class="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation"></i> <%= error[0] %>
+        </div>
+      <% } %>
+      <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+        <div class="bg-green-50 border border-green-200 text-green-700 text-xs rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-circle-check"></i> <%= success[0] %>
+        </div>
+      <% } %>
+
+      <form action="/admin/products/<%= product._id %>?_method=PUT"
+            method="POST"
+            enctype="multipart/form-data"
+            id="editProductForm">
+
+        <!-- ── Basic Information ── -->
+        <div class="card">
+          <p class="card-title">Basic Information</p>
+          <div class="grid grid-cols-2 gap-5 mb-4">
+            <div>
+              <label class="f-label">Product Name <span>*</span></label>
+              <input type="text" name="name" value="<%= product.name %>" class="f-input" required />
+            </div>
+            <div>
+              <label class="f-label">Category <span>*</span></label>
+              <div class="relative">
+                <select name="category" class="f-select pr-8" required>
+                  <option value="">Select category</option>
+                  <% categories.forEach(function(c) { %>
+                    <option value="<%= c._id %>"
+                      <%= product.category && product.category.toString() === c._id.toString() ? 'selected' : '' %>>
+                      <%= c.name %>
+                    </option>
+                  <% }) %>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-5">
+            <div>
+              <label class="f-label">Product Status <span>*</span></label>
+              <div class="relative">
+                <select name="status" class="f-select pr-8">
+                  <option value="active"   <%= product.status === 'active'   ? 'selected' : '' %>>Active</option>
+                  <option value="inactive" <%= product.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Description ── -->
+        <div class="card">
+          <p class="card-title">Description</p>
+          <div class="mb-4">
+            <label class="f-label">Short Description</label>
+            <textarea name="shortDescription" class="f-textarea"><%= product.shortDescription || '' %></textarea>
+          </div>
+          <div>
+            <label class="f-label">Full Description</label>
+            <textarea name="fullDescription" class="f-textarea" style="min-height:90px"><%= product.fullDescription || '' %></textarea>
+          </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════
+             PRODUCT VARIANTS SECTION
+        ══════════════════════════════════════════ -->
+        <div class="card">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <p class="card-title mb-0">Product Variants</p>
+              <p class="text-xs text-gray-400 mt-0.5">
+                <%= product.variants ? product.variants.length : 0 %> variant(s) — click a variant to edit it
+              </p>
+            </div>
+            <button type="button" onclick="openAddVariantPopup()"
+              class="flex items-center gap-1.5 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+              <i class="fa-solid fa-plus text-xs"></i> Add Variant
+            </button>
+          </div>
+
+          <!-- ── Existing variants list ── -->
+          <div id="variantsList">
+            <% if (product.variants && product.variants.length > 0) { %>
+              <% product.variants.forEach(function(v, vi) {
+                   const stock = v.stockQuantity || v.stock || 0;
+                   const isActive = v.status !== 'inactive';
+              %>
+              <div class="variant-row" id="vrow-<%= v._id %>" onclick="toggleEditPanel('<%= v._id %>')">
+
+                <!-- Number badge -->
+                <span class="variant-num"><%= vi + 1 %></span>
+
+                <!-- Thumbnail -->
+                <div class="variant-thumb" id="thumb-<%= v._id %>">
+                  <% if (v.images && v.images.length > 0) { %>
+                    <img src="/uploads/products/<%= v.images[0] %>" alt="<%= v.size %>"
+                         onerror="this.parentNode.innerHTML='<i class=\'fa-solid fa-seedling\' style=\'color:#b8d4b8\'></i>'" />
+                  <% } else { %>
+                    <i class="fa-solid fa-seedling" style="color:#b8d4b8;font-size:1rem"></i>
+                  <% } %>
+                </div>
+
+                <!-- Info -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+                    <span class="font-semibold text-gray-800 text-sm">Variant <%= vi + 1 %></span>
+                    <span class="text-gray-400 text-xs">·</span>
+                    <span class="text-gray-600 text-xs" id="text-size-<%= v._id %>"><%= v.size || '—' %></span>
+                    <% if (vi === 0) { %><span class="vbadge-default">Default</span><% } %>
+                    <span class="<%= isActive ? 'vbadge-active' : 'vbadge-inactive' %>" id="text-status-<%= v._id %>">
+                      <%= isActive ? 'Active' : 'Inactive' %>
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-4 text-xs text-gray-500">
+                    <span><i class="fa-solid fa-indian-rupee-sign" style="font-size:.6rem"></i> <span id="text-price-<%= v._id %>"><%= Number(v.price || 0).toLocaleString('en-IN') %></span></span>
+                    <span><i class="fa-solid fa-boxes-stacked" style="font-size:.6rem"></i> <span id="text-stock-<%= v._id %>"><%= stock %></span> in stock</span>
+                    <span id="text-imgcount-<%= v._id %>" class="<%= (v.images && v.images.length > 0) ? '' : 'hidden' %>"><i class="fa-regular fa-image" style="font-size:.6rem"></i> <span><%= v.images ? v.images.length : 0 %></span> image(s)</span>
+                  </div>
+                </div>
+
+                <!-- Edit / Delete buttons -->
+                <div class="flex items-center gap-1.5 flex-shrink-0" onclick="event.stopPropagation()">
+                  <button type="button"
+                    onclick="toggleEditPanel('<%= v._id %>')"
+                    class="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:text-[#1a5c1a] hover:border-[#1a5c1a] transition-colors"
+                    title="Edit variant">
+                    <i class="fa-regular fa-pen-to-square" style="font-size:.75rem"></i>
+                  </button>
+                  <button type="button"
+                    onclick="deleteVariant('<%= v._id %>', '<%= product._id %>')"
+                    class="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-300 transition-colors"
+                    title="Delete variant">
+                    <i class="fa-regular fa-trash-can" style="font-size:.75rem"></i>
+                  </button>
+                </div>
+
+                <!-- Chevron -->
+                <i class="fa-solid fa-chevron-down text-gray-300 flex-shrink-0" id="chevron-<%= v._id %>"
+                   style="font-size:0.7rem;transition:transform .2s"></i>
+              </div>
+
+              <!-- ── Inline edit panel (hidden by default) ── -->
+              <div class="edit-panel" id="panel-<%= v._id %>">
+                <div class="flex items-center gap-2 mb-4">
+                  <div class="w-1 h-5 bg-[#1a5c1a] rounded-full"></div>
+                  <p class="text-xs font-semibold text-[#1a5c1a]">Editing Variant <%= vi + 1 %></p>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                  <!-- Size -->
+                  <div>
+                    <label class="f-label">Size <span>*</span></label>
+                    <div class="relative">
+                      <select name="variants[<%= vi %>][size]" class="f-select pr-8" onchange="syncNewVariantFields('<%= v._id %>', 'size', this.value)">
+                        <option value="Sapling" <%= v.size === 'Sapling' ? 'selected' : '' %>>Sapling</option>
+                        <option value="Small"   <%= v.size === 'Small'   ? 'selected' : '' %>>Small</option>
+                        <option value="Medium"  <%= v.size === 'Medium'  ? 'selected' : '' %>>Medium</option>
+                        <option value="Large"   <%= v.size === 'Large'   ? 'selected' : '' %>>Large</option>
+                      </select>
+                      <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+                    </div>
+                  </div>
+                  <!-- Price -->
+                  <div>
+                    <label class="f-label">Price <span>*</span></label>
+                    <input type="number" name="variants[<%= vi %>][price]"
+                      value="<%= v.price || 0 %>" class="f-input" step="0.01" min="0" oninput="syncNewVariantFields('<%= v._id %>', 'price', this.value)" />
+                  </div>
+                  <!-- Stock -->
+                  <div>
+                    <label class="f-label">Stock Quantity <span>*</span></label>
+                    <input type="number" name="variants[<%= vi %>][stockQuantity]"
+                      value="<%= v.stockQuantity || v.stock || 0 %>" class="f-input" min="0" oninput="syncNewVariantFields('<%= v._id %>', 'stock', this.value)" />
+                  </div>
+                </div>
+
+                <!-- Status toggle -->
+                <div class="flex items-center gap-3 mb-4">
+                  <label class="f-label mb-0">Status</label>
+                  <label class="toggle">
+                    <input type="checkbox" name="variants[<%= vi %>][status]"
+                      value="active" <%= isActive ? 'checked' : '' %> onchange="syncNewVariantFields('<%= v._id %>', 'status', this.checked ? 'Active' : 'Inactive')" />
+                    <span class="toggle-slider"></span>
+                  </label>
+                  <span class="text-xs text-gray-500">Active</span>
+                  <!-- Hidden id field -->
+                  <input type="hidden" name="variants[<%= vi %>][_id]" value="<%= v._id %>" />
+                </div>
+
+                <!-- Existing images -->
+                <div class="mb-3">
+                  <label class="f-label">Current Images</label>
+                  <div class="flex gap-2 flex-wrap mt-1" id="existingImgs-<%= v._id %>">
+                    <% if (v.images && v.images.length > 0) { %>
+                      <% v.images.forEach(function(img, imgIdx) { %>
+                        <div class="relative group" id="imgwrap-<%= v._id %>-<%= imgIdx %>">
+                          <img src="/uploads/products/<%= img %>"
+                                class="w-16 h-16 rounded-lg object-cover border border-gray-200"
+                                onerror="this.src='/images/placeholder.png'" />
+                          <button type="button"
+                            onclick="removeExistingImg('<%= v._id %>','<%= imgIdx %>','<%= img %>')"
+                            class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fa-solid fa-xmark"></i>
+                          </button>
+                          <!-- Hidden to track which images to keep -->
+                          <input type="hidden" name="variants[<%= vi %>][existingImages][]"
+                                 value="<%= img %>" id="existingImgInput-<%= v._id %>-<%= imgIdx %>" />
+                        </div>
+                      <% }) %>
+                    <% } else { %>
+                      <p class="text-xs text-gray-400 italic">No images yet</p>
+                    <% } %>
+                  </div>
+                </div>
+
+                <!-- Upload new images -->
+                <div>
+                  <label class="f-label">Add New Images</label>
+                  <div class="flex gap-2 mt-1 flex-wrap" id="newImgList-<%= v._id %>">
+                    <label class="img-upload">
+                      <i class="fa-solid fa-plus text-gray-400 text-sm"></i>
+                      <input type="file" name="variantImages[<%= vi %>]"
+                             class="hidden" accept="image/*" multiple
+                             onchange="handleVariantImageSelect(this, '<%= v._id %>', <%= vi %>)" />
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Save this variant inline button -->
+                <div class="flex justify-end mt-4">
+                  <button type="submit"
+                    class="flex items-center gap-1.5 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-5 py-2 rounded-lg transition-colors">
+                    <i class="fa-solid fa-floppy-disk text-xs"></i> Save All Changes
+                  </button>
+                </div>
+              </div>
+
+              <% }) %>
+            <% } else { %>
+              <div class="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
+                <i class="fa-solid fa-boxes-stacked text-3xl text-gray-200 block mb-2"></i>
+                <p class="text-sm text-gray-400 font-medium">No variants yet</p>
+                <p class="text-xs text-gray-300 mb-3">Click "Add Variant" to create one</p>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- ── Actions ── -->
+        <div class="flex items-center justify-end gap-3 pb-6">
+          <a href="/admin/products"
+            class="px-6 py-2.5 text-xs font-medium border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+            Cancel
+          </a>
+          <button type="submit"
+            class="flex items-center gap-2 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition-colors">
+            <i class="fa-solid fa-floppy-disk text-xs"></i> Save Changes
+          </button>
+        </div>
+
+      </form>
+    </main>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ADD VARIANT POPUP
+════════════════════════════════════════ -->
+<div id="variantPopup" class="hidden popup-overlay">
+  <div class="bg-white rounded-2xl shadow-2xl w-[420px] max-h-[90vh] overflow-y-auto">
+
+    <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
+      <h2 class="text-sm font-semibold text-gray-800">
+        <i class="fa-solid fa-circle-plus text-[#1a5c1a] mr-1.5"></i> Add New Variant
+      </h2>
+      <button onclick="closeAddVariantPopup()" class="text-gray-400 hover:text-gray-600 transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="px-6 py-5 space-y-4">
+
+      <!-- Size -->
+      <div>
+        <label class="f-label">Size <span>*</span></label>
+        <div class="relative">
+          <select id="popSize" class="f-select pr-8">
+            <option value="">Select a Size</option>
+            <option value="Sapling">Sapling</option>
+            <option value="Small">Small</option>
+            <option value="Medium">Medium</option>
+            <option value="Large">Large</option>
+          </select>
+          <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+        </div>
+      </div>
+
+      <!-- Price + Qty -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="f-label">Price <span>*</span></label>
+          <input type="number" id="popPrice" placeholder="Enter Price" class="f-input" step="0.01" min="0" />
+        </div>
+        <div>
+          <label class="f-label">Stock Qty <span>*</span></label>
+          <input type="number" id="popQty" placeholder="Enter Stock" class="f-input" min="0" />
+        </div>
+      </div>
+
+      <!-- Images drop zone -->
+      <div>
+        <label class="f-label">Variant Images</label>
+        <label class="drop-zone block mt-1" for="popImages">
+          <i class="fa-solid fa-cloud-arrow-up text-gray-300 text-2xl mb-2 block"></i>
+          <p class="text-xs text-gray-400">Click to upload or drag and drop</p>
+          <p class="text-gray-300 mt-1" style="font-size:0.65rem">PNG, JPG, WEBP (max 5MB each)</p>
+          <input type="file" id="popImages" class="hidden" accept="image/*" multiple
+                 onchange="previewPopupImgs(this)" />
+        </label>
+        <div id="popImgPreview" class="flex gap-2 flex-wrap mt-2"></div>
+      </div>
+
+    </div>
+
+    <div class="flex items-center gap-3 px-6 pb-6">
+      <button type="button" onclick="saveNewVariant()"
+        class="bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition-colors">
+        <i class="fa-solid fa-plus text-xs mr-1"></i> Add Variant
+      </button>
+      <button type="button" onclick="closeAddVariantPopup()"
+        class="border border-gray-300 hover:border-gray-400 text-gray-600 text-xs font-medium px-6 py-2.5 rounded-lg transition-colors">
+        Cancel
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     CROPPING POPUP
+     ════════════════════════════════════════ -->
+<div id="croppingPopup" class="hidden popup-overlay">
+  <div class="bg-white rounded-2xl shadow-2xl w-[500px] max-h-[90vh] overflow-y-auto p-6">
+    <h2 class="text-sm font-semibold text-gray-800 mb-4">Crop Image</h2>
+    <div class="w-full h-80 bg-gray-100 rounded-lg overflow-hidden mb-4">
+      <img id="croppingImage" src="" alt="To Crop" class="max-w-full mx-auto" />
+    </div>
+    <div class="flex justify-end gap-3">
+      <button type="button" onclick="cancelCropping()" class="px-4 py-2 text-xs font-medium border border-gray-300 rounded-lg">Cancel</button>
+      <button type="button" onclick="applyCrop()" class="bg-[#1a5c1a] text-white px-4 py-2 text-xs font-semibold rounded-lg">Apply Crop</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     DELETE CONFIRM MODAL
+════════════════════════════════════════ -->
+<div id="deleteModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-xl w-72 p-6 text-center">
+    <div class="w-11 h-11 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-3">
+      <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
+    </div>
+    <h2 class="text-sm font-semibold text-gray-800 mb-1">Delete Variant?</h2>
+    <p class="text-xs text-gray-500 mb-5">This cannot be undone. The variant will be permanently removed.</p>
+    <div class="flex justify-center gap-3">
+      <button onclick="document.getElementById('deleteModal').classList.add('hidden')"
+        class="px-5 py-2 text-xs font-medium border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
+        Cancel
+      </button>
+      <button id="deleteConfirmBtn"
+        class="px-5 py-2 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg">
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ══════════════════════════════════════
+     TOGGLE INLINE EDIT PANEL
+  ══════════════════════════════════════ */
+  let openPanelId = null;
+
+  function toggleEditPanel(variantId) {
+    const panel   = document.getElementById('panel-'   + variantId);
+    const chevron = document.getElementById('chevron-' + variantId);
+    const row     = document.getElementById('vrow-'    + variantId);
+
+    if (!panel || !row) return;
+
+    const isOpen = panel.classList.contains('open');
+
+    // Close all panels first
+    document.querySelectorAll('.edit-panel').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.variant-row').forEach(r => r.classList.remove('active-row'));
+    document.querySelectorAll('[id^="chevron-"]').forEach(c => c.style.transform = '');
+
+    if (!isOpen) {
+      panel.classList.add('open');
+      row.classList.add('active-row');
+      if (chevron) chevron.style.transform = 'rotate(180deg)';
+      openPanelId = variantId;
+      // Smooth scroll to panel
+      setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+    } else {
+      openPanelId = null;
+    }
+  }
+
+  /* ── Remove existing image ── */
+  function removeExistingImg(variantId, imgIdx, imgName) {
+    const wrap  = document.getElementById('imgwrap-' + variantId + '-' + imgIdx);
+    const input = document.getElementById('existingImgInput-' + variantId + '-' + imgIdx);
+    if (wrap)  {
+      wrap.style.opacity = '0.3';
+      wrap.style.pointerEvents = 'none';
+      wrap.classList.add('removed-img');
+    }
+    if (input) input.disabled = true; // disabled → not submitted → backend treats as removed
+
+    // Update variant visuals
+    updateVariantRowVisuals(variantId, croppedFilesMap[variantId] || []);
+  }
+
+  /* ══════════════════════════════════════
+     IMAGE CROPPING & FILE HANDLING
+  ══════════════════════════════════════ */
+  let croppedFilesMap = {}; // Maps variant ID or tempId to arrays of cropped File objects
+  let croppingQueue = [];
+  let croppingTargetId = null;
+  let croppingTargetIndex = null;
+  let croppingIsNew = false;
+  let cropper = null;
+
+  function handleVariantImageSelect(input, tempId, index, isNew = false) {
+    const files = Array.from(input.files);
+    if (files.length === 0) return;
+
+    croppingQueue = files;
+    croppingTargetId = tempId;
+    croppingTargetIndex = index;
+    croppingIsNew = isNew;
+
+    input.value = ''; // Reset so same file selection fires change again
+
+    if (!croppedFilesMap[tempId]) {
+      croppedFilesMap[tempId] = [];
+    }
+
+    processNextInCroppingQueue();
+  }
+
+  function processNextInCroppingQueue() {
+    if (croppingQueue.length === 0) {
+      updateFileInputAndPreviews();
+      return;
+    }
+
+    const file = croppingQueue.shift();
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      openCroppingPopup(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function openCroppingPopup(src) {
+    const popup = document.getElementById('croppingPopup');
+    const img = document.getElementById('croppingImage');
+    img.src = src;
+    popup.classList.remove('hidden');
+
+    if (cropper) cropper.destroy();
+
+    cropper = new Cropper(img, {
+      aspectRatio: 1,
+      viewMode: 2,
+    });
+  }
+
+  function closeCroppingPopup() {
+    document.getElementById('croppingPopup').classList.add('hidden');
+    if (cropper) cropper.destroy();
+  }
+
+  function applyCrop() {
+    if (!cropper) return;
+
+    const canvas = cropper.getCroppedCanvas({
+      width: 800,
+      height: 800
+    });
+
+    canvas.toBlob((blob) => {
+      const fileName = `cropped-${Date.now()}.jpg`;
+      const croppedFile = new File([blob], fileName, { type: 'image/jpeg' });
+
+      croppedFilesMap[croppingTargetId].push(croppedFile);
+
+      closeCroppingPopup();
+      processNextInCroppingQueue();
+    }, 'image/jpeg');
+  }
+
+  function cancelCropping() {
+    closeCroppingPopup();
+    processNextInCroppingQueue();
+  }
+
+  function updateFileInputAndPreviews() {
+    const files = croppedFilesMap[croppingTargetId] || [];
+
+    if (croppingTargetId === 'popup') {
+      // Render popup previews
+      const preview = document.getElementById('popImgPreview');
+      if (preview) {
+        preview.innerHTML = '';
+        files.forEach((file, fileIdx) => {
+          const src = URL.createObjectURL(file);
+          const wrap = document.createElement('div');
+          wrap.className = 'relative group';
+          wrap.innerHTML = `
+            <img src="${src}" class="w-14 h-14 rounded-lg object-cover border border-gray-200" />
+            <button type="button"
+              onclick="removePopupImg(${fileIdx})"
+              class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          `;
+          preview.appendChild(wrap);
+        });
+      }
+      return;
+    }
+
+    // Normal variant preview and input population
+    let fileInput;
+    if (croppingIsNew) {
+      fileInput = document.getElementById(`file-input-${croppingTargetId}`);
+    } else {
+      fileInput = document.querySelector(`input[name="variantImages[${croppingTargetIndex}]"]`);
+    }
+
+    if (fileInput) {
+      const dt = new DataTransfer();
+      files.forEach(f => dt.items.add(f));
+      fileInput.files = dt.files;
+    }
+
+    renderNewPreviews(croppingTargetId, files, croppingTargetIndex, croppingIsNew);
+  }
+
+  function renderNewPreviews(tempId, files, index, isNew) {
+    const list = document.getElementById(`newImgList-${tempId}`);
+    if (!list) return;
+
+    const uploadBtn = list.querySelector('label');
+    list.querySelectorAll('.new-preview').forEach(el => el.remove());
+
+    files.forEach((file, fileIdx) => {
+      const src = URL.createObjectURL(file);
+      const wrap = document.createElement('div');
+      wrap.className = 'relative new-preview group';
+      wrap.innerHTML = `
+        <img src="${src}" class="w-16 h-16 rounded-lg object-cover border border-gray-200" />
+        <button type="button"
+          onclick="removeNewCroppedImg('${tempId}', ${fileIdx}, ${index}, ${isNew})"
+          class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      `;
+      list.insertBefore(wrap, uploadBtn);
+    });
+
+    updateVariantRowVisuals(tempId, files);
+  }
+
+  function removeNewCroppedImg(tempId, fileIdx, index, isNew) {
+    if (croppedFilesMap[tempId]) {
+      croppedFilesMap[tempId].splice(fileIdx, 1);
+    }
+    croppingTargetId = tempId;
+    croppingTargetIndex = index;
+    croppingIsNew = isNew;
+    updateFileInputAndPreviews();
+  }
+
+  function updateVariantRowVisuals(tempId, files) {
+    const thumbDiv = document.getElementById(`thumb-${tempId}`);
+    const imgCountSpan = document.getElementById(`text-imgcount-${tempId}`);
+
+    // Count active existing images
+    const existingImgsDiv = document.getElementById(`existingImgs-${tempId}`);
+    let activeExistingImages = [];
+    if (existingImgsDiv) {
+      const activeImgElems = existingImgsDiv.querySelectorAll('.relative.group:not(.removed-img) img');
+      activeExistingImages = Array.from(activeImgElems).map(img => img.src);
+    }
+
+    const totalImagesCount = activeExistingImages.length + files.length;
+
+    if (totalImagesCount > 0) {
+      if (thumbDiv) {
+        const firstImgSrc = files.length > 0 ? URL.createObjectURL(files[0]) : activeExistingImages[0];
+        thumbDiv.innerHTML = `<img src="${firstImgSrc}" alt="Variant Image" class="w-full h-full object-cover" />`;
+      }
+      if (imgCountSpan) {
+        imgCountSpan.classList.remove('hidden');
+        imgCountSpan.querySelector('span').textContent = totalImagesCount;
+      }
+    } else {
+      if (thumbDiv) {
+        thumbDiv.innerHTML = `<i class="fa-solid fa-seedling" style="color:#b8d4b8;font-size:1rem"></i>`;
+      }
+      if (imgCountSpan) {
+        imgCountSpan.classList.add('hidden');
+      }
+    }
+  }
+
+  /* ══════════════════════════════════════
+     ADD VARIANT POPUP & FLOW
+  ══════════════════════════════════════ */
+  let newVariantCounter = 0;
+
+  function openAddVariantPopup() {
+    document.getElementById('variantPopup').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    croppedFilesMap['popup'] = [];
+  }
+
+  function closeAddVariantPopup() {
+    document.getElementById('variantPopup').classList.add('hidden');
+    document.body.style.overflow = '';
+    // reset fields
+    document.getElementById('popSize').value  = '';
+    document.getElementById('popPrice').value = '';
+    document.getElementById('popQty').value   = '';
+    document.getElementById('popImgPreview').innerHTML = '';
+    document.getElementById('popImages').value = '';
+    delete croppedFilesMap['popup'];
+  }
+
+  document.getElementById('variantPopup').addEventListener('click', function(e) {
+    if (e.target === this) closeAddVariantPopup();
+  });
+
+  function previewPopupImgs(input) {
+    const files = Array.from(input.files);
+    if (files.length === 0) return;
+
+    croppingQueue = files;
+    croppingTargetId = 'popup';
+    croppingTargetIndex = null;
+    croppingIsNew = true;
+
+    input.value = '';
+
+    if (!croppedFilesMap['popup']) {
+      croppedFilesMap['popup'] = [];
+    }
+
+    processNextInCroppingQueue();
+  }
+
+  function removePopupImg(fileIdx) {
+    if (croppedFilesMap['popup']) {
+      croppedFilesMap['popup'].splice(fileIdx, 1);
+    }
+    croppingTargetId = 'popup';
+    updateFileInputAndPreviews();
+  }
+
+  function saveNewVariant() {
+    const size  = document.getElementById('popSize').value;
+    const price = document.getElementById('popPrice').value;
+    const qty   = document.getElementById('popQty').value   || 0;
+
+    if (!size)  { alert('Please select a size.');  return; }
+    if (!price) { alert('Please enter a price.');  return; }
+
+    const tempId = 'new_' + Date.now();
+    const newIndex = newVariantCounter++;
+
+    // Transfer popup images to new variant key
+    const popupFiles = croppedFilesMap['popup'] || [];
+    croppedFilesMap[tempId] = [...popupFiles];
+    delete croppedFilesMap['popup'];
+
+    // Append new variant rows and edit panel directly to HTML
+    appendNewVariantToDOM(tempId, newIndex, size, price, qty);
+    closeAddVariantPopup();
+  }
+
+  function appendNewVariantToDOM(tempId, newIndex, size, price, qty) {
+    const variantsList = document.getElementById('variantsList');
+    if (!variantsList) return;
+
+    // Remove no variants placeholder if present
+    const placeholder = variantsList.querySelector('.text-center.py-8');
+    if (placeholder) {
+      placeholder.remove();
+    }
+
+    const nextNum = variantsList.querySelectorAll('.variant-row').length + 1;
+
+    const html = `
+      <div class="variant-row" id="vrow-${tempId}" onclick="toggleEditPanel('${tempId}')">
+        <span class="variant-num">${nextNum}</span>
+        <div class="variant-thumb" id="thumb-${tempId}">
+          <i class="fa-solid fa-seedling" style="color:#b8d4b8;font-size:1rem"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-0.5 flex-wrap">
+            <span class="font-semibold text-gray-800 text-sm">Variant ${nextNum}</span>
+            <span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-semibold">New</span>
+            <span class="text-gray-400 text-xs">·</span>
+            <span class="text-gray-600 text-xs" id="text-size-${tempId}">${size}</span>
+            <span class="vbadge-active" id="text-status-${tempId}">Active</span>
+          </div>
+          <div class="flex items-center gap-4 text-xs text-gray-500">
+            <span><i class="fa-solid fa-indian-rupee-sign" style="font-size:.6rem"></i> <span id="text-price-${tempId}">${Number(price).toLocaleString('en-IN')}</span></span>
+            <span><i class="fa-solid fa-boxes-stacked" style="font-size:.6rem"></i> <span id="text-stock-${tempId}">${qty}</span> in stock</span>
+            <span id="text-imgcount-${tempId}" class="hidden"><i class="fa-regular fa-image" style="font-size:.6rem"></i> <span>0</span> image(s)</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 flex-shrink-0" onclick="event.stopPropagation()">
+          <button type="button"
+            onclick="toggleEditPanel('${tempId}')"
+            class="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:text-[#1a5c1a] hover:border-[#1a5c1a] transition-colors"
+            title="Edit variant">
+            <i class="fa-regular fa-pen-to-square" style="font-size:.75rem"></i>
+          </button>
+          <button type="button"
+            onclick="removeNewVariantDOM('${tempId}')"
+            class="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center text-gray-400 hover:text-red-500 hover:border-red-300 transition-colors"
+            title="Delete variant">
+            <i class="fa-regular fa-trash-can" style="font-size:.75rem"></i>
+          </button>
+        </div>
+        <i class="fa-solid fa-chevron-down text-gray-300 flex-shrink-0" id="chevron-${tempId}" style="font-size:0.7rem;transition:transform .2s"></i>
+      </div>
+
+      <div class="edit-panel" id="panel-${tempId}">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-1 h-5 bg-[#1a5c1a] rounded-full"></div>
+          <p class="text-xs font-semibold text-[#1a5c1a]">Editing New Variant ${nextNum}</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mb-4">
+          <div>
+            <label class="f-label">Size <span>*</span></label>
+            <div class="relative">
+              <select name="newVariants[${newIndex}][size]" class="f-select pr-8" onchange="syncNewVariantFields('${tempId}', 'size', this.value)">
+                <option value="Sapling" ${size === 'Sapling' ? 'selected' : ''}>Sapling</option>
+                <option value="Small"   ${size === 'Small'   ? 'selected' : ''}>Small</option>
+                <option value="Medium"  ${size === 'Medium'  ? 'selected' : ''}>Medium</option>
+                <option value="Large"   ${size === 'Large'   ? 'selected' : ''}>Large</option>
+              </select>
+              <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+            </div>
+          </div>
+          <div>
+            <label class="f-label">Price <span>*</span></label>
+            <input type="number" name="newVariants[${newIndex}][price]" value="${price}" class="f-input" step="0.01" min="0" oninput="syncNewVariantFields('${tempId}', 'price', this.value)" />
+          </div>
+          <div>
+            <label class="f-label">Stock Quantity <span>*</span></label>
+            <input type="number" name="newVariants[${newIndex}][stockQuantity]" value="${qty}" class="f-input" min="0" oninput="syncNewVariantFields('${tempId}', 'stock', this.value)" />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 mb-4">
+          <label class="f-label mb-0">Status</label>
+          <label class="toggle">
+            <input type="checkbox" name="newVariants[${newIndex}][status]" value="active" checked onchange="syncNewVariantFields('${tempId}', 'status', this.checked ? 'Active' : 'Inactive')" />
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="text-xs text-gray-500">Active</span>
+        </div>
+
+        <div>
+          <label class="f-label">Add New Images</label>
+          <div class="flex gap-2 mt-1 flex-wrap" id="newImgList-${tempId}">
+            <label class="img-upload">
+              <i class="fa-solid fa-plus text-gray-400 text-sm"></i>
+              <input type="file" name="newVariantImages[${newIndex}]" id="file-input-${tempId}" class="hidden" accept="image/*" multiple onchange="handleVariantImageSelect(this, '${tempId}', ${newIndex}, true)" />
+            </label>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    while(tempDiv.firstChild) {
+      variantsList.appendChild(tempDiv.firstChild);
+    }
+
+    // Assign files to the new file input and render previews
+    croppingTargetId = tempId;
+    croppingTargetIndex = newIndex;
+    croppingIsNew = true;
+    updateFileInputAndPreviews();
+
+    showToast('New variant added to the list.', 'success');
+  }
+
+  function removeNewVariantDOM(tempId) {
+    const row = document.getElementById(`vrow-${tempId}`);
+    const panel = document.getElementById(`panel-${tempId}`);
+    if (row) row.remove();
+    if (panel) panel.remove();
+
+    delete croppedFilesMap[tempId];
+    renumberVariants();
+    showToast('Variant removed.', 'success');
+  }
+
+  function syncNewVariantFields(tempId, field, value) {
+    if (field === 'size') {
+      const el = document.getElementById(`text-size-${tempId}`);
+      if (el) el.textContent = value;
+    } else if (field === 'price') {
+      const el = document.getElementById(`text-price-${tempId}`);
+      if (el) el.textContent = Number(value || 0).toLocaleString('en-IN');
+    } else if (field === 'stock') {
+      const el = document.getElementById(`text-stock-${tempId}`);
+      if (el) el.textContent = value || 0;
+    } else if (field === 'status') {
+      const el = document.getElementById(`text-status-${tempId}`);
+      if (el) {
+        el.textContent = value;
+        el.className = value === 'Active' ? 'vbadge-active' : 'vbadge-inactive';
+      }
+    }
+  }
+
+  function renumberVariants() {
+    document.querySelectorAll('.variant-num').forEach((el, i) => {
+      el.textContent = i + 1;
+    });
+  }
+
+  /* ══════════════════════════════════════
+     DELETE VARIANT (AJAX)
+  ══════════════════════════════════════ */
+  let _deleteVariantId  = null;
+  let _deleteProductId  = null;
+
+  function deleteVariant(variantId, productId) {
+    _deleteVariantId = variantId;
+    _deleteProductId = productId;
+    document.getElementById('deleteModal').classList.remove('hidden');
+  }
+
+  document.getElementById('deleteConfirmBtn').addEventListener('click', async function() {
+    if (!_deleteVariantId || !_deleteProductId) return;
+
+    this.disabled = true;
+    this.textContent = 'Deleting...';
+
+    try {
+      const res  = await fetch(`/admin/variants/${_deleteVariantId}`, {
+        method:  'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        // Remove row + panel from DOM
+        const row    = document.getElementById('vrow-'  + _deleteVariantId);
+        const panel  = document.getElementById('panel-' + _deleteVariantId);
+        if (row)   row.remove();
+        if (panel) panel.remove();
+        document.getElementById('deleteModal').classList.add('hidden');
+        showToast('Variant deleted.', 'success');
+        renumberVariants();
+      } else {
+        showToast(data.message || 'Could not delete variant.', 'error');
+      }
+    } catch {
+      showToast('Network error.', 'error');
+    } finally {
+      this.disabled = false;
+      this.textContent = 'Delete';
+      _deleteVariantId = _deleteProductId = null;
+    }
+  });
+
+  /* ══════════════════════════════════════
+     FORM VALIDATION ON SUBMIT
+  ══════════════════════════════════════ */
+  document.getElementById('editProductForm').addEventListener('submit', function(e) {
+    const variantsList = document.getElementById('variantsList');
+    const variantRows = variantsList.querySelectorAll('.variant-row');
+
+    if (variantRows.length === 0) {
+      e.preventDefault();
+      alert('At least one variant is required.');
+      return;
+    }
+
+    // Check if at least one variant has images (either existing active ones or new cropped ones)
+    let hasImages = false;
+    variantRows.forEach(row => {
+      const idAttr = row.getAttribute('id');
+      const tempId = idAttr.replace('vrow-', '');
+
+      // Check existing images
+      const existingImgsDiv = document.getElementById(`existingImgs-${tempId}`);
+      let existingCount = 0;
+      if (existingImgsDiv) {
+        existingCount = existingImgsDiv.querySelectorAll('.relative.group:not(.removed-img)').length;
+      }
+
+      // Check new cropped images
+      const newCount = (croppedFilesMap[tempId] || []).length;
+
+      if (existingCount + newCount > 0) {
+        hasImages = true;
+      }
+    });
+
+    if (!hasImages) {
+      e.preventDefault();
+      alert('At least one variant must have an image.');
+      return;
+    }
+  });
+
+  /* ══════════════════════════════════════
+     INLINE TOAST
+  ══════════════════════════════════════ */
+  function showToast(msg, type) {
+    const old = document.getElementById('inlineToast');
+    if (old) old.remove();
+    const t = document.createElement('div');
+    t.id = 'inlineToast';
+    t.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:10px;font-size:.82rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.12);animation:slideIn .3s ease';
+    t.className = type === 'success'
+      ? 'bg-green-50 border border-green-200 text-green-700'
+      : 'bg-red-50 border border-red-200 text-red-700';
+    t.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'circle-check' : 'circle-exclamation'}"></i> ${msg}`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  /* ── Close delete modal on overlay click ── */
+  document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.add('hidden');
+  });
+</script>
+
+</body>
+</html>

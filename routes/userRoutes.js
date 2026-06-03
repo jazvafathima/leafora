@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 
 console.log("USER ROUTES LOADED");
+const upload=require('../middleware/profileMulters');
 
 const User = require('../models/User');
 const authController = require('../controllers/userController');
@@ -9,11 +10,17 @@ const { isAuthenticated, isGuest } = require('../middleware/authMiddleware');
 const { signupRules, loginRules, handleValidation } = require('../middleware/validate');
 const addressController = require('../controllers/addressController');
 const passport = require('passport');
+const productController = require('../controllers/productController');
+const cartController = require("../controllers/cartController");
+const wishlistController=require("../controllers/wishlistController")
+
 
 const { generateOTP, sendOTP, createAndSendOTP } = require('../utils/otp');
 
 
 console.log("authController:", authController);
+
+
 
 router.use((req, res, next) => {
   console.log("ROUTE HIT:", req.method, req.url);
@@ -150,18 +157,21 @@ router.get('/profileEdit', isAuthenticated, async (req, res) => {
 
     res.render('user/profileEdit', { user });
 
+
   } catch (err) {
     console.log("PROFILE EDIT ERROR:", err);
     res.redirect('/profile');
   }
 });
 
-
-   router.post(
-  '/profile/update',
-  isAuthenticated,
+router.post(
+  "/profileEdit",
+  upload.single("avatar"),
   authController.updateProfile
 );
+
+
+
   
 
 router.get('/change-password', isAuthenticated, (req, res) => {
@@ -206,6 +216,49 @@ router.post('/addresses/:id/update', async (req, res) => {
 router.post('/addresses/:id/delete', addressController.deleteAddress);
 
 router.post('/addresses/:id/default', addressController.setDefaultAddress);
+
+
+
+
+
+router.get('/productlist', productController.getUserProducts);
+
+
+router.get("/product/:id", productController.getProductDetail);
+
+
+
+
+
+
+router.get("/cart", cartController.getCart);
+
+router.post("/cart/add", cartController.addToCart);
+
+router.post("/cart/update",cartController.updateCartItem);
+
+router.post("/cart/remove",  cartController.removeCartItem);
+
+
+
+
+router.get('/wishlist',     wishlistController.getWishlist);
+
+// Toggle (add/remove) from product detail heart button
+router.post('/wishlist/toggle',       wishlistController.toggleWishlist);
+
+// Explicitly remove one item
+router.post('/wishlist/remove',       wishlistController.removeFromWishlist);
+
+// "Order Now" button — add to cart + remove from wishlist
+router.post('/wishlist/add-to-cart',  wishlistController.addToCartFromWishlist);
+
+// Count (for badge)
+router.get('/wishlist/count',         wishlistController.getWishlistCount);
+
+
+
+
 
 
 // ── ROOT ROUTE (KEEP THIS LAST ALWAYS) ───────────────────────

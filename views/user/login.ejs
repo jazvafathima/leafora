@@ -150,7 +150,7 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      width: 80%;
+      width: 100%;
       padding: 11px 18px;
       border: 1.5px solid #d0c9bc;
       border-radius: 6px;
@@ -393,7 +393,8 @@
       </div>
 
       <!-- Flash / General Error -->
-      <% if (error) { %>
+       <% if (error && error.trim && error.trim() !== "") { %>
+    
         <div class="flash-error">
           <i class="fa-solid fa-triangle-exclamation"></i>
           <%= error %>

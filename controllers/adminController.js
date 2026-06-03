@@ -105,7 +105,6 @@ exports.getUsers = async (req, res) => {
     }
 
 
-
     const users = await User.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
