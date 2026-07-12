@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Invoice - Leafora</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leaf: { 50:'#f0faf0', 100:'#dcf5dc', 600:'#1f7a1f', 700:'#185c18', 800:'#124512' },
+            cream: '#f5f0e8',
+          },
+          fontFamily: {
+            display: ['"Playfair Display"','serif'],
+            body:    ['Poppins','sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f0f0ec; margin: 0; }
+
+    /* ── Invoice wrapper ── */
+    .invoice-page {
+      max-width: 680px;
+      margin: 32px auto;
+      background: #fff;
+      border-radius: 4px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+    }
+
+    /* ── Header ── */
+    .inv-header {
+      background: #1a2e1a;
+      padding: 22px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .brand-name span { color: #6aaa6a; }
+    .inv-title-block { text-align: right; }
+    .inv-title-block h1 { font-size: 1.6rem; font-weight: 800; color: #fff; letter-spacing: .08em; margin: 0; line-height: 1; }
+    .inv-title-block p  { font-size: 0.65rem; color: #9ca3af; margin-top: 3px; letter-spacing: .04em; }
+
+    /* ── Meta grid ── */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .meta-cell {
+      padding: 14px 32px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .meta-cell:nth-child(odd)  { border-right: 1px solid #f0f0f0; }
+    .meta-label { font-size: 0.62rem; font-weight: 700; color: #9ca3af; letter-spacing: .07em; text-transform: uppercase; margin-bottom: 5px; }
+    .meta-value { font-size: 0.8rem; font-weight: 500; color: #1f2937; }
+
+    /* ── Status badges ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.65rem; font-weight: 700; padding: 3px 10px;
+      border-radius: 4px;
+    }
+    .badge::before { content: '●'; font-size: .5rem; }
+    .badge-placed     { background: #fef9c3; color: #92400e; }
+    .badge-pending    { background: #fef9c3; color: #92400e; }
+    .badge-paid       { background: #dcfce7; color: #15803d; }
+    .badge-processing { background: #dbeafe; color: #1d4ed8; }
+    .badge-shipped    { background: #ede9fe; color: #6d28d9; }
+    .badge-delivered  { background: #dcfce7; color: #15803d; }
+    .badge-cancelled  { background: #fee2e2; color: #991b1b; }
+
+    /* ── Two-col section (billing + thank you) ── */
+    .two-col-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .billing-col {
+      padding: 20px 32px;
+      border-right: 1px solid #f0f0f0;
+    }
+    .thankyou-col {
+      padding: 20px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+    }
+
+    /* ── Order items table ── */
+    .items-section { padding: 20px 32px; border-bottom: 1px solid #f0f0f0; }
+    .section-label { font-size: 0.62rem; font-weight: 700; color: #1a5c1a; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 14px; }
+    .items-table { width: 100%; border-collapse: collapse; }
+    .items-table th {
+      font-size: 0.62rem; font-weight: 700; color: #9ca3af;
+      letter-spacing: .06em; text-transform: uppercase;
+      padding: 8px 0; text-align: left; border-bottom: 1px solid #f0f0f0;
+    }
+    .items-table th:last-child { text-align: right; }
+    .items-table td {
+      font-size: 0.78rem; color: #374151;
+      padding: 12px 0; border-bottom: 1px solid #f7f7f7;
+      vertical-align: middle;
+    }
+    .items-table tbody tr:last-child td { border-bottom: none; }
+    .items-table td:last-child { text-align: right; font-weight: 600; color: #1f2937; }
+
+    /* ── Product image slot ── */
+    .prod-img-slot {
+      width: 38px; height: 38px; border-radius: 6px;
+      overflow: hidden; background: #e8ede8;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .prod-img-slot img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ── Totals ── */
+    .totals-section { padding: 0 32px 24px; display: flex; justify-content: flex-end; }
+    .totals-table { width: 260px; }
+    .total-row {
+      display: flex; justify-content: space-between;
+      font-size: 0.78rem; padding: 6px 0;
+      color: #374151;
+    }
+    .total-row.grand {
+      background: #1a2e1a; color: #fff;
+      padding: 10px 14px; border-radius: 4px;
+      font-weight: 700; font-size: 0.85rem; margin-top: 4px;
+    }
+    .total-row.grand span:last-child { color: #6aaa6a; }
+
+    /* ── Footer ── */
+    .inv-footer {
+      background: #f5f5f0;
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid #e9e9e4;
+    }
+    .inv-footer .brand-name { font-size: 1rem; }
+    .inv-footer p { font-size: 0.65rem; color: #9ca3af; }
+
+    /* ── Print button (web only) ── */
+    .print-bar {
+      max-width: 680px; margin: 0 auto 16px;
+      display: flex; justify-content: flex-end; gap: 10px;
+    }
+    @media print {
+      .print-bar { display: none; }
+      body { background: #fff; }
+      .invoice-page { margin: 0; box-shadow: none; border-radius: 0; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Web-only action bar ── -->
+  <div class="print-bar pt-6">
+    <a href="/orders"
+       class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#1a5c1a] border border-gray-200 bg-white px-4 py-2 rounded-lg transition-colors">
+      <i class="fa-solid fa-chevron-left text-xs"></i> Back to Orders
+    </a>
+    <button onclick="window.print()"
+      class="flex items-center gap-1.5 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+      <i class="fa-solid fa-download text-xs"></i> Download / Print
+    </button>
+  </div>
+
+  <%
+    const o      = typeof order !== 'undefined' ? order : {};
+    const addr   = o.address || {};
+    const items  = o.items   || [];
+    const user   = o.user    || {};
+
+    const orderId = o.orderId || ('#ORD-' + (o._id||'').toString().slice(-10).toUpperCase());
+
+    const orderDate = o.createdAt
+      ? new Date(o.createdAt).toLocaleString('en-IN', {
+          day:'numeric', month:'numeric', year:'numeric',
+          hour:'2-digit', minute:'2-digit', hour12: true
+        })
+      : '—';
+
+    const statusKey   = (o.orderStatus  || 'placed').toLowerCase().replace(/\s/g,'');
+    const payStatusKey= (o.paymentStatus|| 'pending').toLowerCase();
+    const statusLabel = o.orderStatus === 'outForDelivery' ? 'Out for Delivery'
+      : (o.orderStatus || 'Placed').charAt(0).toUpperCase() + (o.orderStatus || 'Placed').slice(1);
+    const payLabel = (o.paymentStatus || 'Pending').charAt(0).toUpperCase() + (o.paymentStatus || 'Pending').slice(1);
+
+    const badgeMap = {
+      placed:'badge-placed', pending:'badge-pending', paid:'badge-paid',
+      processing:'badge-processing', shipped:'badge-shipped',
+      delivered:'badge-delivered', cancelled:'badge-cancelled',
+    };
+  %>
+
+  <!-- ══════════════════════════════════
+       INVOICE PAGE
+  ══════════════════════════════════ -->
+  <div class="invoice-page">
+
+    <!-- ── Header ── -->
+    <div class="inv-header">
+      <div>
+        <p class="brand-name">Leaf<span>ora</span></p>
+        <p style="font-size:0.65rem;color:#9ca3af;margin-top:2px">Thank you for shopping with us 🌿</p>
+      </div>
+      <div class="inv-title-block">
+        <h1>INVOICE</h1>
+        <p>System-generated document</p>
+      </div>
+    </div>
+
+    <!-- ── Meta grid: 4 cells ── -->
+    <div class="meta-grid">
+
+      <div class="meta-cell">
+        <p class="meta-label">Order ID</p>
+        <p class="meta-value font-mono"><%= orderId %></p>
+      </div>
+
+      <div class="meta-cell">
+        <p class="meta-label">Order Date</p>
+        <p class="meta-value"><%= orderDate %></p>
+      </div>
+
+      <div class="meta-cell">
+        <p class="meta-label">Order Status</p>
+        <span class="badge <%= badgeMap[statusKey] || 'badge-placed' %>"><%= statusLabel %></span>
+      </div>
+
+      <div class="meta-cell">
+        <p class="meta-label">Payment Status</p>
+        <span class="badge <%= badgeMap[payStatusKey] || 'badge-pending' %>"><%= payLabel %></span>
+      </div>
+
+      <div class="meta-cell" style="border-bottom:none">
+        <p class="meta-label">Payment Method</p>
+        <p class="meta-value uppercase"><%= o.paymentMethod === 'cod' ? 'COD' : (o.paymentMethod || 'COD') %></p>
+      </div>
+
+      <div class="meta-cell" style="border-bottom:none">
+        <p class="meta-label">Invoice Number</p>
+        <p class="meta-value font-mono text-xs text-gray-400">INV-<%= (o._id||'000000').toString().slice(-8).toUpperCase() %></p>
+      </div>
+
+    </div>
+
+    <!-- ── Billing + Thank-you illustration ── -->
+    <div class="two-col-section">
+
+      <!-- Billing address -->
+      <div class="billing-col">
+        <p class="section-label">Billing Address</p>
+        <p class="font-semibold text-gray-800 text-sm mb-1">
+          <%= addr.fullName || (user.firstName ? user.firstName + ' ' + (user.lastName||'') : '—') %>
+        </p>
+        <div class="text-xs text-gray-500 leading-relaxed space-y-0.5">
+          <% if (addr.addressLine1) { %><p><%= addr.addressLine1 %><% if (addr.addressLine2) { %>, <%= addr.addressLine2 %><% } %></p><% } %>
+          <% if (addr.city || addr.state) { %>
+            <p><%= [addr.city, addr.state].filter(Boolean).join(', ') %><% if (addr.pincode) { %> – <%= addr.pincode %><% } %></p>
+          <% } %>
+          <% if (user.email || addr.email) { %>
+            <p><i class="fa-regular fa-envelope mr-1 text-gray-300"></i><%= user.email || addr.email %></p>
+          <% } %>
+          <% if (addr.phone || user.phone) { %>
+            <p><i class="fa-solid fa-phone mr-1 text-gray-300" style="font-size:.6rem"></i><%= addr.phone || user.phone %></p>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Thank-you illustration -->
+      <div class="thankyou-col">
+        <!-- Leafora leaf illustration placeholder (replace with real SVG/img) -->
+        <div style="width:60px;height:60px;border:1.5px solid #e5e7eb;border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;background:#fff">
+          <i class="fa-solid fa-seedling" style="font-size:1.6rem;color:#c0d8c0"></i>
+        </div>
+        <p class="text-xs font-semibold text-gray-600 mb-0.5">Thank you for your order!</p>
+        <p class="text-[10px] text-gray-400">We appreciate your business.</p>
+      </div>
+
+    </div>
+
+    <!-- ── Order items ── -->
+    <div class="items-section">
+      <p class="section-label">Order Items</p>
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th style="width:35%">Product</th>
+            <th style="width:15%">Variant</th>
+            <th style="width:13%">Status</th>
+            <th style="width:8%;text-align:center">Qty</th>
+            <th style="width:15%;text-align:right">Unit Price</th>
+            <th style="width:14%">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (items.length > 0) { %>
+            <% items.forEach(function(item) {
+                 const product   = item.product || item;
+                 const img       = item.image || (typeof product === 'object' && product.images && product.images[0]);
+                 const price     = item.price  || 0;
+                 const qty       = item.quantity || 1;
+                 const itemTotal = price * qty;
+                 const iStatus =
+  item.itemStatus ||
+  item.status ||
+  o.orderStatus ||
+  'placed';
+                 const iStatusKey= iStatus.toLowerCase().replace(/\s/g,'');
+                 const iLabel    = iStatus === 'outForDelivery' ? 'Out for Delivery'
+                   : iStatus.charAt(0).toUpperCase() + iStatus.slice(1);
+            %>
+            <tr>
+              <!-- Product -->
+              <td>
+                <div class="flex items-center gap-2">
+                  <div class="prod-img-slot">
+                    <% if (img) { %>
+                      <img src="<%= img %>" alt="<%= item.name || 'product' %>"
+                           onerror="this.parentNode.innerHTML='<i class=\'fa-solid fa-seedling\' style=\'color:#b8d4b8;font-size:.85rem\'></i>'" />
+                    <% } else { %>
+                      <i class="fa-solid fa-seedling" style="color:#b8d4b8;font-size:.85rem"></i>
+                    <% } %>
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-800" style="font-size:.78rem;line-height:1.2">
+                      <%= item.name || (typeof product === 'object' && product ? product.name : '—') %>
+                    </p>
+                    <% if (item.brand || (typeof product === 'object' && product && product.brand)) { %>
+                      <p style="font-size:.62rem;color:#9ca3af">
+                        <%= item.brand || (typeof product === 'object' && product.brand && (product.brand.name||product.brand)) %>
+                      </p>
+                    <% } %>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Variant -->
+              <td style="font-size:.75rem;color:#4b5563"><%= item.color || item.size || '—' %></td>
+
+              <!-- Item status -->
+              <td>
+                <span class="badge <%= badgeMap[iStatusKey] || 'badge-placed' %>" style="font-size:.58rem;padding:2px 8px"><%= iLabel %></span>
+              </td>
+
+              <!-- Qty -->
+              <td style="text-align:center;font-weight:600"><%= qty %></td>
+
+              <!-- Unit Price -->
+              <td style="text-align:right">₹<%= Number(price).toLocaleString('en-IN') %></td>
+
+              <!-- Total -->
+              <td>₹<%= Number(item.total).toLocaleString('en-IN') %>td>
+            </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" style="text-align:center;color:#9ca3af;padding:20px 0;font-size:.75rem">No items</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Totals ── -->
+    <div class="totals-section">
+      <div class="totals-table">
+
+        <div class="total-row">
+          <span class="text-gray-500">Subtotal</span>
+          <span class="font-semibold text-gray-800">₹<%= Number(subtotal || 0).toLocaleString('en-IN') %></span>
+        </div>
+
+        <% if (o.discount && o.discount > 0) { %>
+        <div class="total-row">
+          <span class="text-gray-500">Discount</span>
+          <span class="font-semibold text-red-500">–₹<%= Number(o.discount).toLocaleString('en-IN') %></span>
+        </div>
+        <% } %>
+
+        <div class="total-row">
+          <span class="text-gray-500">Shipping</span>
+          <span class="font-semibold <%= (o.shipping || 0) === 0 ? 'text-green-600' : 'text-gray-800' %>">
+            <%= (o.shipping || 0) === 0 ? 'FREE' : '₹' + Number(o.shipping).toLocaleString('en-IN') %>
+          </span>
+        </div>
+
+        <% if (o.tax && o.tax > 0) { %>
+        <div class="total-row">
+          <span class="text-gray-500">Tax (GST)</span>
+          <span class="font-semibold text-gray-800">₹<%= Number(o.tax).toLocaleString('en-IN') %></span>
+        </div>
+        <% } %>
+
+        <div class="total-row grand">
+          <span>Grand Total</span>
+          <span>₹<%= Number(total || 0).toLocaleString('en-IN') %></span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Notes section (optional) ── -->
+    <div style="padding: 0 32px 18px">
+      <p style="font-size:0.65rem;color:#9ca3af;border-top:1px dashed #e5e7eb;padding-top:14px;line-height:1.6">
+        <strong class="text-gray-500">Notes:</strong>
+        This is a system-generated invoice. No signature required.
+        For queries, contact <span class="text-[#1a5c1a]">support@leafora.com</span> or call +91 9000000000.
+        All amounts are in Indian Rupees (₹) and inclusive of applicable taxes.
+      </p>
+    </div>
+
+    <!-- ── Footer ── -->
+    <div class="inv-footer">
+      <div>
+        <p class="brand-name" style="font-size:1rem">Leaf<span style="color:#6aaa6a">ora</span></p>
+        <p class="text-[10px] text-gray-400 mt-0.5">Thank you for shopping with us 🌿</p>
+      </div>
+      <p class="text-[10px] text-gray-400 italic">This is a system-generated invoice</p>
+    </div>
+
+  </div>
+  <!-- /invoice-page -->
+
+  <!-- Bottom margin -->
+  <div style="height:32px"></div>
+
+</body>
+</html>

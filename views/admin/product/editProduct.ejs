@@ -135,10 +135,19 @@
         </div>
       <% } %>
 
+      <!-- Inline JS error banner (duplicate product name, validation, etc.) -->
+      <div id="formErrorBanner" class="hidden bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-4 py-3 mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-circle-exclamation flex-shrink-0"></i>
+        <span id="formErrorText"></span>
+        <button type="button" onclick="document.getElementById('formErrorBanner').classList.add('hidden')" class="ml-auto text-red-400 hover:text-red-600">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
       <form action="/admin/products/<%= product._id %>?_method=PUT"
             method="POST"
             enctype="multipart/form-data"
-            id="editProductForm">
+            id="editProductForm" novalidate>
 
         <!-- ── Basic Information ── -->
         <div class="card">
@@ -806,8 +815,10 @@
     const price = document.getElementById('popPrice').value;
     const qty   = document.getElementById('popQty').value   || 0;
 
-    if (!size)  { alert('Please select a size.');  return; }
-    if (!price) { alert('Please enter a price.');  return; }
+    if (!size)  { showToast('Please select a size.', 'error');  return; }
+    if (!price) { showToast('Please enter a price.', 'error');  return; }
+    if (parseFloat(price) < 0) { showToast('Price cannot be negative.', 'error'); return; }
+    if (parseInt(qty) < 0) { showToast('Stock quantity cannot be negative.', 'error'); return; }
 
     const tempId = 'new_' + Date.now();
     const newIndex = newVariantCounter++;
@@ -1019,44 +1030,90 @@
   });
 
   /* ══════════════════════════════════════
+     INLINE ERROR BANNER HELPERS
+  ══════════════════════════════════════ */
+  function showFormError(msg) {
+    const banner = document.getElementById('formErrorBanner');
+    const text   = document.getElementById('formErrorText');
+    text.textContent = msg;
+    banner.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function hideFormError() {
+    document.getElementById('formErrorBanner').classList.add('hidden');
+  }
+
+  /* ══════════════════════════════════════
      FORM VALIDATION ON SUBMIT
   ══════════════════════════════════════ */
-  document.getElementById('editProductForm').addEventListener('submit', function(e) {
-    const variantsList = document.getElementById('variantsList');
-    const variantRows = variantsList.querySelectorAll('.variant-row');
+  document.getElementById('editProductForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    hideFormError();
 
+    const variantsList = document.getElementById('variantsList');
+    const variantRows  = variantsList.querySelectorAll('.variant-row');
+
+    // 1. At least one variant required
     if (variantRows.length === 0) {
-      e.preventDefault();
-      alert('At least one variant is required.');
+      showFormError('At least one variant is required before saving.');
       return;
     }
 
-    // Check if at least one variant has images (either existing active ones or new cropped ones)
+    // 2. At least one variant must have an image
     let hasImages = false;
+    let hasNegativeValues = false;
     variantRows.forEach(row => {
-      const idAttr = row.getAttribute('id');
-      const tempId = idAttr.replace('vrow-', '');
-
-      // Check existing images
+      const tempId = row.getAttribute('id').replace('vrow-', '');
       const existingImgsDiv = document.getElementById(`existingImgs-${tempId}`);
-      let existingCount = 0;
-      if (existingImgsDiv) {
-        existingCount = existingImgsDiv.querySelectorAll('.relative.group:not(.removed-img)').length;
-      }
-
-      // Check new cropped images
+      const existingCount   = existingImgsDiv
+        ? existingImgsDiv.querySelectorAll('.relative.group:not(.removed-img)').length
+        : 0;
       const newCount = (croppedFilesMap[tempId] || []).length;
+      if (existingCount + newCount > 0) hasImages = true;
 
-      if (existingCount + newCount > 0) {
-        hasImages = true;
+      const panel = document.getElementById(`panel-${tempId}`);
+      if (panel) {
+        const priceInput = panel.querySelector('input[name*="[price]"]');
+        const stockInput = panel.querySelector('input[name*="[stockQuantity]"]');
+        if (priceInput && parseFloat(priceInput.value) < 0) hasNegativeValues = true;
+        if (stockInput && parseInt(stockInput.value) < 0) hasNegativeValues = true;
       }
     });
 
-    if (!hasImages) {
-      e.preventDefault();
-      alert('At least one variant must have an image.');
+    if (hasNegativeValues) {
+      showFormError('Price and Stock Quantity cannot be negative.');
       return;
     }
+
+    if (!hasImages) {
+      showFormError('At least one variant must have an image.');
+      return;
+    }
+
+    // 3. Duplicate product name check (AJAX — no page reload)
+    const nameInput = this.querySelector('input[name="name"]');
+    const productId = '<%= product._id %>';
+    if (nameInput && nameInput.value.trim()) {
+      try {
+        const resp = await fetch(
+          `/admin/products/check-name?name=${encodeURIComponent(nameInput.value.trim())}&excludeId=${productId}`
+        );
+        const data = await resp.json();
+        if (data.exists) {
+          showFormError(`A product named "${nameInput.value.trim()}" already exists. Please use a different name.`);
+          nameInput.focus();
+          return;
+        }
+      } catch (_) {
+        // Network error — let server-side validation handle it
+      }
+    }
+
+    // 4. All checks passed — submit the form
+    const submitBtns = this.querySelectorAll('button[type="submit"]');
+    submitBtns.forEach(btn => { btn.disabled = true; });
+    this.submit();
   });
 
   /* ══════════════════════════════════════

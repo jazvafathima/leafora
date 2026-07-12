@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora Admin - Order Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>tailwind.config={theme:{extend:{fontFamily:{body:['Poppins','sans-serif']}}}}</script>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:'Poppins',sans-serif;background:#e8ede8;margin:0}
+
+    /* ── Sidebar ── */
+    .sidebar{width:175px;background:#fff;min-height:100vh;flex-shrink:0;border-right:1px solid #e5e7eb;display:flex;flex-direction:column}
+    .sidebar-brand{padding:18px 18px 14px}
+    .sidebar-brand p{color:#1a5c1a;font-size:1.25rem;font-weight:700;margin:0}
+    .sidebar-link{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.78rem;color:#4b5563;text-decoration:none;transition:all .15s}
+    .sidebar-link:hover{color:#1a5c1a;background:#f0faf0}
+    .sidebar-link.active{background:#1a5c1a;color:#fff;font-weight:600;margin:2px 8px;border-radius:8px;padding:9px 10px}
+    .sidebar-link i{width:16px;text-align:center;font-size:0.8rem;flex-shrink:0}
+    .sidebar-logout{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.78rem;color:#ef4444;text-decoration:none;transition:all .15s}
+    .sidebar-logout:hover{background:#fef2f2}
+    .sidebar-logout i{width:16px;text-align:center}
+
+    /* ── Topbar ── */
+    .topbar{background:#1a5c1a;padding:10px 22px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .topbar-title{color:#fff;font-size:0.88rem;font-weight:500}
+
+    /* ── Table ── */
+    .th{font-size:0.68rem;color:#9ca3af;font-weight:600;padding:11px 14px;text-align:left;border-bottom:1px solid #f0f0f0;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap}
+    .td{font-size:0.78rem;color:#374151;padding:12px 14px;border-bottom:1px solid #f9fafb;vertical-align:middle}
+    tbody tr:last-child .td{border-bottom:none}
+    tbody tr:hover{background:#fafafa}
+
+    /* ── Status badges ── */
+    .badge{display:inline-block;font-size:0.62rem;font-weight:600;padding:3px 10px;border-radius:999px}
+    .badge-pending     {background:#fef9c3;color:#92400e}
+    .badge-processing  {background:#dbeafe;color:#1d4ed8}
+    .badge-shipped     {background:#ede9fe;color:#6d28d9}
+    .badge-outfordelivery{background:#ffedd5;color:#c2410c}
+    .badge-delivered   {background:#dcfce7;color:#15803d}
+    .badge-cancelled   {background:#fee2e2;color:#991b1b}
+
+    /* ── Filter inputs ── */
+    .f-input{border:1px solid #e5e7eb;border-radius:8px;padding:7px 12px;font-size:0.78rem;color:#374151;outline:none;background:#fff;transition:border-color .2s;font-family:'Poppins',sans-serif}
+    .f-input:focus{border-color:#1a5c1a;box-shadow:0 0 0 2px rgba(26,92,26,.08)}
+    .f-input::placeholder{color:#adb5bd}
+    .f-select{border:1px solid #e5e7eb;border-radius:8px;padding:7px 28px 7px 12px;font-size:0.78rem;color:#374151;outline:none;background:#fff;cursor:pointer;font-family:'Poppins',sans-serif;appearance:none;transition:border-color .2s}
+    .f-select:focus{border-color:#1a5c1a}
+
+    /* ── Pagination ── */
+    .page-btn{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.78rem;cursor:pointer;border:1px solid #e5e7eb;background:#fff;color:#374151;transition:all .15s;text-decoration:none}
+    .page-btn:hover{border-color:#1a5c1a;color:#1a5c1a}
+    .page-btn.active{background:#1a5c1a;color:#fff;border-color:#1a5c1a;font-weight:600}
+    .page-nav{display:flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:0.75rem;color:#374151;cursor:pointer;background:#fff;text-decoration:none;transition:all .15s}
+    .page-nav:hover{border-color:#1a5c1a;color:#1a5c1a}
+    .page-nav.disabled{opacity:.35;pointer-events:none}
+
+    /* ── Toast ── */
+    .toast{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:10px;font-size:.82rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.12);animation:slideIn .3s ease}
+    @keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+  </style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- Flash toasts -->
+<% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+  <div class="toast bg-green-50 border border-green-200 text-green-700" id="flashToast">
+    <i class="fa-solid fa-circle-check"></i> <%= success[0] %>
+  </div>
+<% } %>
+<% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+  <div class="toast bg-red-50 border border-red-200 text-red-700" id="flashToast">
+    <i class="fa-solid fa-circle-exclamation"></i> <%= error[0] %>
+  </div>
+<% } %>
+
+<div class="flex min-h-screen">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand"><p>leafora</p></div>
+    <nav class="flex-1 py-2">
+      <a href="/admin/dashboard"  class="sidebar-link "><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="/admin/orders"     class="sidebar-link active"><i class="fa-solid fa-bag-shopping"></i> Orders</a>
+      <a href="/admin/products"   class="sidebar-link"><i class="fa-solid fa-box"></i> Products</a>
+      <a href="/admin/categories" class="sidebar-link"><i class="fa-solid fa-list"></i> Categories</a>
+      <a href="/admin/users"      class="sidebar-link"><i class="fa-regular fa-user"></i> Users</a>
+      <a href="/admin/offers"     class="sidebar-link"><i class="fa-regular fa-heart"></i> Offers</a>
+      <a href="/admin/coupons"    class="sidebar-link"><i class="fa-solid fa-ticket"></i> Coupons</a>
+      <a href="/admin/reports"    class="sidebar-link"><i class="fa-solid fa-chart-bar"></i> Reports</a>
+    </nav>
+    <div class="border-t border-gray-100 py-2 mt-auto">
+      <a href="/admin/logout" class="sidebar-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </aside>
+
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <div class="flex-1 flex flex-col">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <span class="topbar-title">Dashboard</span>
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full overflow-hidden border-2 border-white/40 bg-green-800 flex items-center justify-center flex-shrink-0">
+          <% if (typeof admin !== 'undefined' && admin && admin.avatar) { %>
+            <img src="<%= admin.avatar %>" alt="Admin" class="w-full h-full object-cover" />
+          <% } else { %>
+            <i class="fa-regular fa-user text-white text-xs"></i>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <main class="flex-1 p-6">
+
+      <!-- Page heading -->
+      <div class="mb-5">
+        <h1 class="text-lg font-semibold text-gray-800">Order Management-return requests</h1>
+        <p class="text-xs text-gray-400 mt-0.5">View and manage customer orders</p>
+      </div>
+
+      <!-- ── Filter / Search bar ── -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
+        <form method="GET" action="/admin/returns" id="filterForm">
+          <div class="flex flex-wrap items-end gap-3">
+
+            <!-- Search -->
+            
+
+          </div>
+        </form>
+      </div>
+
+      <!-- ── Orders Table ── -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr>
+                <th class="th">Order Number</th>
+                <th class="th">Customer</th>
+                <th class="th">Date</th>
+                <th class="th">Items</th>
+                <th class="th">Total</th>
+                <th class="th">Status</th>
+                <th class="th text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% let hasReturns = false; %>
+              <% if (typeof orders !== 'undefined' && orders && orders.length > 0) { %>
+                <% orders.forEach(order => { %>
+                  <% order.items.forEach(item => { %>
+                    <% if (item.returnStatus === "requested") { %>
+                      <% hasReturns = true; %>
+                      <tr>
+                        <td class="td"><%= order.orderId %></td>
+                        <td class="td"><%= order.user?.firstName || '' %> <%= order.user?.lastName || '' %></td>
+                        <td class="td"><%= new Date(order.createdAt).toLocaleDateString() %></td>
+                        <td class="td">
+                          <div class="flex items-center gap-3">
+                            <img src="/uploads/products/<%= item.image %>" class="w-12 h-12 rounded object-cover">
+                            <div>
+                              <p class="font-medium"><%= item.name %></p>
+                              <p class="text-xs text-gray-500">Qty: <%= item.quantity %></p>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="td">₹<%= item.total %></td>
+                        <td class="td">
+              <% if (item.returnStatus === 'approved') { %>
+  <span class="badge badge-processing block w-max mb-1">Return Approved</span>
+<% } else if (item.returnStatus === 'rejected') { %>
+  <span class="badge badge-cancelled block w-max mb-1">Return Rejected</span>
+<% } else if (item.returnStatus === 'requested') { %>
+  <span class="badge badge-pending block w-max mb-1">Return Requested</span>
+<% } %>
+                          <% if (item.returnReason) { %>
+                            <span class="text-[10px] text-gray-500 block max-w-[150px] truncate" title="<%= item.returnReason %>">Reason: <%= item.returnReason %></span>
+                          <% } %>
+                        </td>
+                        <td class="td text-right">
+                          <div class="flex gap-2 justify-end">
+                            <form action="/admin/returns/<%= order._id %>/<%= item._id %>/approve" method="POST">
+                              <button class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded-lg">Accept</button>
+                            </form>
+                            <form action="/admin/returns/<%= order._id %>/<%= item._id %>/reject" method="POST">
+                              <button class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded-lg">Reject</button>
+                            </form>
+                          </div>
+                        </td>
+                      </tr>
+                    <% } %>
+                  <% }) %>
+                <% }) %>
+              <% } %>
+              
+              <% if (!hasReturns) { %>
+                <tr>
+                  <td colspan="7" class="text-center text-gray-400 text-xs py-12">
+                    <i class="fa-solid fa-bag-shopping text-3xl text-gray-200 block mb-2"></i>
+                    No return requests found
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+
+      
+
+      </div>
+      <!-- /table -->
+
+    </main>
+  </div>
+</div>
+
+<script>
+  /* ── Debounced search ── */
+ const searchInput = document.getElementById('searchInput');
+
+if (searchInput) {
+  let _st;
+
+  searchInput.addEventListener('input', function () {
+    clearTimeout(_st);
+    _st = setTimeout(() => {
+      document.getElementById('filterForm').submit();
+    }, 500);
+  });
+}
+
+  /* ── Flash toast dismiss ── */
+  const ft = document.getElementById('flashToast');
+  if (ft) setTimeout(() => ft.remove(), 5000);
+</script>
+</body>
+</html>

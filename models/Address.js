@@ -62,4 +62,4 @@ const addressSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-module.exports = mongoose.model('Address', addressSchema);
+module.exports = mongoose.models.Address || mongoose.model("Address", addressSchema);

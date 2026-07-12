@@ -16,10 +16,49 @@
     .btn-del    { font-size:0.72rem; color:#dc2626; font-weight:600; cursor:pointer; }
     .btn-setdef { font-size:0.7rem; border:1px solid #d1d5db; border-radius:6px; padding:4px 10px; }
     .addr-line { font-size:0.75rem; color:#6b7280; line-height:1.6; }
+
+
+     /* ── Navbar ── */
+    .navbar { background: #f5f0e8; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 60px; border-bottom: 1px solid #e8e2d8; position: sticky; top: 0; z-index: 100; }
+    .nav-logo { display: flex; align-items: center; gap: 6px; text-decoration: none; }
+    .nav-logo img { height: 34px; }
+    .nav-logo span { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; color: #1a5c1a; }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a { font-size: 0.8rem; color: #374151; text-decoration: none; font-weight: 500; transition: color .15s; padding-bottom: 2px; }
+    .nav-links a:hover { color: #1a5c1a; }
+    .nav-links a.active { border-bottom: 2px solid #374151; }
+    .nav-icons { display: flex; align-items: center; gap: 16px; }
+    .nav-icons a { color: #374151; font-size: 0.9rem; text-decoration: none; transition: color .15s; position: relative; }
+    .nav-icons a:hover { color: #1a5c1a; }
+    .cart-badge { position: absolute; top: -6px; right: -7px; background: #1a5c1a; color: #fff; font-size: 0.5rem; font-weight: 700; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
   </style>
 </head>
 
 <body>
+<!-- ════════ NAVBAR ════════ -->
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <img src="/images/leafora logo.png" alt="Leafora" onerror="this.style.display='none'" />
+    <span>Leafora</span>
+  </a>
+ <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+        <a href="/"          class="hover:text-leaf-700 transition-colors">Home</a>
+        <a href="/productlist" class="hover:text-leaf-700 transition-colors"  >products</a>
+        <a href="/about"  class="hover:text-leaf-700 transition-colors">About</a>
+        <a href="/contact"     class="hover:text-leaf-700 transition-colors">Contact</a>
+      </nav>
+     <div class="nav-icons" style="display:flex;align-items:center">
+    <a href="/profile" title="Account"><i class="fa-regular fa-user"></i></a>
+    <a href="/wishlist" title="Wishlist"><i class="fa-regular fa-heart"></i></a>
+    <a href="/cart" title="Cart" style="position:relative">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+        <span class="cart-badge"><%= cartCount %></span>
+      <% } %>
+    </a>
+  </div>
+</nav>
 
 <!-- PAGE TITLE -->
 <div class="max-w-6xl mx-auto px-6 pt-6 pb-2">
@@ -113,7 +152,43 @@
           </div>
         </div>
 
+        
       <% }); %>
+      <div class="flex justify-center mt-8">
+
+  <div class="flex items-center gap-1">
+
+    <% if(currentPage > 1){ %>
+      <a href="?page=<%= currentPage-1 %>"
+         class="w-9 h-9 flex items-center justify-center rounded-lg border bg-white hover:bg-gray-50">
+        <i class="fa-solid fa-chevron-left"></i>
+      </a>
+    <% } %>
+
+    <% for(let i=1;i<=totalPages;i++){ %>
+
+      <a href="?page=<%= i %>"
+         class="w-9 h-9 flex items-center justify-center rounded-lg border
+         <%= currentPage === i
+           ? 'bg-[#185c18] text-white border-[#185c18]'
+           : 'bg-white text-gray-700 hover:bg-gray-50' %>">
+
+         <%= i %>
+
+      </a>
+
+    <% } %>
+
+    <% if(currentPage < totalPages){ %>
+      <a href="?page=<%= currentPage+1 %>"
+         class="w-9 h-9 flex items-center justify-center rounded-lg border bg-white hover:bg-gray-50">
+        <i class="fa-solid fa-chevron-right"></i>
+      </a>
+    <% } %>
+
+  </div>
+
+</div>
       
 
     <!-- ================== FALLBACK ================== -->

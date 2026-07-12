@@ -252,8 +252,26 @@
                 </p>
               <% } %>
             </div>
+            
+            <div class="mb-3">
+    <label>Referral Code (Optional)</label>
+
+    <input
+        type="text"
+        name="referralCode"
+        class="form-control"
+        value="<%= formData?.referralCode || '' %>">
+
+    <% if(errors?.referralCode){ %>
+        <small class="text-danger">
+            <%= errors.referralCode %>
+        </small>
+    <% } %>
+</div>
 
           </div>
+
+          
 
           <!-- Submit -->
           <div class="pt-2">
@@ -402,6 +420,15 @@ if (!cpw) {
 
       if (!valid) {
         e.preventDefault();
+        // Show a toast with the first field error or a generic message
+        const firstErr = document.querySelector('.field-error');
+        const msg = firstErr ? firstErr.textContent.trim() : 'Please correct the highlighted errors.';
+        const toastDiv = document.createElement('div');
+        toastDiv.id = 'flashToast';
+        toastDiv.className = 'toast bg-red-50 border border-red-200 text-red-700';
+        toastDiv.innerHTML = `<i class="fa-solid fa-circle-exclamation text-xs mr-2"></i> ${msg}`;
+        document.body.appendChild(toastDiv);
+        setTimeout(() => toastDiv.remove(), 5000);
       } else {
         const btn = document.getElementById('submitBtn');
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Creating account...';

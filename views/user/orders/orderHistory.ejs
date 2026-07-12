@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order History - Leafora</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *{box-sizing:border-box}body{font-family:'Poppins',sans-serif;background:#f5f0e8;margin:0}
+    .navbar{background:#f5f0e8;padding:0 40px;display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:1px solid #e8e2d8;position:sticky;top:0;z-index:100}
+    .nav-logo{display:flex;align-items:center;gap:6px;text-decoration:none}
+    .nav-logo img{height:32px}
+    .nav-logo span{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1a5c1a}
+    .nav-links a{font-size:0.78rem;color:#374151;text-decoration:none;font-weight:500;margin-left:22px;transition:color .15s}
+    .nav-links a:hover{color:#1a5c1a}
+    .nav-links a.active{border-bottom:2px solid #374151}
+    .nav-icons a{color:#374151;font-size:0.88rem;text-decoration:none;margin-left:14px;transition:color .15s;position:relative}
+    .nav-icons a:hover{color:#1a5c1a}
+    .cart-badge{position:absolute;top:-6px;right:-7px;background:#1a5c1a;color:#fff;font-size:0.5rem;font-weight:700;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+    .order-card{background:#fff;border-radius:14px;border:1px solid #ece8e0;padding:18px 20px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+    .prod-img{width:64px;height:64px;border-radius:10px;overflow:hidden;background:#e8ede8;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .prod-img img{width:100%;height:100%;object-fit:cover}
+    .badge{display:inline-block;font-size:0.62rem;font-weight:700;padding:3px 12px;border-radius:999px}
+    .badge-pending{background:#fef9c3;color:#92400e}
+    .badge-processing{background:#dbeafe;color:#1d4ed8}
+    .badge-shipped{background:#ede9fe;color:#6d28d9}
+    .badge-outfordelivery{background:#ffedd5;color:#c2410c}
+    .badge-delivered{background:#dcfce7;color:#15803d}
+    .badge-cancelled{background:#fee2e2;color:#991b1b}
+    .badge-returned{background:#f3f4f6;color:#374151}
+    .search-input{border:1px solid #e5e7eb;border-radius:8px;padding:8px 30px 8px 34px;font-size:0.78rem;color:#374151;outline:none;background:#fff;transition:border-color .2s;font-family:'Poppins',sans-serif;width:220px}
+    .search-input:focus{border-color:#1a5c1a;box-shadow:0 0 0 2px rgba(26,92,26,.07)}
+    .search-input::placeholder{color:#adb5bd}
+    .filter-select{border:1px solid #e5e7eb;border-radius:8px;padding:8px 28px 8px 12px;font-size:0.78rem;color:#374151;outline:none;background:#fff;appearance:none;cursor:pointer;font-family:'Poppins',sans-serif;transition:border-color .2s}
+    .filter-select:focus{border-color:#1a5c1a}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:50}
+    .toast{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:10px;font-size:.82rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.12);animation:slideIn .3s ease}
+    @keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+    .page-btn{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.78rem;cursor:pointer;border:1px solid #e5e7eb;background:#fff;color:#374151;transition:all .15s;text-decoration:none}
+    .page-btn:hover{border-color:#1a5c1a;color:#1a5c1a}
+    .page-btn.active{background:#1a5c1a;color:#fff;border-color:#1a5c1a;font-weight:600}
+    .page-nav{display:flex;align-items:center;gap:5px;padding:5px 12px;border:1px solid #e5e7eb;border-radius:6px;font-size:.75rem;color:#374151;cursor:pointer;background:#fff;text-decoration:none;transition:all .15s}
+    .page-nav:hover{border-color:#1a5c1a;color:#1a5c1a}
+    .page-nav.disabled{opacity:.35;pointer-events:none}
+    .f-textarea{width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:12px 14px;font-size:0.82rem;color:#374151;outline:none;font-family:'Poppins',sans-serif;resize:vertical;min-height:80px;transition:border-color .2s}
+    .f-textarea:focus{border-color:#1a5c1a}
+    .f-textarea::placeholder{color:#adb5bd}
+    .f-select-modal{width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:12px 14px;font-size:0.82rem;color:#374151;outline:none;font-family:'Poppins',sans-serif;appearance:none;cursor:pointer;background:#fff;transition:border-color .2s}
+    .f-select-modal:focus{border-color:#1a5c1a}
+    .star-btn{cursor:pointer;font-size:1.4rem;color:#d1d5db;transition:color .15s}
+    .star-btn:hover,.star-btn.active{color:#f59e0b}
+  </style>
+</head>
+<body class="min-h-screen">
+
+<% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+  <div class="toast bg-green-50 border border-green-200 text-green-700" id="flashToast">
+    <i class="fa-solid fa-circle-check"></i> <%= success[0] %>
+  </div>
+<% } %>
+<% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+  <div class="toast bg-red-50 border border-red-200 text-red-700" id="flashToast">
+    <i class="fa-solid fa-circle-exclamation"></i> <%= error[0] %>
+  </div>
+<% } %>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <img src="/images/leafora logo.png" alt="Leafora" onerror="this.style.display='none'" />
+    <span>Leafora</span>
+  </a>
+      <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+        <a href="/"          class="hover:text-leaf-700 transition-colors">Home</a>
+        <a href="/productlist" class="hover:text-leaf-700 transition-colors"  >products</a>
+        <a href="/about"  class="hover:text-leaf-700 transition-colors">About</a>
+        <a href="/contact"     class="hover:text-leaf-700 transition-colors">Contact</a>
+      </nav>
+
+  <div class="nav-icons" style="display:flex;align-items:center">
+    <a href="/profile" title="Account"><i class="fa-regular fa-user"></i></a>
+    <a href="/wishlist" title="Wishlist"><i class="fa-regular fa-heart"></i></a>
+    <a href="/cart" title="Cart" style="position:relative">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+        <span class="cart-badge"><%= cartCount %></span>
+      <% } %>
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="max-w-3xl mx-auto px-4 py-8">
+
+  <!-- Heading + Search/Filter -->
+  <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
+    <h1 class="text-xl font-bold text-[#1a5c1a]" style="font-family:'Playfair Display',serif">Order History</h1>
+    <form method="GET" action="/orderhistory" id="filterForm" class="flex items-center gap-2 flex-wrap">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style="font-size:10px"></i>
+        <input type="text" name="search" id="searchInput"
+          placeholder="Search by Order ID..."
+          value="<%= typeof search !== 'undefined' ? search : '' %>"
+          class="search-input" />
+        <% if (typeof search !== 'undefined' && search) { %>
+          <button type="button" onclick="clearSearch()"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+            <i class="fa-solid fa-xmark" style="font-size:10px"></i>
+          </button>
+        <% } %>
+      </div>
+      <div class="relative">
+        <select name="status" class="filter-select pr-8" onchange="document.getElementById('filterForm').submit()">
+          <option value="">All Orders</option>
+          <% ['pending','shipped','outForDelivery','delivered','cancelled','returned'].forEach(function(s){ %>
+            <option value="<%= s %>"
+              <%= (typeof selectedStatus !== 'undefined' && selectedStatus === s) ? 'selected' : '' %>>
+              <%= s === 'outForDelivery' ? 'Out for Delivery' : s.charAt(0).toUpperCase()+s.slice(1) %>
+            </option>
+          <% }) %>
+        </select>
+        <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+      </div>
+      <input type="hidden" name="page" value="1" />
+    </form>
+  </div>
+
+  <!-- Order cards -->
+  <% if (typeof orders !== 'undefined' && orders && orders.length > 0) { %>
+    <% orders.forEach(function(order) {
+         const statusKey  = (order.orderStatus || 'pending').toLowerCase().replace(/\s/g,'');
+        const badgeClass = {
+  pending:'badge-pending',
+  processing:'badge-processing',
+  shipped:'badge-shipped',
+  outfordelivery:'badge-outfordelivery',
+  delivered:'badge-delivered',
+  completed:'badge-completed',
+  cancelled:'badge-cancelled',
+  returned:'badge-returned',
+  returnrequested:'badge-processing'
+}[statusKey] || 'badge-pending';
+         const statusLabel = order.orderStatus==='outForDelivery'?'Out for Delivery':(order.orderStatus||'Pending').charAt(0).toUpperCase()+(order.orderStatus||'Pending').slice(1);
+         const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) : '—';
+         const canCancel   = ['pending','processing'].includes(statusKey);
+         const canReturn   = ['delivered'].includes(statusKey);
+         const canReview   = ['delivered'].includes(statusKey);
+    %>
+    <div class="order-card" id="card-<%= order._id %>">
+
+      <!-- Top row: OrderID + date + badge -->
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          <p class="font-mono font-bold text-gray-800 text-sm"><%= order.orderId || ('#ORD-'+order._id.toString().slice(-6).toUpperCase()) %></p>
+          <p class="text-[10px] text-gray-400 mt-0.5"><%= orderDate %></p>
+        </div>
+        <!-- <span class="badge <%= badgeClass %>"><%= statusLabel %></span> -->
+      </div>
+
+    <!-- Items -->
+<% if (order.items && order.items.length > 0) { %>
+  <% order.items.forEach(function(item){ %>
+    <div class="flex items-center gap-3 mb-2">
+      
+      <div class="prod-img">
+        <% if (item.image) { %>
+          <img
+            src="/uploads/products/<%= item.image %>"
+            alt="<%= item.name || 'product' %>"
+            class="w-full h-full object-cover"
+          />
+        <% } else { %>
+          <i
+            class="fa-solid fa-seedling"
+            style="color:#b8d4b8;font-size:1.1rem"
+          ></i>
+        <% } %>
+      </div>
+
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold text-gray-800 text-xs truncate">
+          <%= item.name || '—' %>
+        </p>
+
+        <p class="text-gray-400 text-[10px]">
+          Size: <%= item.size || '—' %>
+          &nbsp;·&nbsp;
+          Qty: <%= item.quantity || 1 %>
+        </p>
+      </div>
+
+      <span class="font-semibold text-gray-800 text-xs flex-shrink-0">
+        ₹<%= Number((item.price || 0) * (item.quantity || 1)).toLocaleString('en-IN') %>
+      </span>
+    </div>
+  <% }) %>
+<% } %>
+      <!-- Total + actions -->
+      <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 flex-wrap gap-2">
+        <div>
+          <p class="text-[10px] text-gray-400">Total Amount</p>
+          <p class="font-bold text-gray-900 text-sm">₹<%= Number(order.total||0).toLocaleString('en-IN') %></p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <% if(canCancel){ %>
+            <button onclick="openCancelModal('<%= order._id %>','<%= order.orderId||order._id %>')"
+              class="flex items-center gap-1.5 border border-red-200 text-red-500 hover:bg-red-50 text-xs font-medium px-4 py-2 rounded-lg transition-colors">
+              <i class="fa-solid fa-xmark text-xs"></i> Cancel
+            </button>
+          <% } %>
+          <% if(canReturn){ %>
+            <!-- <button onclick="openReturnModal('<%= order._id %>','<%= order.orderId||order._id %>')"
+              class="flex items-center gap-1.5 border border-amber-200 text-amber-600 hover:bg-amber-50 text-xs font-medium px-4 py-2 rounded-lg transition-colors">
+              <i class="fa-solid fa-rotate-left text-xs"></i> Return
+            </button> -->
+          <% } %>
+          <% if(canReview){ %>
+            <button onclick="openReviewModal('<%= order._id %>','<%= (order.items&&order.items[0]&&order.items[0].image)||'' %>','<%= (order.items&&order.items[0]&&(order.items[0].name))||'Product' %>')"
+              class="flex items-center gap-1.5 border border-yellow-200 text-yellow-600 hover:bg-yellow-50 text-xs font-medium px-4 py-2 rounded-lg transition-colors">
+              <i class="fa-regular fa-star text-xs"></i> Review
+            </button>
+          <% } %>
+          <a href="/orders/<%= order._id %>"
+            class="flex items-center gap-1.5 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-5 py-2 rounded-xl transition-colors">
+            <i class="fa-solid fa-truck-fast text-xs"></i> Track Order
+          </a>
+        </div>
+      </div>
+
+    </div>
+    <% }) %>
+
+    <!-- Pagination -->
+    <%
+      const cur=currentPage||1;
+      const totPg=totalPages||1;
+    %>
+    <% if(totPg>1){ %>
+      <div class="flex items-center justify-center gap-2 mt-6">
+        <a href="?search=<%= typeof search!=='undefined'?search:'' %>&status=<%= typeof selectedStatus!=='undefined'?selectedStatus:'' %>&page=<%= cur-1 %>" class="page-nav <%= cur>1?'':'disabled' %>"><i class="fa-solid fa-chevron-left text-xs"></i></a>
+        <% for(let pg=1;pg<=totPg;pg++){ %><a href="?search=<%= typeof search!=='undefined'?search:'' %>&status=<%= typeof selectedStatus!=='undefined'?selectedStatus:'' %>&page=<%= pg %>" class="page-btn <%= pg===cur?'active':'' %>"><%= pg %></a><% } %>
+        <a href="?search=<%= typeof search!=='undefined'?search:'' %>&status=<%= typeof selectedStatus!=='undefined'?selectedStatus:'' %>&page=<%= cur+1 %>" class="page-nav <%= cur<totPg?'':'disabled' %>"><i class="fa-solid fa-chevron-right text-xs"></i></a>
+      </div>
+    <% } %>
+
+  <% } else { %>
+    <div class="text-center py-20 bg-white rounded-2xl border border-gray-100">
+      <i class="fa-solid fa-bag-shopping text-6xl block mb-4" style="color:#d1e8d1"></i>
+      <p class="text-xl font-semibold text-gray-700 mb-2">No orders yet</p>
+      <p class="text-xs text-gray-400 mb-6"><%= (typeof search!=='undefined'&&search)?'No orders found for "'+search+'".':'Start shopping to place your first order!' %></p>
+      <a href="/products" class="inline-flex items-center gap-2 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-sm font-semibold px-6 py-3 rounded-xl transition-colors"><i class="fa-solid fa-seedling text-xs"></i> Shop Now</a>
+    </div>
+  <% } %>
+
+</div>
+
+<!-- FOOTER -->
+<footer style="background-color:#1a2e1a;font-family:'Poppins',sans-serif;margin-top:32px">
+  <div class="max-w-6xl mx-auto px-6 pt-10 pb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
+      <div><p class="text-white text-2xl font-bold mb-4" style="font-family:'Playfair Display',serif">Leafora</p><p class="text-xs text-gray-300 mb-3">Download the Leafora App Now</p><div class="w-24 h-24 bg-white rounded-lg mb-4 flex items-center justify-center"><i class="fa-solid fa-qrcode text-3xl text-gray-400"></i></div><div class="flex gap-2"><a href="#" class="flex items-center gap-1.5 bg-black text-white text-[10px] px-3 py-2 rounded-lg"><i class="fa-brands fa-google-play text-sm"></i><span><span class="block text-[8px] text-gray-400">Get it on</span>Play Store</span></a><a href="#" class="flex items-center gap-1.5 bg-black text-white text-[10px] px-3 py-2 rounded-lg"><i class="fa-brands fa-apple text-sm"></i><span><span class="block text-[8px] text-gray-400">Download on</span>App Store</span></a></div></div>
+      <div><h4 class="text-white text-sm font-semibold mb-4">Helpful Links</h4><ul class="space-y-2"><li><a href="#" class="text-gray-300 text-xs hover:text-white">Plant Care Guide</a></li><li><a href="#" class="text-gray-300 text-xs hover:text-white">Shipping Policy</a></li><li><a href="#" class="text-gray-300 text-xs hover:text-white">Returns &amp; Refunds</a></li><li><a href="#" class="text-gray-300 text-xs hover:text-white">Track Order</a></li><li><a href="#" class="text-gray-300 text-xs hover:text-white">Locate Stores</a></li></ul></div>
+      <div><h4 class="text-white text-sm font-semibold mb-4">Information</h4><ul class="space-y-2"><li><a href="#" class="text-gray-300 text-xs hover:text-white">Plant Blog</a></li><li><a href="#" class="text-gray-300 text-xs hover:text-white">Plant Care Tips</a></li><li><a href="#" class="text-gray-300 text-xs hover:text-white">FAQs</a></li><li><a href="#" class="text-gray-300 text-xs hover:text-white">About Us</a></li></ul></div>
+      <div><h4 class="text-white text-sm font-semibold mb-4">Contact Us</h4><ul class="space-y-2 mb-4"><li class="text-gray-300 text-xs">+91 9000000000</li><li><a href="mailto:support@leafora.com" class="text-gray-300 text-xs hover:text-white">Email Us: support@leafora.com</a></li></ul><div class="flex gap-2"><a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-brands fa-whatsapp text-sm"></i></a><a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-regular fa-envelope text-sm"></i></a><a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-brands fa-telegram text-sm"></i></a></div></div>
+    </div>
+  </div>
+  <div class="border-t border-gray-600 mx-6"></div>
+  <div class="max-w-6xl mx-auto px-6 py-5">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+      <p class="text-gray-400 text-[11px]">© 2026 Leafora – All Rights Reserved.</p>
+      <div class="flex gap-4"><a href="#" class="text-gray-400 text-[11px] hover:text-white">Terms &amp; Conditions</a><a href="#" class="text-gray-400 text-[11px] hover:text-white">Privacy Policy</a><a href="#" class="text-gray-400 text-[11px] hover:text-white">Disclaimer</a></div>
+    </div>
+    <p class="text-right mt-3 text-sm font-medium" style="color:#6aaa6a;font-family:'Playfair Display',serif">Grow Green, Live Fresh 🌿</p>
+  </div>
+</footer>
+
+<!-- ═══════ CANCEL MODAL (iii. optional reason) ═══════ -->
+<div id="cancelModal" class="hidden modal-overlay">
+  <div class="bg-white rounded-2xl shadow-2xl w-96 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-bold text-gray-800">Cancel Order</h2>
+      <button onclick="document.getElementById('cancelModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <p class="text-xs text-gray-500 mb-3">Reason for cancellation</p>
+    <textarea id="cancelReason" class="f-textarea" placeholder="Type the reason for cancellation"></textarea>
+    <div class="flex justify-end gap-3 mt-4">
+      <button onclick="document.getElementById('cancelModal').classList.add('hidden')"
+        class="px-5 py-2 text-xs font-medium border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
+      <button onclick="submitCancel()"
+        class="px-5 py-2 text-xs font-semibold bg-[#1a5c1a] hover:bg-[#144d14] text-white rounded-lg transition-colors">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ RETURN MODAL (iv. mandatory reason) ═══════ -->
+<div id="returnModal" class="hidden modal-overlay">
+  <div class="bg-white rounded-2xl shadow-2xl w-96 p-6">
+    <div class="flex items-center justify-between mb-5">
+      <div class="flex items-center gap-2">
+        <div class="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center">
+          <i class="fa-solid fa-rotate-left text-[#1a5c1a]"></i>
+        </div>
+        <h2 class="text-sm font-bold text-gray-800">Return Order</h2>
+      </div>
+      <button onclick="document.getElementById('returnModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <label class="block text-xs font-medium text-gray-600 mb-2">Reason for Return <span class="text-red-500">*</span></label>
+    <select id="returnReason" class="f-select-modal mb-4">
+      <option value="">Select a reason</option>
+      <option value="damaged">Item arrived damaged</option>
+      <option value="wrong">Wrong item received</option>
+      <option value="notAsDescribed">Not as described</option>
+      <option value="noLongerNeeded">No longer needed</option>
+      <option value="quality">Poor quality</option>
+      <option value="other">Other</option>
+    </select>
+    <label class="block text-xs font-medium text-gray-600 mb-2">Additional Comments (Optional)</label>
+    <textarea id="returnComments" class="f-textarea" placeholder="Please provide any additional details about your return..."></textarea>
+    <div class="bg-gray-50 border border-gray-100 rounded-xl p-3 mt-4 mb-5">
+      <p class="text-[10px] text-gray-500 leading-relaxed"><strong class="text-gray-700">Note:</strong> Once submitted, you will receive a return confirmation email with further instructions within 24 hours.</p>
+    </div>
+    <div class="flex gap-3">
+      <button onclick="document.getElementById('returnModal').classList.add('hidden')"
+        class="flex-1 py-2.5 text-xs font-medium border border-gray-300 rounded-xl text-gray-600 hover:bg-gray-50">Cancel</button>
+      <button onclick="submitReturn()"
+        class="flex-1 py-2.5 text-xs font-semibold bg-[#1a5c1a] hover:bg-[#144d14] text-white rounded-xl transition-colors">Request Refund</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ REVIEW MODAL ═══════ -->
+<div id="reviewModal" class="hidden modal-overlay">
+  <div class="bg-white rounded-2xl shadow-2xl w-96 p-6">
+    <button onclick="document.getElementById('reviewModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-sm"><i class="fa-solid fa-xmark"></i></button>
+    <div class="text-center mb-4">
+      <p class="text-base font-bold text-gray-900 uppercase tracking-wider mb-1">Help Us</p>
+      <p class="text-sm font-bold text-gray-900 uppercase tracking-wider">Make Our Products Better</p>
+      <div class="w-16 h-[2px] bg-gray-800 mx-auto mt-2"></div>
+    </div>
+    <div id="reviewProductImg" class="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 mx-auto mb-4 flex items-center justify-center">
+      <i class="fa-solid fa-seedling text-3xl" style="color:#b8d4b8"></i>
+    </div>
+    <p class="text-xs font-semibold text-gray-700 mb-1">Overall Product Feedback</p>
+    <div class="flex gap-1 mb-4" id="starRow">
+      <% for(let s=1;s<=5;s++){ %>
+        <i class="fa-regular fa-star star-btn" data-val="<%= s %>" onclick="setRating(<%= s %>)"></i>
+      <% } %>
+    </div>
+    <p class="text-xs font-semibold text-gray-700 mb-1">Tell Us More</p>
+    <textarea id="reviewText" class="f-textarea" placeholder="Type any additional feedback here"></textarea>
+    <button onclick="submitReview()"
+      class="w-full mt-4 bg-[#8b1a1a] hover:bg-[#6e1414] text-white font-bold text-xs py-3 rounded-lg uppercase tracking-widest transition-colors">
+      Submit
+    </button>
+  </div>
+</div>
+
+<script>
+  let _cancelOrderId = null;
+  let _returnOrderId = null;
+  let _reviewProductId = null;
+  let _reviewRating  = 0;
+
+  /* ── Cancel modal ── */
+  function openCancelModal(orderId) {
+    _cancelOrderId = orderId;
+    document.getElementById('cancelReason').value = '';
+    document.getElementById('cancelModal').classList.remove('hidden');
+  }
+  async function submitCancel() {
+    const reason = document.getElementById('cancelReason').value.trim();
+    try {
+      const res  = await fetch(`/orders/${_cancelOrderId}/cancel`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json();
+      document.getElementById('cancelModal').classList.add('hidden');
+      if (data.success) { showToast('Order cancelled successfully.', 'success'); setTimeout(() => window.location.reload(), 800); }
+      else showToast(data.message || 'Could not cancel order.', 'error');
+    } catch { showToast('Network error.', 'error'); }
+  }
+
+  /* ── Return modal ── */
+  function openReturnModal(orderId) {
+    _returnOrderId = orderId;
+    document.getElementById('returnReason').value   = '';
+    document.getElementById('returnComments').value = '';
+    document.getElementById('returnModal').classList.remove('hidden');
+  }
+ async function submitReturn() {
+  const reason = document.getElementById('returnReason').value;
+  const comments = document.getElementById('returnComments').value.trim();
+
+  if (!reason) {
+    showToast('Please select a reason for return.', 'error');
+    return;
+  }
+
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = `/orders/${_returnOrderId}/return`;
+
+  const reasonInput = document.createElement('input');
+  reasonInput.type = 'hidden';
+  reasonInput.name = 'reason';
+  reasonInput.value = reason;
+
+  const commentsInput = document.createElement('input');
+  commentsInput.type = 'hidden';
+  commentsInput.name = 'comments';
+  commentsInput.value = comments;
+
+  form.appendChild(reasonInput);
+  form.appendChild(commentsInput);
+
+  document.body.appendChild(form);
+  form.submit();
+}
+
+  /* ── Review modal ── */
+  function openReviewModal(orderId, imgSrc, productName) {
+    _reviewOrderId = orderId;
+    _reviewRating  = 0;
+    document.getElementById('reviewText').value = '';
+    document.querySelectorAll('.star-btn').forEach(s => { s.classList.remove('active'); s.classList.replace('fa-solid','fa-regular'); });
+    const imgWrap = document.getElementById('reviewProductImg');
+    if (imgSrc) { imgWrap.innerHTML = `<img src="${imgSrc}" class="w-full h-full object-cover" onerror="this.parentNode.innerHTML='<i class=\'fa-solid fa-seedling\' style=\'color:#b8d4b8;font-size:2rem\'></i>'" />`; }
+    document.getElementById('reviewModal').style.position = 'fixed';
+    document.getElementById('reviewModal').classList.remove('hidden');
+  }
+  function setRating(val) {
+    _reviewRating = val;
+    document.querySelectorAll('.star-btn').forEach((s,i) => {
+      s.classList.toggle('active', i < val);
+      if (i < val) { s.classList.replace('fa-regular','fa-solid'); } else { s.classList.replace('fa-solid','fa-regular'); }
+    });
+  }
+  async function submitReview() {
+    const text = document.getElementById('reviewText').value.trim();
+    if (_reviewRating === 0) { showToast('Please select a star rating.', 'error'); return; }
+    try {
+      const res  = await fetch(`/orders/${_reviewOrderId}/review`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: _reviewRating, comment: text }),
+      });
+      const data = await res.json();
+      document.getElementById('reviewModal').classList.add('hidden');
+      if (data.success) showToast('Review submitted! Thank you.', 'success');
+      else showToast(data.message || 'Could not submit review.', 'error');
+    } catch { showToast('Network error.', 'error'); }
+  }
+
+  /* ── Close modals on overlay click ── */
+  ['cancelModal','returnModal','reviewModal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e) { if(e.target===this) this.classList.add('hidden'); });
+  });
+
+  /* ── Toast ── */
+  function showToast(msg, type) {
+    const old = document.getElementById('miniToast'); if(old) old.remove();
+    const t = document.createElement('div');
+    t.id = 'miniToast';
+    t.className = 'toast ' + (type==='success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700');
+    t.innerHTML = `<i class="fa-solid fa-${type==='success'?'circle-check':'circle-exclamation'}"></i> ${msg}`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  /* ── Search ── */
+  function clearSearch() { document.getElementById('searchInput').value=''; document.getElementById('filterForm').submit(); }
+  let _st;
+  document.getElementById('searchInput').addEventListener('input', function() {
+    clearTimeout(_st); _st = setTimeout(() => document.getElementById('filterForm').submit(), 500);
+  });
+
+  const ft = document.getElementById('flashToast');
+  if (ft) setTimeout(() => ft.remove(), 5000);
+</script>
+</body>
+</html>

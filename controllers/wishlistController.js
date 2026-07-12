@@ -1,16 +1,18 @@
-// ═══════════════════════════════════════════════════════════════
-//  controllers/user/wishlistController.js
-// ═══════════════════════════════════════════════════════════════
+
 
 const User    = require('../models/User');
 const Product = require('../models/Product');
 const Cart    = require('../models/Cart');
 const ProductVariant = require('../models/productvariant');
 const MAX_QTY_PER_ITEM = 5;
+const {
+  getActiveOffers,
+  calculateProductPrice,
+} = require("../utils/priceHelper");
 
-// ─────────────────────────────────────────────────────────────
-//  GET /wishlist  — Render wishlist/favorites page
-// ─────────────────────────────────────────────────────────────
+
+
+
 
 
 
@@ -27,6 +29,7 @@ exports.getWishlist = async (req, res) => {
       })
       .lean();
 
+
     if (!user) return res.redirect('/user/login');
 
     
@@ -37,6 +40,9 @@ exports.getWishlist = async (req, res) => {
       productId: product._id
     }).lean();
 
+
+    const offers = await getActiveOffers();
+    
     return {
       _id: product._id,
       product,
@@ -46,7 +52,7 @@ exports.getWishlist = async (req, res) => {
   })
 );
 
-      console.log(wishlistItems)
+      
     res.render('user/wishlist', {
       wishlistItems,
       cartCount: req.session.cartCount || 0,
@@ -60,60 +66,82 @@ exports.getWishlist = async (req, res) => {
 };
 
 
-// ─────────────────────────────────────────────────────────────
-//  POST /wishlist/toggle  — Add or remove from wishlist
-//  (called from product detail heart button)
-// ─────────────────────────────────────────────────────────────
 exports.toggleWishlist = async (req, res) => {
   try {
-    const userId    = req.session.userId || req.session.user?._id;
+    const userId = req.session.userId || req.session.user?._id;
+
     if (!userId) {
-      return res.status(401).json({ success: false, message: 'Please login first.' });
+      return res.status(401).json({
+        success: false,
+        message: 'Please login first.'
+      });
     }
 
     const { productId } = req.body;
 
-    // Validate product exists and is not blocked
+    // Validate product
     const product = await Product.findById(productId).lean();
+
     if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found.' });
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found.'
+      });
     }
+
     if (product.isBlocked || product.status === 'inactive') {
-      return res.status(400).json({ success: false, message: 'This product is unavailable.' });
+      return res.status(400).json({
+        success: false,
+        message: 'This product is unavailable.'
+      });
     }
 
     const user = await User.findById(userId).select('wishlist');
-    const idx  = user.wishlist.findIndex(id => id.toString() === productId);
+
+    const idx = user.wishlist.findIndex(
+      id => id.toString() === productId
+    );
 
     let action;
+
     if (idx > -1) {
-      // Already in wishlist → remove
+      // Remove from wishlist
       user.wishlist.splice(idx, 1);
       action = 'removed';
     } else {
-      // Not in wishlist → add
+      // Add to wishlist
       user.wishlist.push(productId);
       action = 'added';
     }
 
     await user.save();
 
-    res.json({
-      success:    true,
+    // Updated wishlist count
+    const wishlistCount = user.wishlist.length;
+
+    return res.json({
+      success: true,
       action,
       inWishlist: action === 'added',
-      message:    action === 'added' ? 'Added to favorites!' : 'Removed from favorites.',
+      wishlistCount, // <-- IMPORTANT
+      message:
+        action === 'added'
+          ? 'Added to favorites!'
+          : 'Removed from favorites.'
     });
+
   } catch (err) {
     console.error('wishlistController.toggleWishlist:', err);
-    res.status(500).json({ success: false, message: 'Server error.' });
+
+    return res.status(500).json({
+      success: false,
+      message: 'Server error.'
+    });
   }
 };
 
 
-// ─────────────────────────────────────────────────────────────
-//  POST /wishlist/remove  — Explicitly remove one item
-// ─────────────────────────────────────────────────────────────
+
 exports.removeFromWishlist = async (req, res) => {
   try {
     const userId = req.session.userId || req.session.user?._id;
@@ -135,13 +163,8 @@ exports.removeFromWishlist = async (req, res) => {
 };
 
 
-// ─────────────────────────────────────────────────────────────
-//  POST /wishlist/add-to-cart  — Move wishlist item to cart
-//  ✓ Adds product to cart
-//  ✓ Removes from wishlist
-//  ✓ Validates product is not blocked / out of stock
-//  ✓ Respects MAX_QTY_PER_ITEM
-// ─────────────────────────────────────────────────────────────
+
+
 exports.addToCartFromWishlist = async (req, res) => {
   try {
     const userId = req.session.userId || req.session.user?._id;
@@ -239,18 +262,26 @@ if (stock <= 0) {
 };
 
 
-// ─────────────────────────────────────────────────────────────
+
 //  GET /wishlist/count  — AJAX cart count refresh
-// ─────────────────────────────────────────────────────────────
+
 exports.getWishlistCount = async (req, res) => {
   try {
     const userId = req.session.userId || req.session.user?._id;
-    if (!userId) return res.json({ count: 0 });
 
-    const user  = await User.findById(userId).select('wishlist').lean();
+    if (!userId) {
+      return res.json({ count: 0 });
+    }
+
+    const user = await User.findById(userId)
+      .select('wishlist')
+      .lean();
+
     const count = user?.wishlist?.length || 0;
+
     res.json({ count });
-  } catch {
+  } catch (err) {
+    console.error(err);
     res.json({ count: 0 });
   }
 };

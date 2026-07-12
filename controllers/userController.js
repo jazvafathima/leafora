@@ -2,16 +2,24 @@ const userService = require("../services/userService");
 const Product = require("../models/Product");
 const ProductVariant = require("../models/productvariant");
 const User = require('../models/User');
+const Order = require('../models/Order');
+ const Address = require("../models/Address");
+ const Wallet=require("../models/wallet");
+
+ const {
+    getActiveOffers,
+    calculateProductPrice,
+} = require("../utils/priceHelper");
 
 
 
 // ── GET SIGNUP ─────────────────────────────
 
-
-
-
 exports.getSignup = (req, res) => {
-  res.render("user/signup");
+  res.render("user/signup", {
+    formData: {},
+    errors: {}
+  });
 };
 
 
@@ -417,24 +425,51 @@ exports.getDashboard = async (req, res) => {
       wishlistIds = (user?.wishlist || []).map(id => id.toString());
     }
 
-    const allProducts = await Product.find({
+    const search = req.query.search || "";
+
+    const query = {
       status: "active",
-      isDeleted: false
-    })
+      isDeleted: false,
+    };
+
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+
+    const allProducts = await Product.find(query)
       .populate({
         path: "variants",
         model: "ProductVariant",
-        match: { status: "active" }
+        match: { status: "active" },
       })
-      .sort({ createdAt: -1 });
+      .populate("category")
+      .sort({ createdAt: -1 })
+      .lean();
 
-    const products = allProducts
-      .filter(p => p.variants?.length > 0)
-      .slice(0, 5);
+const offers = await getActiveOffers();
+
+const products = [];
+
+for (const p of allProducts.filter(p => p.variants?.length > 0).slice(0, 5)) {
+
+    const variant = p.variants[0];
+
+    const price = calculateProductPrice(
+        p,
+        variant,
+        offers
+    );
+
+    products.push({
+        ...p,
+        ...price
+    });
+}
 
     return res.render("user/home", {
       products,
-      wishlistIds
+      wishlistIds,
+      search,
     });
 
   } catch (err) {
@@ -442,15 +477,98 @@ exports.getDashboard = async (req, res) => {
 
     return res.render("user/home", {
       products: [],
-      wishlistIds: []
+      wishlistIds: [],
+      search: "",
     });
   }
 };
+
+
+
+
+exports.getProfile = async (req, res) => {
+  try {
+    const userId = req.session.userId;
+
+    const [user, defaultAddress, orders, wallet] = await Promise.all([
+      User.findById(userId).lean(),
+      Address.findOne({ user: userId, isDefault: true }).lean(),
+      Order.find({ user: userId }).sort({ createdAt: -1 }).lean(),
+      Wallet.findOne({ user: userId }).lean(),
+    ]);
+
+    const transactions = wallet?.transactions || [];
+
+    const totalCredits = transactions
+      .filter((t) => t.type === "credit")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    const totalDebits = transactions
+      .filter((t) => t.type === "debit")
+      .reduce((sum, t) => sum + t.amount, 0);
+
+
+     // Users referred by the current user
+const referrals = await User.find({
+  referredBy: userId
+})
+.select("firstName lastName email createdAt")
+.lean();
+
+// Referral statistics
+const referralStats = {
+  total: referrals.length,
+  successful: referrals.length,
+  rewards: referrals.length * 100
+};
+
+// Prepare referral history for EJS
+const referralHistory = referrals.map(ref => ({
+  friendName: `${ref.firstName} ${ref.lastName || ""}`.trim(),
+  friendEmail: ref.email,
+  joinedAt: ref.createdAt,
+  status: "successful"
+}));
+
+    res.render("user/profile", {
+      user,
+      defaultAddress,
+      orders,
+      wallet,
+      transactions,
+      totalCredits,
+      totalDebits,
+      referralStats,
+      referrals: referralHistory,
+      siteUrl: process.env.SITE_URL
+    });
+  } catch (err) {
+    console.error("Profile Error:", err);
+    res.redirect("/dashboard");
+  }
+};
+
 
 exports.getUserProducts = async (req, res) => {
   const products = await Product.find({
     isDeleted: false
   }).populate('category');
+  let wishlistIds = [];
 
-  res.render('user/productList', { products });
+if (req.session.userId) {
+  const wishlist = await Wishlist.findOne({
+    userId: req.session.userId
+  });
+
+  if (wishlist) {
+    wishlistIds = wishlist.products.map(id => id.toString());
+  }
+}
+
+
+  res.render("user/productlist", {
+      products: [],
+      wishlistIds: []
+  
+});
 };

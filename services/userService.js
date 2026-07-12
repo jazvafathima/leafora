@@ -1,5 +1,8 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
+const { generateReferralCode } = require("../utils/referral");
+const referralService = require("./referralService");
+const walletService = require("./walletService");
 
 const {
   generateOTP,
@@ -13,7 +16,8 @@ exports.signupUser = async ({
   firstName,
   lastName,
   email,
-  password
+  password,
+  referralCode
 }) => {
 
   let errors = {};
@@ -42,13 +46,42 @@ exports.signupUser = async ({
     };
   }
 
-  const newUser = new User({
-    firstName,
-    lastName,
-    email,
-    password,
-    isVerified: false
+
+  let referrer = null;
+
+if (referralCode && referralCode.trim()) {
+
+  referrer = await User.findOne({
+    referralCode: referralCode.trim().toUpperCase()
   });
+
+  if (!referrer) {
+    return {
+      errors: {
+        referralCode: "Invalid referral code"
+      }
+    };
+  }
+}
+
+
+const myReferralCode = generateReferralCode(firstName);
+
+console.log("Generated referral code:", myReferralCode);
+
+const newUser = new User({
+  firstName,
+  lastName,
+  email,
+  password,
+  isVerified: false,
+
+  referralCode: myReferralCode,
+
+  referredBy: referrer ? referrer._id : null
+});
+
+console.log(newUser);
 
   await newUser.save();
 
@@ -56,6 +89,8 @@ exports.signupUser = async ({
 
   return { user: newUser };
 };
+
+
 
 
 // ── LOGIN ─────────────────────────────
@@ -205,21 +240,59 @@ exports.completeEmailChange = async ({
   user.otpExpiry = null;
 
   await user.save();
+
+  await referralService.rewardReferral(user);
 };
 
 
 // ── COMPLETE SIGNUP ────────────────────
-exports.completeSignupVerification =
-async (user) => {
+exports.completeSignupVerification = async (user) => {
 
-  user.isVerified = true;
-  user.otp = null;
-  user.otpExpiry = null;
+    // Verify the user
+    user.isVerified = true;
+    user.otp = null;
+    user.otpExpiry = null;
 
-  await user.save();
+    await user.save();
+
+    console.log("====================================");
+    console.log("User verified:", user.email);
+    console.log("User ID:", user._id);
+    console.log("Referred By:", user.referredBy);
+    console.log("Reward Already Given:", user.referralRewardGiven);
+    console.log("====================================");
+
+    // Give referral rewards only once
+    if (user.referredBy && !user.referralRewardGiven) {
+
+        console.log("➡️ Crediting ₹50 to new user:", user._id);
+
+        const newUserWallet = await walletService.creditWallet(
+            user._id,
+            50,
+            "Referral Signup Bonus"
+        );
+
+        console.log("✅ New User Wallet Balance:", newUserWallet.balance);
+
+        console.log("➡️ Crediting ₹100 to referrer:", user.referredBy);
+
+        const referrerWallet = await walletService.creditWallet(
+            user.referredBy,
+            100,
+            "Referral Reward"
+        );
+
+        console.log("✅ Referrer Wallet Balance:", referrerWallet.balance);
+
+        user.referralRewardGiven = true;
+        await user.save();
+
+        console.log("🎉 Referral rewards completed successfully.");
+    } else {
+        console.log("❌ No referral reward given.");
+    }
 };
-
-
 // ── FORGOT PASSWORD ────────────────────
 exports.forgotPassword = async (email) => {
 
@@ -458,4 +531,4 @@ if (avatar) {
 await User.findByIdAndUpdate(userId, updateData);
 
   return { success: true };
-};
+}

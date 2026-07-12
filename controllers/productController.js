@@ -1,10 +1,15 @@
 const Product = require("../models/Product");
+const Order = require("../models/Order");
 const ProductVariant = require("../models/productvariant");
 const Category = require("../models/Category");
+const User = require("../models/User");
 const sharp = require("sharp");
 const fs = require("fs");
 const path = require("path");
 const { search } = require("../routes/userRoutes");
+const Offer = require("../models/Offer");
+const { getBestOffer } = require("../utils/offerHelper");
+ const { calculateProductPrice } = require("../utils/priceHelper");
 
 
 
@@ -75,6 +80,12 @@ exports.getProducts = async (req, res) => {
       page * limit
     );
 
+    const indoorcategory=await Category.find({
+      name:"indoor"
+    });
+
+
+    
     res.render("admin/product/products", {
       products: paginatedProducts,
       categories,
@@ -84,6 +95,8 @@ exports.getProducts = async (req, res) => {
       selectedStock: stock,
       selectedCategory: category,
       search,
+      
+      
     });
 
   } catch (error) {
@@ -94,13 +107,31 @@ exports.getProducts = async (req, res) => {
 
 
 
+// Check if a product name already exists (used by add & edit forms via AJAX)
+exports.checkProductName = async (req, res) => {
+  try {
+    const { name, excludeId } = req.query;
+    if (!name || !name.trim()) return res.json({ exists: false });
+
+    const query = { name: { $regex: new RegExp(`^${name.trim()}$`, 'i') } };
+    if (excludeId) query._id = { $ne: excludeId };
+
+    const found = await Product.findOne(query);
+    res.json({ exists: !!found });
+  } catch (err) {
+    console.log(err);
+    res.json({ exists: false });
+  }
+};
+
 exports.getAddProduct = async (req, res) => {
   try {
     const categories = await Category.find({isDeleted:false});
 
     res.render("admin/product/addproduct", {
       categories,
-
+      error:   req.flash ? req.flash('error')   : [],
+      success: req.flash ? req.flash('success') : [],
     });
   } catch (error) {
     console.log(error);
@@ -110,8 +141,6 @@ exports.getAddProduct = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   try {
-
-    console.log(req.files)
     const {
       name,
       category,
@@ -120,8 +149,16 @@ exports.createProduct = async (req, res) => {
       status
     } = req.body;
 
-
-
+    // Duplicate product name check (case-insensitive)
+    const existing = await Product.findOne({
+      name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }
+    });
+    if (existing) {
+      return res.json({
+        success: false,
+        message: `A product named "${name}" already exists. Please use a different name.`
+      });
+    }
     const product = await Product.create({
       name,
       category,
@@ -155,6 +192,8 @@ exports.createProduct = async (req, res) => {
             fs.unlinkSync(file.path);
           }
         }
+
+
 
         await ProductVariant.create({
           productId: product._id,
@@ -199,11 +238,13 @@ exports.getEditProduct = async (req, res) => {
       isDeleted: false
     });
 
-    console.log("Variants:", product.variants);
+  
 
     res.render("admin/product/editProduct", {
       product,
-      categories
+      categories,
+      error:   req.flash ? req.flash('error')   : [],
+      success: req.flash ? req.flash('success') : [],
     });
 
   } catch (err) {
@@ -254,6 +295,17 @@ const cleanUpRemainingFiles = (files) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { name, category, shortDescription, fullDescription, status } = req.body;
+
+    // Duplicate product name check (excluding the current product)
+    const duplicate = await Product.findOne({
+      name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
+      _id:  { $ne: req.params.id }
+    });
+    if (duplicate) {
+      cleanUpRemainingFiles(req.files);
+      req.flash('error', `A product named "${name}" already exists. Please use a different name.`);
+      return res.redirect(`/admin/products/${req.params.id}/edit`);
+    }
 
     // 1. Update basic product details
     const product = await Product.findByIdAndUpdate(
@@ -374,43 +426,43 @@ exports.updateProduct = async (req, res) => {
 };
 
 exports.blockProduct = async (req, res) => {
-
   try {
-
-
     await Product.findByIdAndUpdate(
       req.params.id,
-      { isDeleted: true }
+      { status: 'inactive' }
     );
-
     res.redirect('/admin/products');
-
   } catch (err) {
-
     console.log(err);
-
     res.redirect('/admin/products');
   }
 };
 
-
-exports.unblockProduct=async(req,res)=>{
-  try{
-
+exports.unblockProduct = async (req, res) => {
+  try {
     await Product.findByIdAndUpdate(
-      req.params.id,{
-        isDeleted:false
-      }
-    )
-
-    res.redirect('/admin/products')
-
-  }catch(err){
-    console.log(err)
-
-    res.redirect('/admin/products')
+      req.params.id,
+      { status: 'active' }
+    );
+    res.redirect('/admin/products');
+  } catch (err) {
+    console.log(err);
+    res.redirect('/admin/products');
   }
-}
+};
+
+exports.deleteProduct = async (req, res) => {
+  try {
+    await Product.findByIdAndUpdate(
+      req.params.id,
+      { isDeleted: true }
+    );
+    res.redirect('/admin/products');
+  } catch (err) {
+    console.log(err);
+    res.redirect('/admin/products');
+  }
+};
 
 
 exports.getVariants = async (req, res) => {
@@ -537,96 +589,185 @@ exports.deleteVariant = async (req, res) => {
     });
   }
 };
-
-
-
+      
 
 exports.getUserProducts = async (req, res) => {
   try {
-    const page     = parseInt(req.query.page)     || 1;
-    const limit    = 9;
-    const search   = req.query.search   || '';
-    const sort     = req.query.sort     || '';
-    const category = req.query.category || '';
-    const minPrice = req.query.minPrice ? Number(req.query.minPrice) : null;
-    const maxPrice = req.query.maxPrice ? Number(req.query.maxPrice) : null;
+    const page = parseInt(req.query.page) || 1;
+    const limit = 12;
+    const skip = (page - 1) * limit;
 
-    // Base filter: only active, non-deleted products
-    const filter = { isDeleted: false, status: 'active' };
-    if (category) filter.category = category;
-    if (search)   filter.name = { $regex: search, $options: 'i' };
+    const search = req.query.search || "";
+    const sort = req.query.sort || "";
+    const category = req.query.category || "";
+    const minPrice = req.query.minPrice
+      ? Number(req.query.minPrice)
+      : null;
+    const maxPrice = req.query.maxPrice
+      ? Number(req.query.maxPrice)
+      : null;
 
-    // Fetch all categories for the sidebar filter
-    const categories = await Category.find({ isActive: true});
+   
+    const filter = {
+      isDeleted: false,
+      status: "active",
+    };
 
-    // Get ALL matching products first (with variants) so we can filter by price
- let products = await Product.find(filter)
-  .populate({
-    path: 'category',
-    match: { isActive: true }
-  })
-  .populate('variants')
-  .sort({ createdAt: -1 });
+    if (category) {
+      filter.category = category;
+    }
 
-products = products.filter(product => product.category);
+    if (search) {
+      filter.name = {
+        $regex: search,
+        $options: "i",
+      };
+    }
 
-    // Filter by price (based on the first variant's price)
+  
+    let sortOption = { createdAt: -1 };
+
+    switch (sort) {
+      case "name_asc":
+        sortOption = { name: 1 };
+        break;
+
+      case "name_desc":
+        sortOption = { name: -1 };
+        break;
+
+      case "newest":
+        sortOption = { createdAt: -1 };
+        break;
+
+      default:
+        sortOption = { createdAt: -1 };
+    }
+
+    const categories = await Category.find({ isActive: true });
+
+    const now = new Date();
+
+const offers = await Offer.find({
+  isActive: true,
+  isDeleted: false,
+  startDate: { $lte: now },
+  endDate: { $gte: now }
+}).lean();
+
+    let products = await Product.find(filter)
+      .populate({
+        path: "category",
+        match: { isActive: true },
+      })
+      .populate("variants")
+      .sort({createdAt:-1})
+      .lean();
+
+    // Remove inactive categories
+    products = products.filter((p) => p.category);
+
+   
+
+products = products.map((product) => {
+
+  const variant = product.variants?.[0];
+
+  if (!variant) {
+    return {
+      ...product,
+      originalPrice: 0,
+      offerPrice: 0,
+      offerDiscount: 0,
+      hasOffer: false,
+    };
+  }
+
+  const price = calculateProductPrice(
+    product,
+    variant,
+    offers
+  );
+
+  return {
+    ...product,
+    ...price,
+  };
+});
+
+
+    // Price Filter
     if (minPrice !== null || maxPrice !== null) {
-      products = products.filter(p => {
-        const v = p.variants && p.variants[0];
-        if (!v) return false;
-        const price = v.discountPrice || v.price || 0;
+      products = products.filter((p) => {
+      const price = p.offerPrice || 0;
+
         if (minPrice !== null && price < minPrice) return false;
         if (maxPrice !== null && price > maxPrice) return false;
+
         return true;
       });
     }
 
-    // Sort
-    if (sort === 'price_asc') {
+    // Price Sorting
+    if (sort === "price_asc") {
       products.sort((a, b) => {
-        const pa = (a.variants[0] && (a.variants[0].discountPrice || a.variants[0].price)) || 0;
-        const pb = (b.variants[0] && (b.variants[0].discountPrice || b.variants[0].price)) || 0;
+const pa = a.offerPrice || 0;
+const pb = b.offerPrice || 0;
+
         return pa - pb;
       });
-    } else if (sort === 'price_desc') {
+    }
+
+    if (sort === "price_desc") {
       products.sort((a, b) => {
-        const pa = (a.variants[0] && (a.variants[0].discountPrice || a.variants[0].price)) || 0;
-        const pb = (b.variants[0] && (b.variants[0].discountPrice || b.variants[0].price)) || 0;
+        const pa = a.offerPrice || 0;
+const pb = b.offerPrice || 0;
+
         return pb - pa;
       });
-    } else if (sort === 'name_asc') {
-      products.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sort === 'name_desc') {
-      products.sort((a, b) => b.name.localeCompare(a.name));
-    } else if (sort === 'newest') {
-      products.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     }
 
     const totalProducts = products.length;
-    const totalPages    = Math.ceil(totalProducts / limit) || 1;
-    const pagedProducts = products.slice((page - 1) * limit, page * limit);
+    const totalPages = Math.ceil(totalProducts / limit);
 
-    // Build image paths correctly (variant images stored as filenames)
-    const productsWithImages = pagedProducts.map(p => {
-      const pObj = p.toObject();
-      // Find the first image across variants
-      let imageUrl = null;
-      if (pObj.variants && pObj.variants.length > 0) {
-        const firstVar = pObj.variants[0];
-        if (firstVar.images && firstVar.images.length > 0) {
-          imageUrl = '/uploads/products/' + firstVar.images[0];
-        }
+    const pagedProducts = products.slice(skip, skip + limit);
+
+    // Wishlist
+    let wishlistIds = [];
+    const userId = req.session.userId || req.session.user?._id;
+
+    if (userId) {
+      const user = await User.findById(userId)
+        .select("wishlist")
+        .lean();
+
+      wishlistIds = (user?.wishlist || []).map((id) =>
+        id.toString()
+      );
+    }
+
+    // Image
+    const productsWithImages = pagedProducts.map((p) => {
+      let image = null;
+
+      if (p.variants?.length && p.variants[0].images?.length) {
+        image =
+          "/uploads/products/" + p.variants[0].images[0];
       }
-      pObj.images = imageUrl ? [imageUrl] : [];
-      return pObj;
+
+      return {
+        ...p,
+        images: image ? [image] : [],
+      };
     });
 
-    res.render('user/productlist', {
-      products:         productsWithImages,
+
+
+    res.render("user/productlist", {
+      products: productsWithImages,
       categories,
       totalProducts,
-      currentPage:      page,
+      currentPage: page,
       totalPages,
       limit,
       search,
@@ -634,16 +775,14 @@ products = products.filter(product => product.category);
       selectedCategory: category,
       minPrice,
       maxPrice,
-      pageTitle:        'All Plants',
+      pageTitle: "All Plants",
+      wishlistIds,
     });
-
   } catch (err) {
-    console.log(err);
-    res.status(500).send('Server Error');
+    console.error(err);
+    res.status(500).send("Server Error");
   }
 };
-
-
 
 
 exports.getProductDetail = async (req, res) => {
@@ -661,36 +800,110 @@ if (!product) {
   productId: product._id
 }).lean();
 
-    const productObj = product.toObject();
+  const productObj = product.toObject();
 
-    productObj.variants = variants;
+  const now = new Date();
 
-    
-    // Build images array from first variant
-    if (variants.length > 0 && variants[0].images.length > 0) {
-      productObj.images = variants[0].images.map(
-        img => `/uploads/products/${img}`
-      );
-    } else {
-      productObj.images = [];
+const offers = await Offer.find({
+  isActive: true,
+  isDeleted: false,
+  startDate: { $lte: now },
+  endDate: { $gte: now }
+}).lean();
+
+
+  productObj.variants = variants;
+
+ const variant = variants[0] || null;
+
+const offer = getBestOffer(
+    productObj,
+    variant,
+    offers
+);
+  console.log(offer);
+
+productObj.offerPrice = offer.discountedPrice;
+productObj.originalPrice = offer.originalPrice;
+productObj.offerDiscount = offer.discountPercent;
+productObj.offerAmount = offer.discountAmount;
+productObj.offerName = offer.offerName;
+productObj.hasOffer = offer.hasOffer;
+
+  // Build images array from first variant
+  if (variants.length > 0 && variants[0].images.length > 0) {
+    productObj.images = variants[0].images.map(
+      img => `/uploads/products/${img}`
+    );
+  } else {
+    productObj.images = [];
+  }
+
+  // Attach return/cancel status for the logged-in user if any order items exist
+  const userId = req.session?.userId || req.session?.user?._id;
+  if (userId) {
+    const userOrders = await Order.find({
+      user: userId,
+      "items.product": product._id
+    }, "items").lean();
+    // Find the first matching item status (priority: approved > rejected > returned > requested > cancelled)
+    const statusPriority = {
+      approved: 5,
+      rejected: 4,
+      returned: 3,
+      requested: 2,
+      cancelled: 1
+    };
+    let bestStatus = null;
+    let bestScore = 0;
+    userOrders.forEach(o => {
+      o.items.forEach(it => {
+        if (String(it.product) === String(product._id) && it.returnStatus) {
+          const score = statusPriority[it.returnStatus] || 0;
+          if (score > bestScore) {
+            bestScore = score;
+            bestStatus = it.returnStatus;
+          }
+        }
+        if (String(it.product) === String(product._id) && it.itemStatus === 'cancelled') {
+          // treat cancelled as a status if no returnStatus
+          if (statusPriority['cancelled'] > bestScore) {
+            bestScore = statusPriority['cancelled'];
+            bestStatus = 'cancelled';
+          }
+        }
+      });
+    });
+    if (bestStatus) {
+      productObj.returnStatus = bestStatus;
     }
+  }
 
-
-    const unavailable =
-  product.isDeleted ||
-  product.status !== "active" ||
-  (product.category &&
-   (product.category.isDeleted || product.category.isActive === false));
-
+const unavailable =
+  !product ||
+  product.isBlocked ||
+  product.status === "inactive" ||
+  product.status === "blocked";
 if (product.status !== "active" || product.isDeleted) {
+
+//   console.log({
+//     originalPrice: productObj.originalPrice,
+//     offerPrice: productObj.offerPrice,
+//     hasOffer: productObj.hasOffer
+// });
+
+
   return res.render("user/productdetail", {
     product: productObj,
-    unavailable: true,
+    unavailable,
     relatedProducts: [],
     reviews: [],
     coupons: [],
     cartCount: 0,
     inWishlist: false,
+       wishlistIds,
+    cartCount,
+    wishlistCount
     
   
   });
@@ -706,6 +919,7 @@ if (product.status !== "active" || product.isDeleted) {
     reviews: [],
     coupons: [],
     cartCount: 0,
+    wishlistCount:0,
     inWishlist: false
   });
 }
@@ -730,18 +944,49 @@ productObj.stock = variants.reduce((sum, v) => {
   return sum + Number(v.stockQuantity || 0);
 }, 0);
 
-console.log("FINAL TOTAL STOCK:", productObj.stock);
-console.log("VARIANTS:");
-console.dir(variants, { depth: null });
+
+
+const relatedProducts = await Product.find({
+  category: product.category._id,
+  _id: { $ne: product._id }, // exclude current product
+  isDeleted: false,
+  status: "active"
+})
+.limit(4)
+.lean();
+
+
+for (let rp of relatedProducts) {
+  const variant = await ProductVariant.findOne({
+    productId: rp._id
+  }).lean();
+
+  rp.image =
+    variant?.images?.length > 0
+      ? `/uploads/products/${variant.images[0]}`
+      : "/images/no-image.png";
+}
+
+
+let wishlistIds = [];
+
+if (userId) {
+  const user = await User.findById(userId).select("wishlist");
+
+  wishlistIds = user?.wishlist?.map(id => id.toString()) || [];
+}
+
+
 
     res.render("user/productdetail", {
       product: productObj,
       unavailable,
-      relatedProducts: [],
+      relatedProducts,
       reviews: [],
       coupons: [],
       cartCount: 0,
-      inWishlist: false
+       wishlistCount:0,
+      wishlistIds
     });
 
   
@@ -750,3 +995,4 @@ console.dir(variants, { depth: null });
     res.redirect("/products");
   }
 };
+

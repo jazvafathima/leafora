@@ -113,8 +113,8 @@
           <div>
             <p class="text-xs text-gray-400 font-medium mb-0.5">Total Orders</p>
             <p class="text-2xl font-bold text-gray-800">
-              <% if (typeof stats !== 'undefined' && stats && stats.totalOrders !== undefined) { %><%= stats.totalOrders.toLocaleString() %><% } else { %>1,248<% } %>
-            </p>
+  <%= stats.totalOrders.toLocaleString() %>
+</p>
           </div>
           <div class="stat-icon bg-green-50">
             <i class="fa-solid fa-lock text-green-700"></i>
@@ -124,9 +124,9 @@
         <div class="stat-card">
           <div>
             <p class="text-xs text-gray-400 font-medium mb-0.5">Total Revenue</p>
-            <p class="text-2xl font-bold text-gray-800">
-              $<% if (typeof stats !== 'undefined' && stats && stats.totalRevenue !== undefined) { %><%= stats.totalRevenue.toLocaleString() %><% } else { %>48,392<% } %>
-            </p>
+           <p class="text-2xl font-bold text-gray-800">
+  ₹<%= (stats?.totalRevenue || 0).toLocaleString("en-IN") %>
+</p>
           </div>
           <div class="stat-icon bg-green-50">
             <i class="fa-solid fa-circle text-green-700"></i>
@@ -136,9 +136,9 @@
         <div class="stat-card">
           <div>
             <p class="text-xs text-gray-400 font-medium mb-0.5">Total Users</p>
-            <p class="text-2xl font-bold text-gray-800">
-              <% if (typeof stats !== 'undefined' && stats && stats.totalUsers !== undefined) { %><%= stats.totalUsers.toLocaleString() %><% } else { %>3,572<% } %>
-            </p>
+           <p class="text-2xl font-bold text-gray-800">
+  <%= (stats?.totalUsers || 0).toLocaleString() %>
+</p>
           </div>
           <div class="stat-icon bg-green-50">
             <i class="fa-solid fa-users text-green-700"></i>
@@ -148,9 +148,9 @@
         <div class="stat-card">
           <div>
             <p class="text-xs text-gray-400 font-medium mb-0.5">Pending Orders</p>
-            <p class="text-2xl font-bold text-gray-800">
-              <% if (typeof stats !== 'undefined' && stats && stats.pendingOrders !== undefined) { %><%= stats.pendingOrders %><% } else { %>87<% } %>
-            </p>
+          <p class="text-2xl font-bold text-gray-800">
+  <%= stats?.pendingOrders || 0 %>
+</p>
           </div>
           <div class="stat-icon bg-green-50">
             <i class="fa-solid fa-square text-green-700"></i>
@@ -161,12 +161,157 @@
 
       <%# Sales Overview chart %>
       <div class="bg-white rounded-xl p-5 mb-4 shadow-sm">
-        <h2 class="text-sm font-semibold text-gray-700 mb-4">Sales Overview</h2>
+       <div class="flex justify-between items-center mb-4">
+   <h2 id="chartTitle" class="text-sm font-semibold">
+    Yearly Sales
+</h2>
+
+    <select id="chartFilter"
+            class="border rounded-md px-3 py-1 text-sm">
+
+        <option value="yearly">Yearly</option>
+        <option value="monthly">Monthly</option>
+        <option value="weekly">Weekly</option>
+        <option value="daily">Daily</option>
+
+    </select>
+</div>
+        
         <div style="height: 220px">
           <canvas id="salesChart"></canvas>
         </div>
       </div>
+      <!-- ===================== -->
 
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+
+    <!-- ================= Top Selling Products ================= -->
+    <div class="bg-white rounded-xl shadow-sm">
+
+        <div class="px-5 py-4 border-b">
+            <h2 class="text-sm font-semibold">
+                🏆 Top 10 Best Selling Products
+            </h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="text-left px-5 py-3 text-xs">#</th>
+                        <th class="text-left px-5 py-3 text-xs">Product</th>
+                        <th class="text-center px-5 py-3 text-xs">Sold</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                <% if(topProducts && topProducts.length){ %>
+
+                    <% topProducts.forEach(function(item,index){ %>
+
+                        <tr class="border-t hover:bg-gray-50">
+
+                            <td class="px-5 py-3 font-semibold">
+                                <%= index+1 %>
+                            </td>
+
+                            <td class="px-5 py-3">
+                                <%= item.product.name %>
+                            </td>
+
+                            <td class="px-5 py-3 text-center text-green-700 font-semibold">
+                                <%= item.totalSold %>
+                            </td>
+
+                        </tr>
+
+                    <% }) %>
+
+                <% } else { %>
+
+                    <tr>
+                        <td colspan="3" class="py-5 text-center text-gray-400">
+                            No products found
+                        </td>
+                    </tr>
+
+                <% } %>
+
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+
+
+
+    <!-- ================= Top Categories ================= -->
+
+    <div class="bg-white rounded-xl shadow-sm">
+
+        <div class="px-5 py-4 border-b">
+            <h2 class="text-sm font-semibold">
+                📂 Top 10 Best Selling Categories
+            </h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-5 py-3 text-left text-xs">#</th>
+                        <th class="px-5 py-3 text-left text-xs">Category</th>
+                        <th class="px-5 py-3 text-center text-xs">Sold</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                <% if(topCategories && topCategories.length){ %>
+
+                    <% topCategories.forEach(function(item,index){ %>
+
+                        <tr class="border-t hover:bg-gray-50">
+
+                            <td class="px-5 py-3 font-semibold">
+                                <%= index+1 %>
+                            </td>
+
+                            <td class="px-5 py-3">
+                                <%= item.category.name %>
+                            </td>
+
+                            <td class="px-5 py-3 text-center text-green-700 font-semibold">
+                                <%= item.totalSold %>
+                            </td>
+
+                        </tr>
+
+                    <% }) %>
+
+                <% } else { %>
+
+                    <tr>
+                        <td colspan="3" class="py-5 text-center text-gray-400">
+                            No category sales found
+                        </td>
+                    </tr>
+
+                <% } %>
+
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+
+</div>
+<br>
       <%# Recent Orders %>
       <div class="bg-white rounded-xl shadow-sm overflow-hidden">
         <div class="px-5 py-4 border-b border-gray-100">
@@ -202,7 +347,7 @@
                         <%= order.status %>
                       </span>
                     </td>
-                    <td class="tbl-cell text-right font-medium">$<%= order.amount %></td>
+                    <td class="tbl-cell text-right font-medium">₹<%= Number(order.amount).toLocaleString("en-IN") %></td>
                   </tr>
                 <% }); %>
 
@@ -247,52 +392,71 @@
     </main>
   </div>
 </div>
-
 <script>
-  var ctx = document.getElementById('salesChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'bar',
+
+const ctx = document.getElementById("salesChart").getContext("2d");
+
+const salesChart = new Chart(ctx, {
+    type: "bar",
     data: {
-      labels: ['Jan','Feb','Mar','Apr','May','Jun'],
-      datasets: [{
-        label: 'Sales',
-        data: [
-          <% if (typeof salesData !== 'undefined' && salesData && salesData.length > 0) { %>
-            <% salesData.forEach(function(v,i) { %><%= v %><% if(i < salesData.length-1){ %>,<% } %><% }); %>
-          <% } else { %>
-            4000, 3800, 5800, 4400, 6200, 6400
-          <% } %>
-        ],
-        backgroundColor: '#1a5c1a',
-        borderRadius: 4,
-        borderSkipped: false,
-      }]
+        labels: <%- JSON.stringify(typeof chartLabels !== "undefined" ? chartLabels : []) %>,
+        datasets: [{
+            label: "Sales",
+            data: <%- JSON.stringify(typeof chartValues !== "undefined" ? chartValues : []) %>,
+            backgroundColor: "#1a5c1a",
+            borderRadius: 4,
+            borderSkipped: false
+        }]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(ctx) { return '$' + ctx.parsed.y.toLocaleString(); }
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid: { display: false },
-          ticks: { font: { size: 10, family: 'Poppins' }, color: '#9ca3af' }
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
         },
-        y: {
-          grid: { color: '#f3f4f6' },
-          ticks: { font: { size: 10, family: 'Poppins' }, color: '#9ca3af' },
-          beginAtZero: true
+        scales: {
+            y: {
+                beginAtZero: true
+            }
         }
-      }
     }
-  });
-</script>
+});
 
+const chartFilter = document.getElementById("chartFilter");
+const chartTitle = document.getElementById("chartTitle");
+
+chartFilter.addEventListener("change", async function () {
+
+    const filter = this.value;
+
+    try {
+
+        const response = await fetch(`/admin/dashboard/chart?filter=${filter}`);
+
+        if (!response.ok) {
+            throw new Error("Unable to fetch chart data");
+        }
+
+        const data = await response.json();
+
+        salesChart.data.labels = data.labels;
+        salesChart.data.datasets[0].data = data.values;
+
+        salesChart.update();
+
+        chartTitle.innerText =
+            filter.charAt(0).toUpperCase() +
+            filter.slice(1) +
+            " Sales";
+
+    } catch (err) {
+        console.error(err);
+    }
+
+});
+
+</script>
 </body>
 </html>

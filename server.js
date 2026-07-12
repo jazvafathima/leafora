@@ -16,6 +16,10 @@ const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const checkUserBlocked = require("./middleware/checkUserBlocked");
 const methodOverride = require('method-override');
+const navbarCounts = require("./middleware/navbarCounts");
+
+
+const { error } = require("console");
 
 // ─── Connect to MongoDB ─────────────────────────
 connectDB();
@@ -34,7 +38,6 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static("public/uploads"));
 app.use(express.static("public"));
 app.use(methodOverride('_method'));
-
 
 // ─── Session (MUST COME BEFORE PASSPORT) ────────
 app.use(
@@ -61,9 +64,11 @@ app.use((req, res, next) => {
 
 app.use(nocache());
 app.use(checkUserBlocked);
-// ─── Passport  ───────────────────
 app.use(passport.initialize());
 app.use(passport.session());
+
+// ─── Navbar Counts Middleware ───────────────────
+app.use(navbarCounts);
 
 // ─── Flash Messages ─────────────────────────────
 app.use(flash());
@@ -98,3 +103,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🌿 Leafora running on http://localhost:${PORT}`);
 });
+
+

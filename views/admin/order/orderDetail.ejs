@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Details - Leafora Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>tailwind.config={theme:{extend:{fontFamily:{body:['Poppins','sans-serif']}}}}</script>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:'Poppins',sans-serif;background:#f0f2f0;margin:0}
+
+    /* ── Table ── */
+    .th{font-size:0.7rem;color:#6b7280;font-weight:600;padding:10px 14px;text-align:left;border-bottom:1px solid #f0f0f0;letter-spacing:.03em}
+    .td{font-size:0.78rem;color:#374151;padding:12px 14px;border-bottom:1px solid #f9fafb;vertical-align:middle}
+    tbody tr:last-child .td{border-bottom:none}
+
+
+
+        /* ── Sidebar ── */
+    .sidebar{width:175px;background:#fff;min-height:100vh;flex-shrink:0;border-right:1px solid #e5e7eb;display:flex;flex-direction:column}
+    .sidebar-brand{padding:18px 18px 14px}
+    .sidebar-brand p{color:#1a5c1a;font-size:1.25rem;font-weight:700;margin:0}
+    .sidebar-link{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.78rem;color:#4b5563;text-decoration:none;transition:all .15s}
+    .sidebar-link:hover{color:#1a5c1a;background:#f0faf0}
+    .sidebar-link.active{background:#1a5c1a;color:#fff;font-weight:600;margin:2px 8px;border-radius:8px;padding:9px 10px}
+    .sidebar-link i{width:16px;text-align:center;font-size:0.8rem;flex-shrink:0}
+    .sidebar-logout{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.78rem;color:#ef4444;text-decoration:none;transition:all .15s}
+    .sidebar-logout:hover{background:#fef2f2}
+    .sidebar-logout i{width:16px;text-align:center}
+
+    /* ── Status badges ── */
+    .badge{display:inline-flex;align-items:center;gap:5px;font-size:0.65rem;font-weight:700;padding:4px 12px;border-radius:999px}
+    .badge-pending      {background:#fef9c3;color:#92400e}
+    .badge-processing   {background:#dbeafe;color:#1d4ed8}
+    .badge-shipped      {background:#ede9fe;color:#6d28d9}
+    .badge-outfordelivery{background:#ffedd5;color:#c2410c}
+    .badge-delivered    {background:#dcfce7;color:#15803d}
+    .badge-cancelled    {background:#fee2e2;color:#991b1b}
+    .badge-completed    {background:#dcfce7;color:#15803d}
+
+    /* ── Status dropdown ── */
+    .status-select{border:1px solid #e5e7eb;border-radius:7px;padding:5px 28px 5px 10px;font-size:0.72rem;color:#374151;outline:none;background:#fff;appearance:none;cursor:pointer;font-family:'Poppins',sans-serif;transition:border-color .2s}
+    .status-select:focus{border-color:#1a5c1a}
+
+    /* ── Product image ── */
+    .prod-img{width:50px;height:50px;border-radius:8px;overflow:hidden;background:#e8ede8;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .prod-img img{width:100%;height:100%;object-fit:cover}
+
+    /* ── Section card ── */
+    .s-card{background:#fff;border-radius:14px;border:1px solid #ece8e0;padding:22px 24px;margin-bottom:16px}
+    .s-title{font-size:0.82rem;font-weight:700;color:#374151;margin-bottom:12px}
+
+    /* ── Toast ── */
+    .toast{position:fixed;top:1rem;right:1rem;z-index:9999;display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:10px;font-size:.82rem;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.12);animation:slideIn .3s ease}
+    @keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+  </style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- Flash -->
+<% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+  <div class="toast bg-green-50 border border-green-200 text-green-700" id="flashToast">
+    <i class="fa-solid fa-circle-check"></i> <%= success[0] %>
+  </div>
+<% } %>
+<% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+  <div class="toast bg-red-50 border border-red-200 text-red-700" id="flashToast">
+    <i class="fa-solid fa-circle-exclamation"></i> <%= error[0] %>
+  </div>
+<% } %>
+
+<div class="flex min-h-screen">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand"><p>leafora</p></div>
+    <nav class="flex-1 py-2">
+      <a href="/admin/dashboard"  class="sidebar-link "><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="/admin/orders"     class="sidebar-link active"><i class="fa-solid fa-bag-shopping"></i> Orders</a>
+      <a href="/admin/products"   class="sidebar-link"><i class="fa-solid fa-box"></i> Products</a>
+      <a href="/admin/categories" class="sidebar-link"><i class="fa-solid fa-list"></i> Categories</a>
+      <a href="/admin/users"      class="sidebar-link"><i class="fa-regular fa-user"></i> Users</a>
+      <a href="/admin/offers"     class="sidebar-link"><i class="fa-regular fa-heart"></i> Offers</a>
+      <a href="/admin/coupons"    class="sidebar-link"><i class="fa-solid fa-ticket"></i> Coupons</a>
+      <a href="/admin/reports"    class="sidebar-link"><i class="fa-solid fa-chart-bar"></i> Reports</a>
+    </nav>
+    <div class="border-t border-gray-100 py-2 mt-auto">
+      <a href="/admin/logout" class="sidebar-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </aside>
+
+
+<%
+  const o          = typeof order !== 'undefined' ? order : {};
+  const statusKey  = ((o.orderStatus || 'pending')).toLowerCase().replace(/\s/g,'');
+  const statusLabel = o.orderStatus === 'outForDelivery' ? 'Out for Delivery'
+                    : o.orderStatus === 'completed'      ? 'Completed'
+                    : (o.orderStatus || 'Pending').charAt(0).toUpperCase() + (o.orderStatus || 'Pending').slice(1);
+  const badgeClass = {
+    pending:        'badge-pending',
+    processing:     'badge-processing',
+    shipped:        'badge-shipped',
+    outfordelivery: 'badge-outfordelivery',
+    delivered:      'badge-delivered',
+    completed:      'badge-completed',
+    cancelled:      'badge-cancelled',
+  }[statusKey] || 'badge-pending';
+  const orderDate = o.createdAt
+    ? new Date(o.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+    : '—';
+  const addr = o.address || {};
+  const user = o.user   || {};
+%>
+
+<div class="max-w-4xl mx-auto px-4 py-8">
+
+  <!-- Back link -->
+  <a href="/admin/orders"
+     class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#1a5c1a] mb-5 transition-colors w-fit">
+    <i class="fa-solid fa-chevron-left text-xs"></i> Back to Orders
+  </a>
+
+  <!-- ── Header ── -->
+  <div class="s-card mb-4">
+    <div class="flex items-start justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="text-lg font-bold text-gray-800 mb-0.5">
+          Order Details: &nbsp;
+          <span class="text-[#1a5c1a]">
+            <%= o.orderId || ('#ORD-' + (o._id || '').toString().slice(-6).toUpperCase()) %>
+          </span>
+        </h1>
+        <p class="text-xs text-gray-400"><%= orderDate %></p>
+      </div>
+
+      <!-- Status badge + quick change -->
+      <div class="flex items-center gap-3">
+        <span class="badge <%= badgeClass %>">
+          <i class="fa-solid fa-circle-check" style="font-size:.55rem"></i>
+          <%= statusLabel %>
+        </span>
+        <!-- <% if (o.orderStatus === 'delivered') { %>
+          <div class="flex gap-2">
+            <a href="/admin/orders/<%= o._id %>/cancel" class="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600">Cancel Order</a>
+            <a href="/admin/orders/<%= o._id %>/review" class="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">Review Order</a>
+          </div>
+        <% } %> -->
+
+        <!-- iii. Change order status dropdown -->
+        <form id="statusForm" action="/admin/orders/<%= o._id %>/status" method="POST">
+          <div class="relative">
+            <!-- <select name="orderStatus" class="status-select pr-8"
+              onchange="document.getElementById('statusForm').submit()">
+              <% ['pending','processing','shipped','outForDelivery','delivered','cancelled'].forEach(function(s){ %>
+                <option value="<%= s %>" <%= (o.orderStatus === s) ? 'selected' : '' %>>
+                  <%= s === 'outForDelivery' ? 'Out for Delivery' : s.charAt(0).toUpperCase()+s.slice(1) %>
+                </option>
+              <% }) %>
+             </select> -->
+            <!-- <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:8px"></i> -->
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Two-column: Shipping + Order Info ── -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+
+    <!-- Shipping Address -->
+    <div class="s-card mb-0">
+      <p class="s-title"><i class="fa-solid fa-location-dot text-[#1a5c1a] mr-1.5"></i>Shipping Address</p>
+      <p class="font-bold text-gray-800 text-sm mb-1">
+        <%= addr.fullName || user.firstName + ' ' + (user.lastName || '') || '—' %>
+      </p>
+      <div class="text-xs text-gray-500 space-y-0.5 leading-relaxed">
+        <p><%= addr.addressLine1 || '' %><% if (addr.addressLine2) { %>, <%= addr.addressLine2 %><% } %></p>
+        <p><%= addr.city || '' %><% if (addr.state) { %>, <%= addr.state %><% } %><% if (addr.pincode) { %> – <%= addr.pincode %><% } %></p>
+        <% if (user.email || addr.email) { %>
+          <p>Email: <%= user.email || addr.email %></p>
+        <% } %>
+        <% if (addr.phone || user.phone) { %>
+          <p>Phone: <%= addr.phone || user.phone %></p>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Order Details -->
+    <div class="s-card mb-0">
+      <p class="s-title"><i class="fa-solid fa-receipt text-[#1a5c1a] mr-1.5"></i>Order Details</p>
+      <div class="space-y-2 text-xs">
+        <div class="flex gap-2">
+          <span class="text-gray-400 w-28 flex-shrink-0">Order ID</span>
+          <span class="font-mono font-semibold text-gray-800">
+            <%= o.orderId || ('#ORD-' + (o._id || '').toString().slice(-6).toUpperCase()) %>
+          </span>
+        </div>
+        <div class="flex gap-2">
+          <span class="text-gray-400 w-28 flex-shrink-0">Total Amount</span>
+          <span class="font-bold text-[#1a5c1a]">₹<%= o.total ? Number(o.total).toLocaleString('en-IN') : '0' %></span>
+        </div>
+        <div class="flex gap-2">
+          <span class="text-gray-400 w-28 flex-shrink-0">Payment Method</span>
+          <span class="font-semibold text-gray-700 uppercase"><%= o.paymentMethod || 'COD' %></span>
+        </div>
+        <div class="flex gap-2">
+          <span class="text-gray-400 w-28 flex-shrink-0">Payment Status</span>
+          <span class="font-medium text-gray-700">
+            <%= (o.paymentStatus || 'pending').charAt(0).toUpperCase() + (o.paymentStatus || 'pending').slice(1) %>
+          </span>
+        </div>
+        <div class="flex gap-2">
+          <span class="text-gray-400 w-28 flex-shrink-0">Order Date</span>
+          <span class="text-gray-700">
+            <%= o.createdAt ? new Date(o.createdAt).toLocaleDateString('en-IN') : '—' %>
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Products Table ── -->
+  <div class="s-card">
+    <p class="s-title"><i class="fa-solid fa-boxes-stacked text-[#1a5c1a] mr-1.5"></i>Products</p>
+
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr>
+            <th class="th">Products</th>
+            <th class="th">Image</th>
+            <th class="th">Quantity</th>
+            <th class="th">Unit Price</th>
+            <th class="th">Size</th>
+            <th class="th">Status</th>
+            <th class="th">Change Status</th>
+            <th class="th text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (o.items && o.items.length > 0) { %>
+            <% o.items.forEach(function(item, idx) {
+                 const product   = item.product || item;
+                 const originalPrice = item.originalPrice || item.price || 0;
+const offerPrice = item.offerPrice || item.price || 0;
+const qty = item.quantity || 1;
+const amount = offerPrice * qty;
+const hasOffer = offerPrice < originalPrice;
+                 const itemStatus= item.itemStatus || o.orderStatus || 'pending';
+                 const iStatusKey= itemStatus.toLowerCase().replace(/\s/g,'');
+                 const iBadge    = {
+                   pending:'badge-pending',processing:'badge-processing',
+                   shipped:'badge-shipped',outfordelivery:'badge-outfordelivery',
+                   delivered:'badge-delivered',cancelled:'badge-cancelled',
+                 }[iStatusKey] || 'badge-pending';
+                 const iLabel    = itemStatus === 'outForDelivery' ? 'Out for Delivery'
+                                 : itemStatus.charAt(0).toUpperCase() + itemStatus.slice(1);
+            %>
+            <tr>
+              <!-- Product name -->
+              <td class="td">
+                <span class="font-medium text-gray-800 text-xs">
+                  <%= typeof product === 'object' ? (product.name || item.name || '—') : (item.name || '—') %>
+                </span>
+              </td>
+
+              <!-- Image slot -->
+              <td class="td">
+                <div class="prod-img">
+                  <% const img = item.image || (typeof product === 'object' && product.images && product.images[0]); %>
+                  <% if (img) { %>
+                    <img src="<%= img %>" alt="product"
+                         onerror="this.parentNode.innerHTML='<i class=\'fa-solid fa-seedling\' style=\'color:#b8d4b8\'></i>'" />
+                  <% } else { %>
+                    <i class="fa-solid fa-seedling" style="color:#b8d4b8;font-size:.9rem"></i>
+                  <% } %>
+                </div>
+              </td>
+
+              <!-- Qty -->
+              <td class="td text-center text-xs"><%= qty %></td>
+
+              <!-- Unit Price -->
+<% if (item.offerPrice && item.offerPrice < item.originalPrice) { %>
+
+    <span class="text-green-600 font-semibold">
+        ₹<%= item.offerPrice.toLocaleString("en-IN") %>
+    </span>
+
+    <span class="line-through text-gray-400 text-xs">
+        ₹<%= item.originalPrice.toLocaleString("en-IN") %>
+    </span>
+
+<% } else { %>
+
+    ₹<%= (item.offerPrice || item.price).toLocaleString("en-IN") %>
+
+<% } %>
+
+              <!-- Size -->
+              <td class="td text-xs text-gray-500"><%= item.size || '—' %></td>
+
+              <!-- Item status badge -->
+              <td class="td">
+                <span class="badge <%= iBadge %>"><%= iLabel %></span>
+              </td>
+
+              <!-- iii. Change item-level status -->
+              <td class="td">
+                <%
+const statusFlow = {
+  pending: ['pending', 'processing', 'cancelled'],
+  processing: ['processing', 'shipped', 'cancelled'],
+  shipped: ['shipped', 'outForDelivery', 'cancelled'],
+  outForDelivery: ['outForDelivery', 'delivered'],
+  delivered: ['delivered'],
+  cancelled: ['cancelled']
+};
+
+const allowedStatuses = statusFlow[itemStatus] || [itemStatus];
+%>
+                <form action="/admin/orders/<%= o._id %>/items/<%= idx %>/status" method="POST">
+  <div class="relative">
+    <select
+      name="itemStatus"
+      class="status-select pr-8"
+      onchange="this.form.submit()">
+
+      <% allowedStatuses.forEach(function(s){ %>
+        <option
+          value="<%= s %>"
+          <%= itemStatus === s ? 'selected' : '' %>>
+          <%= s === 'outForDelivery'
+              ? 'Out for Delivery'
+              : s.charAt(0).toUpperCase() + s.slice(1) %>
+        </option>
+      <% }) %>
+
+    </select>
+
+    <i class="fa-solid fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+       style="font-size:7px"></i>
+  </div>
+</form>
+              </td>
+
+              <!-- Amount -->
+              <td class="td text-right font-semibold text-gray-800 text-xs">
+               ₹<%= ((item.offerPrice || item.price) * item.quantity).toLocaleString("en-IN") %>
+              </td>
+            </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="8" class="text-center text-gray-400 text-xs py-8">No items found</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Price summary ── -->
+    <div class="flex justify-end mt-6">
+      <div class="w-60 space-y-2 text-xs">
+        <div class="flex justify-between">
+          <span class="text-gray-400">Subtotal:</span>
+          <span class="font-semibold text-gray-800">
+            ₹<%= o.subtotal ? Number(o.subtotal).toLocaleString('en-IN') : '0' %>
+          </span>
+        </div>
+        <% if (o.discount > 0) { %>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Discount:</span>
+          <span class="font-semibold text-red-500">–₹<%= Number(o.discount).toLocaleString('en-IN') %></span>
+        </div>
+        <% } %>
+        <% if (o.shipping > 0) { %>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Shipping:</span>
+          <span class="font-semibold text-gray-800">₹<%= Number(o.shipping).toLocaleString('en-IN') %></span>
+        </div>
+        <% } %>
+        <% if (o.tax > 0) { %>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Tax:</span>
+          <span class="font-semibold text-gray-800">₹<%= Number(o.tax).toLocaleString('en-IN') %></span>
+        </div>
+        <% } %>
+        <div class="flex justify-between pt-2 border-t border-gray-100 font-bold text-sm">
+          <span>Total:</span>
+          <span class="text-[#1a5c1a]">₹<%= o.total ? Number(o.total).toLocaleString('en-IN') : '0' %></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- /products -->
+
+</div>
+
+<script>
+if (ft) setTimeout(function(){ ft.remove(); }, 5000);
+</script>
+</body>
+</html>

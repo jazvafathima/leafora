@@ -5,9 +5,34 @@ exports.getAddresses = async (req, res) => {
   try {
     const userId = req.session.userId;
 
-    const addresses = await Address.find({ user: userId });
+    const page = parseInt(req.query.page) || 1;
+    const limit = 5;
 
-    res.render('user/addresses/addresses', { addresses });
+    const totalAddresses = await Address.countDocuments({
+      user: userId
+    });
+
+    const totalPages = Math.ceil(totalAddresses / limit);
+
+    const addresses = await Address.find({
+      user: userId
+    })
+      .sort({ isDefault: -1, createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+      console.log({
+  page,
+  totalPages,
+  addressesCount: addresses.length
+});
+
+    res.render('user/addresses/addresses', {
+      addresses,
+      currentPage: page,
+      totalPages
+    });
+
   } catch (err) {
     console.log(err);
     res.send("Error loading addresses");
@@ -24,48 +49,7 @@ exports.getAddAddress = (req, res) => {
 };
 
 // Save Address
-exports.addAddress = async (req, res) => {
-  try {
-    const userId = req.session.userId;
 
-    const newAddress = new Address({
-      user: userId,
-      name: req.body.name,
-      phone: req.body.phone,
-      city: req.body.city,
-      state: req.body.state,
-      pincode: req.body.pincode,
-      address: req.body.address
-    });
-
-    await newAddress.save();
-
-    res.redirect('/addresses'); // back to address list
-  } catch (err) {
-   
-  }
-};
-
-
-
-// ── ADD ADDRESS ───────────────────────────
-exports.addAddress = async (req, res) => {
-  try {
-    const userId = req.session.userId;
-
-    const newAddress = new Address({
-      user: userId,
-      ...req.body
-    });
-
-    await newAddress.save();
-
-    res.redirect('/addresses');
-  } catch (err) {
-    console.log(err);
-    res.send("Error adding address");
-  }
-};
 
 // ── EDIT ADDRESS ──────────────────────────
 exports.editAddress = async (req, res) => {

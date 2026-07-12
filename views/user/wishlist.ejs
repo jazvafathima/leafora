@@ -43,6 +43,7 @@
     .nav-icons a { color: #374151; font-size: 0.9rem; text-decoration: none; transition: color .15s; position: relative; }
     .nav-icons a:hover { color: #1a5c1a; }
     .cart-badge { position: absolute; top: -6px; right: -7px; background: #1a5c1a; color: #fff; font-size: 0.5rem; font-weight: 700; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .wishlist-badge { position: absolute; top: -6px; right: -7px; background: #ef4444; color: #fff; font-size: 0.5rem; font-weight: 700; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
     /* ── Wishlist card ── */
     .wish-card { background: #fff; border-radius: 14px; border: 1px solid #f0ece4; padding: 18px 22px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: box-shadow .2s; }
@@ -86,16 +87,19 @@
     <img src="/images/leafora logo.png" alt="Leafora" onerror="this.style.display='none'" />
     <span>Leafora</span>
   </a>
-  <div class="nav-links">
-    <a href="/">Home</a>
-    <a href="/shop" class="active">Shop</a>
-    <a href="/products">Products</a>
-    <a href="/pages">Pages <i class="fa-solid fa-chevron-down" style="font-size:.6rem"></i></a>
-  </div>
-  <div class="nav-icons">
-    <a href="/search"   title="Search"><i class="fa-solid fa-magnifying-glass"></i></a>
-    <a href="/account"  title="Account"><i class="fa-regular fa-user"></i></a>
-    <a href="/wishlist" title="Wishlist"><i class="fa-regular fa-heart"></i></a>
+   <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+        <a href="/"          class="hover:text-leaf-700 transition-colors">Home</a>
+        <a href="/productlist" class="hover:text-leaf-700 transition-colors"  >products</a>
+        <a href="/about"  class="hover:text-leaf-700 transition-colors">About</a>
+        <a href="/contact"     class="hover:text-leaf-700 transition-colors">Contact</a>
+      </nav>
+
+     <div class="nav-icons" style="display:flex;align-items:center">
+    <a href="/profile" title="Account"><i class="fa-regular fa-user"></i></a>
+<a href="/wishlist" title="Wishlist" style="position:relative">
+  <i class="fa-regular fa-heart"></i>
+  <span class="wishlist-badge" style="<% if (typeof wishlistCount !== 'undefined' && wishlistCount > 0) { %>display:flex;<% } else { %>display:none;<% } %>"><%= wishlistCount || 0 %></span>
+</a>
     <a href="/cart" title="Cart" style="position:relative">
       <i class="fa-solid fa-bag-shopping"></i>
       <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
@@ -150,19 +154,22 @@ const isBlocked =
       %>
 
       <div class="wish-card" id="wish-<%= product._id %>"
-           style="<%= (isBlocked || isOut) ? 'opacity:.65' : '' %>">>
+           style="<%= (isBlocked || isOut) ? 'opacity:.65' : '' %>">
 
         <!-- Left: date + image + info -->
         <div class="flex items-center gap-4 flex-1 min-w-0">
 
           <!-- Product image slot -->
-          <a href="<%= isBlocked ? '#' : '/products/' + product._id %>" class="prod-img flex-shrink-0">
-            <% if (product.images && product.images.length > 0) { %>
-              <img src="/uploads/products/<%= variant.images[0] %>" alt="<%= product.name %>" />
-            <% } else { %>
-              <i class="fa-solid fa-seedling text-xl" style="color:#b8d4b8"></i>
-            <% } %>
-          </a>
+<a href="<%= isBlocked ? '#' : '/product/' + product._id %>" class="prod-img flex-shrink-0">
+  <% if (variant && variant.images && variant.images.length > 0) { %>
+    <img
+      src="/uploads/products/<%= variant.images[0] %>"
+      alt="<%= product.name %>"
+    />
+  <% } else { %>
+    <i class="fa-solid fa-seedling text-xl" style="color:#b8d4b8"></i>
+  <% } %>
+</a>
 
           <!-- Info -->
           <div class="min-w-0">
@@ -174,7 +181,7 @@ const isBlocked =
             <!-- Name -->
             <a href="<%= isBlocked ? '#' : '/products/' + product._id %>"
                class="font-semibold text-[#1a5c1a] text-sm hover:underline leading-tight block mb-0.5 truncate">
-              <%= product.name %>
+             <%- JSON.stringify(product.name) %>
             </a>
 
             <!-- Variant info -->
@@ -217,13 +224,13 @@ const isBlocked =
             </button>
           <% } else { %>
             <button
-              onclick="addToCartFromWishlist('<%= product._id %>',
-                '<%= variant ? variant._id : '' %>',
-                '<%= product.name %>',
-                this)"
-              class="bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">
-              Add to cart
-            </button>
+  data-product-id="<%= product._id %>"
+  data-variant-id="<%= variant ? variant._id : '' %>"
+  data-product-name="<%- product.name.replace(/"/g, '&quot;') %>"
+  onclick="addToCartFromWishlist(this.dataset.productId, this.dataset.variantId, this.dataset.productName, this)"
+  class="bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-6 py-2.5 rounded-lg transition-colors whitespace-nowrap">
+  Add to cart
+</button>
           <% } %>
         </div>
 
@@ -238,7 +245,7 @@ const isBlocked =
       <i class="fa-regular fa-heart text-6xl mb-4 block" style="color:#d1e8d1"></i>
       <p class="font-display text-xl font-semibold text-gray-700 mb-2">No favorites yet</p>
       <p class="text-xs text-gray-400 mb-6">Save plants you love to find them easily later</p>
-      <a href="/products"
+      <a href="/productlist"
          class="inline-flex items-center gap-2 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-sm font-semibold px-6 py-3 rounded-xl transition-colors">
         <i class="fa-solid fa-seedling text-xs"></i> Browse Plants
       </a>
@@ -355,7 +362,6 @@ const isBlocked =
         body:    JSON.stringify({ productId, variantId, quantity: 1 }),
       });
       const data = await res.json();
-window.location.reload();
 
       if (data.success) {
         // Update cart badge in navbar
@@ -394,10 +400,15 @@ window.location.reload();
                   <i class="fa-regular fa-heart text-6xl mb-4 block" style="color:#d1e8d1"></i>
                   <p class="font-semibold text-gray-700 mb-2 text-lg">No favorites yet</p>
                   <p class="text-xs text-gray-400 mb-6">Your wishlist is empty now.</p>
-                  <a href="/products" class="inline-flex items-center gap-2 bg-[#1a5c1a] text-white text-sm font-semibold px-6 py-3 rounded-xl">
+                  <a href="/productlist" class="inline-flex items-center gap-2 bg-[#1a5c1a] text-white text-sm font-semibold px-6 py-3 rounded-xl">
                     <i class="fa-solid fa-seedling text-xs"></i> Browse Plants
                   </a>
                 </div>`;
+              // Refresh badge after empty state
+              refreshWishlistBadge();
+            } else {
+              // Refresh badge after removal
+              refreshWishlistBadge();
             }
           }, 360);
         }
@@ -426,9 +437,9 @@ window.location.reload();
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ productId }),
       });
-      const data = await res.json();
-window.location.reload();
 
+      const data = await res.json();
+      
       if (data.success) {
         const card = document.getElementById('wish-' + productId);
         if (card) {
@@ -441,6 +452,8 @@ window.location.reload();
             if (countEl) {
               countEl.textContent = remaining + ' item' + (remaining !== 1 ? 's' : '') + ' saved for later';
             }
+            // Refresh badge after removing from wishlist
+            refreshWishlistBadge();
             if (remaining === 0) window.location.reload();
           }, 300);
         }
@@ -472,6 +485,30 @@ window.location.reload();
   /* ── Auto-dismiss flash toast ── */
   const flashToast = document.getElementById('flashToast');
   if (flashToast) setTimeout(() => flashToast.remove(), 5000);
+
+  // Refresh wishlist badge count periodically
+  async function refreshWishlistBadge() {
+    try {
+      const res = await fetch('/wishlist/count');
+      const data = await res.json();
+      const badge = document.querySelector('.wishlist-badge');
+      if (badge) {
+        if (data.count > 0) {
+          badge.textContent = data.count;
+          badge.style.display = 'flex';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
+    } catch (e) {
+      console.error('Failed to refresh wishlist badge', e);
+    }
+  }
+  // Initial load
+  refreshWishlistBadge();
+  // Poll every 10 seconds
+  setInterval(refreshWishlistBadge, 10000);
+
 </script>
 
 </body>

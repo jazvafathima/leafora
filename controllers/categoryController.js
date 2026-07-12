@@ -1,11 +1,11 @@
 const Category = require('../models/Category');
+const Product = require("../models/Product");
+
 const fs = require('fs');
 const path = require('path');
 
 
-// =============================
-// CATEGORY LIST
-// =============================
+
 
 exports.getCategories = async (req, res) => {
 
@@ -42,16 +42,28 @@ exports.getCategories = async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit);
 
-
-    res.render('admin/category/category', {
-      categories,
-      currentPage: page,
-      totalPages,
-      totalCount,
-      search
-
+   const categoriesWithCount = await Promise.all(
+  categories.map(async (cat) => {
+    const productCount = await Product.countDocuments({
+      category: cat._id,
+      isDeleted: false
     });
 
+    return {
+      ...cat.toObject(),
+      productCount
+    };
+  })
+);
+
+res.render('admin/category/category', {
+  categories: categoriesWithCount,
+  currentPage: page,
+  totalPages,
+  totalCount,
+  search
+});
+     
     
 
   } catch (error) {
@@ -281,3 +293,21 @@ exports.unblockCategory= async (req,res)=>{
     }
 }
 
+
+exports.deleteCategory = async (req, res) => {
+  try {
+
+    await Category.findByIdAndUpdate(
+      req.params.id,
+      {
+        isDeleted: true
+      }
+    );
+
+    res.redirect('/admin/categories');
+
+  } catch (error) {
+    console.log(error);
+    res.redirect('/admin/categories');
+  }
+};

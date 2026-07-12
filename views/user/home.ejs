@@ -77,6 +77,19 @@
       width: 100%; height: 100%;
       object-fit: cover; display: block;
     }
+
+ .nav-logo { display: flex; align-items: center; gap: 6px; text-decoration: none; }
+    .nav-logo img { height: 34px; }
+    .nav-logo span { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; color: #1a5c1a; }
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+    .nav-links a { font-size: 0.8rem; color: #374151; text-decoration: none; font-weight: 500; transition: color .15s; padding-bottom: 2px; }
+    .nav-links a:hover { color: #1a5c1a; }
+    .nav-links a.active { border-bottom: 2px solid #374151; }
+    .nav-icons { display: flex; align-items: center; gap: 16px; }
+    .nav-icons a { color: #374151; font-size: 0.9rem; text-decoration: none; transition: color .15s; position: relative; }
+    .nav-icons a:hover { color: #1a5c1a; }
+    .cart-badge { position: absolute; top: -6px; right: -7px; background: #1a5c1a; color: #fff; font-size: 0.5rem; font-weight: 700; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
   </style>
 </head>
 
@@ -92,62 +105,35 @@
   <!-- ═══════════════════════════════════════════════════════════════════════
        NAVBAR
   ════════════════════════════════════════════════════════════════════════ -->
-  <!-- <header class="bg-cream   shadow-sm sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+<!-- <div class="flex items-center gap-4 text-black">
 
-       ── LOGO IMAGE ──────────────────────────────────────────────────
-           Replace src with your logo path.
-           Recommended size: any height, keep aspect ratio, h-8 = 32px tall
-      ─────────────────────────────────────────────────────────────────── -->
-      <!-- <a href="/" class="flex items-center gap-2 flex-shrink-0">
-        <img src="\images\leafora logo.jpeg " alt="Leafora Logo" class="h-18 w-28" />
-        
-      </a>
+  <% if (user) { %>
 
-      Search Bar -->
-      <!-- <div class="flex-1 max-w-lg hidden md:flex items-center border border-gray-200 rounded-full px-4 py-2 gap-2 bg-gray-50 hover:bg-white transition-colors">
-        <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
-        <input type="text" placeholder="Search for plants, pots, seeds..."
-          class="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400" />
-      </div> -->
+    <a href="/profile" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
+      <i class="fa-regular fa-user text-base"></i>
+      <span class="text-[10px] text-gray-300">Account</span>
+    </a>
+    <a href="/wishlist" class="hidden md:flex flex-col items-center gap-0.5 relative hover:text-leaf-500 transition-colors">
+  <i class="fa-regular fa-heart text-base"></i>
+  <% if (typeof wishlistCount !== 'undefined' && wishlistCount > 0) { %>
+    <span class="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold"><%= wishlistCount %></span>
+  <% } %>
+  <span class="text-[10px] text-gray-300">Wishlist</span>
+</a>    </a>
+    <a href="/cart" class="flex flex-col items-center gap-0.5 relative hover:text-leaf-500 transition-colors">
+      <i class="fa-solid fa-cart-shopping text-base"></i>
+      <span class="absolute -top-1 -right-2 bg-orange-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">3</span>
+      <span class="text-[10px] text-gray-300">Cart</span>
+    </a>
+  <% } else { %>
+  <% /* Guest: show Login button */ %>
+    <a href="/login" class="flex items-center gap-2 bg-leaf-600 hover:bg-leaf-700 text-white text-sm font-semibold px-5 py-2 rounded-full transition-colors">
+      <i class="fa-regular fa-user"></i> Login / Sign up
+    </a>
+  <% } %>
 
-      <!-- Nav Icons -->
-      <!-- <div class="flex items-center gap-4 text-leaf-700">
-        <a href="/profile" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
-          <i class="fa-regular fa-user text-base"></i>
-          <span class="text-[10px] text-gray-500">Account</span>
-        </a>
-
-
-        <a href="/whishlist" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
-          <i class="fa-regular fa-heart text-base"></i>
-          <span class="text-[10px] text-gray-500">Wishlist</span>
-        </a>
-        <a href="#" class="flex flex-col items-center gap-0.5 relative hover:text-leaf-500 transition-colors">
-          <i class="fa-solid fa-cart-shopping text-base"></i>
-          <span class="absolute -top-1 -right-2 bg-orange-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">3</span>
-          <span class="text-[10px] text-gray-500">Cart</span>
-        </a>
-        <button class="md:hidden text-gray-600"><i class="fa-solid fa-bars text-lg"></i></button>
-      </div>
-    </div> -->
-
-    <!-- Category Nav -->
-    <!-- <nav class="border-t border-gray-100 bg-white">
-      <div class="max-w-7xl mx-auto px-4">
-        <ul class="flex items-center gap-6 overflow-x-auto scrollbar-hide py-2 text-sm font-medium text-gray-600">
-          <% const categories = ['Home','Indoor Plants','Outdoor Plants','Air Purifiers','Pots & Planters','Gift Sets']; %>
-          <% categories.forEach((cat, i) => { %>
-            <li class="flex-shrink-0">
-              <a href="#" class="<%= i===0 ? 'text-leaf-600 font-semibold border-b-2 border-leaf-500 pb-1' : 'hover:text-leaf-600 transition-colors' %>">
-                <%= cat %>
-              </a>
-            </li>
-          <% }) %>
-        </ul>
-      </div>
-    </nav>
-  </header> -->
+</div>
+  -->
 
   <!-- ═══════════════════════════════════════════════════════════════════════
        HERO BANNER  (3-column layout)
@@ -198,32 +184,70 @@
       </nav>  -->
 
   
-      <div class="flex-1 max-w-lg hidden md:flex items-center border border-gray-200 rounded-full px-4 py-2 gap-2 bg-gray-50 hover:bg-white transition-colors">
-        <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
-        <input type="text" placeholder="Search for plants, pots, seeds..."
-          class="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400" />
-      </div>
+   <form action="/productlist" method="GET"
+  class="flex-1 max-w-lg hidden md:flex items-center border border-gray-200 rounded-full px-4 py-2 gap-2 bg-gray-50 hover:bg-white transition-colors">
+
+  <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
+
+  <input
+    id="searchInput"
+    type="text"
+    name="search"
+    placeholder="Search for plants, pots, seeds..."
+    value="<%= search || '' %>"
+    class="flex-1 bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400"
+  />
+
+  <button
+    type="button"
+    id="clearSearch"
+    class="hidden text-gray-400 hover:text-red-500"
+  >
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+</form>
+
+       <% if (user) { %>
 
       <div class="flex items-center gap-4 text-white">
         <a href="/profile" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
           <i class="fa-regular fa-user text-base"></i>
-          <span class="text-[10px] text-gray-500">Account</span>
+        
         </a> 
 
 
         
 
-        <a href="/wishlist" class="hidden md:flex flex-col items-center gap-0.5 hover:text-leaf-500 transition-colors">
-          <i class="fa-regular fa-heart text-base"></i>
-          <span class="text-[10px] text-gray-500">Wishlist</span>
-        </a>
-        <a href="/cart" class="flex flex-col items-center gap-0.5 relative hover:text-leaf-500 transition-colors">
-          <i class="fa-solid fa-cart-shopping text-base"></i>
-          <span class="absolute -top-1 -right-2 bg-orange-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">3</span>
-          <span class="text-[10px] text-gray-500">Cart</span>
-        </a>
+       <a href="/wishlist" class="hidden md:flex flex-col items-center gap-0.5 relative hover:text-leaf-500 transition-colors">
+  <i class="fa-regular fa-heart text-base"></i>
+
+<span
+  id="wishlistCount"
+  class="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold <%= wishlistCount > 0 ? '' : 'hidden' %>">
+  <%= wishlistCount || 0 %>
+</span>
+
+
+</a>
+
+ <a href="/cart" title="Cart" style="position:relative">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+        <span class="cart-badge"><%= cartCount %></span>
+      <% } %>
+    </a>
+
+
+
         <button class="md:hidden text-gray-600"><i class="fa-solid fa-bars text-lg"></i></button>
       </div>
+       <% } else { %>
+  <% /* Guest: show Login button */ %>
+    <a href="/login" class="flex items-center gap-2 bg-leaf-600 hover:bg-leaf-700 text-white text-sm font-semibold px-5 py-2 rounded-full transition-colors">
+      <i class="fa-regular fa-user"></i> Login / Sign up
+    </a>
+  <% } %>
+
     </div> 
 
     </header>
@@ -237,10 +261,11 @@
          Bring life into your space with handpicked plants that purify your air and calm your mind. 
       Start your green journey today.
       </p>
-
+<a href="/productlist">
       <button class="bg-green-500 px-6 py-3 rounded-lg hover:bg-green-900">
         Explore Now
       </button>
+      </a>
     </div>
 
   </div>
@@ -265,10 +290,7 @@
     // ProductVariant fields: productId, color, size, sku, price, discountPrice, stock, images, status
     // images[] stores filenames only → full URL = /uploads/products/<filename>
     const mainVariant = p.variants[0]; // already filtered to active variants in controller
-    const currentPrice  = mainVariant.discountPrice ? mainVariant.discountPrice : mainVariant.price;
-    const originalPrice = mainVariant.discountPrice ? mainVariant.price : null;
-    const hasDiscount   = !!mainVariant.discountPrice;
-    const discountPct   = hasDiscount ? Math.round((1 - mainVariant.discountPrice / mainVariant.price) * 100) : 0;
+   
     const imageFile     = (mainVariant.images && mainVariant.images.length > 0) ? mainVariant.images[0] : null;
     const productImage  = imageFile ? '/uploads/products/' + imageFile : 'https://placehold.co/400x500/2e9e2e/white?text=No+Image';
     const variantSize   = mainVariant.size || '';
@@ -290,9 +312,9 @@
       <div class="absolute inset-0 bg-black/35"></div>
 
       <!-- Badge: Discount % or "New Arrival" -->
-      <span class="absolute top-3 left-3 text-white text-[10px] font-bold px-2 py-1 rounded-full z-10 <%= hasDiscount ? 'bg-orange-500' : 'bg-leaf-600' %>">
-        <%= hasDiscount ? discountPct + '% OFF' : 'New Arrival' %>
-      </span>
+<span class="absolute top-3 left-3 text-white text-[10px] font-bold px-2 py-1 rounded-full z-10 <%= p.hasOffer ? 'bg-orange-500' : 'bg-leaf-600' %>">
+  <%= p.hasOffer ? p.offerDiscount + '% OFF' : 'New Arrival' %>
+</span>
 
       
       <% if (!inStock) { %>
@@ -301,15 +323,18 @@
         </div>
       <% } %>
 
-      <!-- Wishlist -->
-   <button
+     
+     <!-- Wishlist -->
+             <%
+               const _wlIds = typeof wishlistIds !== 'undefined' ? wishlistIds : [];
+               const _inWL  = _wlIds.includes(p._id.toString());
+             %>
+             <button
   type="button"
   onclick="event.preventDefault();event.stopPropagation();toggleWishlist('<%= p._id %>', this)"
   class="absolute top-3 right-3 bg-white/90 rounded-full w-8 h-8 flex items-center justify-center shadow z-10"
 >
-  <i class="<%= wishlistIds.includes(p._id.toString())
-      ? 'fa-solid text-red-500'
-      : 'fa-regular text-gray-500' %> fa-heart text-xs"></i>
+  <i class="<%= _inWL ? 'fa-solid text-red-500' : 'fa-regular' %> fa-heart text-xs"></i>
 </button>
       <!-- Content -->
       <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
@@ -322,22 +347,40 @@
           </p>
         <% } %>
 
-        <div class="flex items-center gap-2 mb-3">
-          <span class="font-bold text-lg">
-            ₹<%= currentPrice.toLocaleString('en-IN') %>
-          </span>
-          <% if (originalPrice) { %>
-            <span class="text-sm line-through text-gray-300">
-              ₹<%= originalPrice.toLocaleString('en-IN') %>
-            </span>
-          <% } %>
-        </div>
+  <div class="flex items-center gap-2 mb-3">
 
-        <button
-  class="w-full bg-white text-leaf-700 py-2 rounded-lg text-sm font-semibold hover:bg-leaf-600 hover:text-white transition <%= p.stockQty === 0 ? 'opacity-50 cursor-not-allowed' : '' %>"
-  <%= p.stockQty === 0 ? 'disabled' : '' %>>
+  <% if (p.hasOffer) { %>
+
+    <span class="font-bold text-lg text-green-700">
+      ₹<%= p.offerPrice.toLocaleString("en-IN") %>
+    </span>
+
+    <span class="text-sm line-through text-gray-400">
+      ₹<%= p.originalPrice.toLocaleString("en-IN") %>
+    </span>
+
+    <span class="text-sm text-red-600 font-semibold">
+      <%= p.offerDiscount %>% OFF
+    </span>
+
+  <% } else { %>
+
+    <span class="font-bold text-lg">
+      ₹<%= p.originalPrice.toLocaleString("en-IN") %>
+    </span>
+
+  <% } %>
+
+</div>
+
+        
+<button
+     type="button"
+     onclick="addToCart(event, '<%= p._id %>', '<%= p.variants[0]._id %>')"
+     class="w-full bg-white text-leaf-700 py-2 rounded-lg text-sm font-semibold hover:bg-leaf-600 hover:text-white transition"
+   >
   <i class="fa-solid fa-cart-plus mr-1"></i>
-  view product
+  ADD TO CART
 </button>
 
 
@@ -349,7 +392,7 @@
 
 
 </div>
-      </a>
+      
 
     <div class="text-center mt-8">
       <a href="/productlist" class="inline-flex items-center gap-2 border-2 border-leaf-600 text-leaf-700 px-8 py-2.5 rounded-full text-sm font-semibold hover:bg-leaf-600 hover:text-white transition-all">
@@ -461,9 +504,9 @@
                Should be a real QR linking to your app / website
           ──────────────────────────────────────────────────────────── -->
           <div class="bg-white rounded-xl p-2 inline-block w-20 h-20 mb-3">
-            <div class="img-box w-full h-full">
+            <!-- <div class="img-box w-full h-full">
               <img src="/images/qr-code.png" alt="Scan to download the Leafora app" class="object-contain" />
-            </div>
+            </div> -->
           </div>
           <p class="text-xs text-gray-500 mb-3">Scan to download the app</p>
 
@@ -522,7 +565,106 @@
     <i class="fa-solid fa-chevron-up text-sm"></i>
   </button>
 
+  <div id="toast"
+     class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg hidden z-50">
+</div>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
+async function addToCart(event, productId, variantId) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  try {
+    const res = await fetch('/cart/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        productId,
+        variantId,
+        quantity: 1
+      })
+    });
+
+    const data = await res.json();
+
+    console.log(data);
+
+    if (data.success) {
+
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Added to cart',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      updateCartBadge(data.cartCount);
+
+    } else {
+
+      Swal.fire({
+        icon: 'error',
+        title: data.message
+      });
+
+    }
+
+  } catch(err){
+    console.error(err);
+  }
+}
+
+function updateCartBadge(count) {
+
+    const badge = document.getElementById("cartCount");
+
+    if(!badge) return;
+
+    badge.textContent = count;
+
+    if(count > 0){
+        badge.classList.remove("hidden");
+    }else{
+        badge.classList.add("hidden");
+    }
+
+}
+
+
+</script>
+<script>
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+
+  toast.textContent = message;
+
+  toast.classList.remove(
+    'hidden',
+    'bg-green-600',
+    'bg-red-600',
+    'bg-blue-600'
+  );
+
+  if (type === 'error') {
+    toast.classList.add('bg-red-600');
+  } else if (type === 'info') {
+    toast.classList.add('bg-blue-600');
+  } else {
+    toast.classList.add('bg-green-600');
+  }
+
+  setTimeout(() => {
+    toast.classList.add('hidden');
+  }, 2500);
+}
+
+
+
 async function toggleWishlist(productId, btn) {
   try {
     const res = await fetch('/wishlist/toggle', {
@@ -545,45 +687,64 @@ async function toggleWishlist(productId, btn) {
     if (data.inWishlist) {
       icon.classList.remove('fa-regular');
       icon.classList.add('fa-solid', 'text-red-500');
-
       showToast('Added to wishlist ❤️', 'success');
     } else {
       icon.classList.remove('fa-solid', 'text-red-500');
       icon.classList.add('fa-regular');
-
       showToast('Removed from wishlist', 'info');
     }
+
+    refreshWishlistCount(); // <-- Add this line
 
   } catch (err) {
     console.error(err);
     showToast('Something went wrong', 'error');
   }
 }
-</script>
-<div id="toast-container"
-     class="fixed top-5 right-5 z-[9999]"></div>
-     <script>
-function showToast(message, type = 'success') {
+ 
+async function refreshWishlistCount() {
+  console.log("Refreshing wishlist count...");
 
-  const toast = document.createElement('div');
+  const res = await fetch('/wishlist/count');
+  const data = await res.json();
 
-  let bg = 'bg-green-600';
+  console.log("Count response:", data);
 
-  if (type === 'error') bg = 'bg-red-600';
-  if (type === 'info') bg = 'bg-blue-600';
+  const badge = document.getElementById('wishlistCount');
 
-  toast.className =
-    `${bg} text-white px-4 py-3 rounded-lg shadow-lg mb-2`;
+  if (!badge) return;
 
-  toast.textContent = message;
+  badge.textContent = data.count;
 
-  document.getElementById('toast-container').appendChild(toast);
-
-  setTimeout(() => {
-    toast.remove();
-  }, 2500);
+  if (data.count > 0) {
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
 }
+
+
 </script>
+<script>
+const searchInput = document.getElementById("searchInput");
+const clearBtn = document.getElementById("clearSearch");
+
+function toggleClearButton() {
+  clearBtn.classList.toggle("hidden", searchInput.value === "");
+}
+
+toggleClearButton();
+
+searchInput.addEventListener("input", toggleClearButton);
+
+clearBtn.addEventListener("click", () => {
+  searchInput.value = "";
+  window.location.href = "/dashboard"; // Clears search and reloads page
+});
+</script>
+
+<!-- <script src="/js/autoReload.js"></script> -->
+     
 
 </body>
 </html>

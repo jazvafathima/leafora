@@ -150,10 +150,39 @@
         </div>
       <% } %>
 
+
+      
+       
+            
       <!-- Filter bar -->
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm px-5 py-4 mb-4">
         <form method="GET" action="/admin/products" id="filterForm">
           <div class="flex flex-wrap items-center gap-3">
+
+
+                 <!-- Search -->
+     <div class="relative">
+  <input
+    type="text"
+    name="search"
+    id="searchInput"
+    placeholder="Search products"
+    value="<%= typeof search !== 'undefined' ? search : '' %>"
+    class="f-input pr-10"
+    style="min-width:900px"
+  />
+
+  <% if (search) { %>
+    <a
+      href="/admin/products"
+      class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500"
+      title="Clear search"
+    >
+      <i class="fa-solid fa-xmark"></i>
+    </a>
+  <% } %>
+</div>
+       
 
             <!-- Category -->
             <div class="relative">
@@ -197,17 +226,6 @@
   </i>
 </div>
 
-            <!-- Search -->
-            <input type="text" name="search" id="searchInput"
-              placeholder="Search products"
-              value="<%= typeof search !== 'undefined' ? search : '' %>"
-              class="f-input" style="min-width:200px" />
-
-            <button type="submit"
-              class="bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-5 py-2 rounded-lg transition-colors">
-              Search
-            </button>
-           
 
           </div>
         </form>
@@ -305,8 +323,10 @@ const totalStk = p.variants
                     </td>
                     <!-- Status -->
 
- <td class="td">
-        <% if (!p.isDeleted) { %>
+  <td class="td">
+        <% if (p.isDeleted) { %>
+          <span class="badge-blocked" style="background:#fee2e2;color:#991b1b;">Deleted</span>
+        <% } else if (p.status === 'active') { %>
           <span class="badge-active">Active</span>
         <% } else { %>
           <span class="badge-blocked">Blocked</span>
@@ -325,39 +345,45 @@ const totalStk = p.variants
 
                 <% if (!p.isDeleted) { %>
 
-            <!-- BLOCK -->
-            <form id="blockForm-<%= p._id %>"
-                  action="/admin/products/<%= p._id %>/block"
-                  method="POST">
+                  <% if (p.status === 'active') { %>
+                    <!-- BLOCK -->
+                    <form id="blockForm-<%= p._id %>"
+                          action="/admin/products/<%= p._id %>/block"
+                          method="POST">
+                      <button
+                          type="button"
+                          onclick='openModal("Are you sure you want to BLOCK this product?", "<%= p._id %>", "block")'
+                          class="text-red-600 text-xs font-medium">
+                          Block
+                      </button>
+                    </form>
+                  <% } else { %>
+                    <!-- UNBLOCK -->
+                    <form id="unblockForm-<%= p._id %>"
+                          action="/admin/products/<%= p._id %>/unblock"
+                          method="POST">
+                      <button
+                        type="button"
+                        onclick='openModal("Are you sure you want to UNBLOCK this product?", "<%= p._id %>", "unblock")'
+                        class="text-green-600 text-xs font-medium">
+                        Unblock
+                      </button>
+                    </form>
+                  <% } %>
 
-              <button
-                type="button"
-                onclick='openModal("Are you sure you want to BLOCK this category?", "<%= p._id %>")'
-                class="text-red-600 text-xs font-medium">
-                Block
-              </button>
+                  <!-- Delete (soft delete) -->
+                  <form id="deleteForm-<%= p._id %>"
+                        action="/admin/products/<%= p._id %>/delete"
+                        method="POST">
+                    <button
+                      type="button"
+                      onclick='openModal("Are you sure you want to DELETE this product?", "<%= p._id %>", "delete")'
+                      class="text-red-600 text-xs font-medium ml-2">
+                      Delete
+                    </button>
+                  </form>
 
-            </form>
-
-          <% } else { %>
-
-            <!-- UNBLOCK -->
-            <form id="unblockForm-<%= p._id %>"
-                  action="/admin/products/<%= p._id %>/unblock"
-                  method="POST">
-
-              <button
-                type="button"
-                onclick='openModal("Are you sure you want to UNBLOCK this category?", "<%= p._id %>")'
-                class="text-green-600 text-xs font-medium">
-                Unblock
-              </button>
-
-            </form>
-
-          <% } %>
-
-      
+                <% } %>
                       </div>
                     </td>
                   </tr>
@@ -583,9 +609,11 @@ document
 </script>
 <script>
 let currentProductId = null;
+let currentAction = null;
 
-function openModal(message, productId) {
+function openModal(message, productId, action) {
   currentProductId = productId;
+  currentAction = action;
 
   document.getElementById("modalText").textContent = message;
 
@@ -595,6 +623,7 @@ function openModal(message, productId) {
 
 function closeModal() {
   currentProductId = null;
+  currentAction = null;
 
   document.getElementById("confirmModal")
     .classList.add("hidden");
@@ -605,18 +634,15 @@ document.getElementById("confirmBtn")
 
     if (!currentProductId) return;
 
-    const blockForm =
-      document.getElementById(`blockForm-${currentProductId}`);
-
-    const unblockForm =
-      document.getElementById(`unblockForm-${currentProductId}`);
-
-    if (blockForm) {
-      blockForm.submit();
-    }
-
-    if (unblockForm) {
-      unblockForm.submit();
+    if (currentAction === "block") {
+      const blockForm = document.getElementById(`blockForm-${currentProductId}`);
+      if (blockForm) blockForm.submit();
+    } else if (currentAction === "unblock") {
+      const unblockForm = document.getElementById(`unblockForm-${currentProductId}`);
+      if (unblockForm) unblockForm.submit();
+    } else if (currentAction === "delete") {
+      const deleteForm = document.getElementById(`deleteForm-${currentProductId}`);
+      if (deleteForm) deleteForm.submit();
     }
   });
 </script>

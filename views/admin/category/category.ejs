@@ -181,18 +181,33 @@
       <!-- Search + Add Category bar -->
       <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
 
-        <!-- Toolbar -->
-        <div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100">
-          <div class="relative flex-1 max-w-sm">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style="font-size:11px"></i>
-            <input
-              type="text"
-              id="searchInput"
-              placeholder="Search categories..."
-              value="<%= typeof search !== 'undefined' ? search : '' %>"
-              class="search-input"
-            />
-          </div>
+<!-- Toolbar -->
+<div class="flex items-center justify-between gap-4 px-5 py-4 border-b border-gray-100">
+  <div class="relative flex-1 max-w-sm">
+    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+       style="font-size:11px"></i>
+
+    <input
+      type="text"
+      id="searchInput"
+      placeholder="Search categories..."
+      value="<%= typeof search !== 'undefined' ? search : '' %>"
+      class="search-input pr-10"
+      style="min-width:400px"
+    />
+
+    <% if (search) { %>
+      <a
+        href="/admin/categories"
+        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500"
+        title="Clear search"
+      >
+        <i class="fa-solid fa-xmark"></i>
+      </a>
+    <% } %>
+  </div>
+
+
         <button
   onclick="document.getElementById('addModal').classList.remove('hidden')"
   class="flex items-center gap-2 bg-[#1a5c1a] text-white text-xs font-semibold px-4 py-2.5 rounded-lg">
@@ -200,6 +215,7 @@
   Add Category
 </button>
         </div>
+        
 
         <!-- Table -->
         <div class="overflow-x-auto">
@@ -235,8 +251,10 @@
       </td>
 
       <!-- Status -->
-      <td class="td">
-        <% if (cat.isActive) { %>
+       <td class="td">
+        <% if (cat.isDeleted) { %>
+          <span class="badge-blocked" style="background:#fee2e2;color:#991b1b;">Deleted</span>
+        <% } else if (cat.isActive) { %>
           <span class="badge-active">Active</span>
         <% } else { %>
           <span class="badge-blocked">Blocked</span>
@@ -257,7 +275,7 @@
 
   <i class="fa-regular fa-pen-to-square"></i>
 </button>
-
+  <% if (!cat.isDeleted) { %>
           <% if (cat.isActive) { %>
 
             <!-- BLOCK -->
@@ -291,6 +309,17 @@
             </form>
 
           <% } %>
+            <form id="deleteForm-<%= cat._id %>"
+                        action="/admin/categories/<%= cat._id %>/delete"
+                        method="POST">
+                    <button
+                      type="button"
+                      onclick='openModal("Are you sure you want to DELETE this category?", "<%= cat._id %>", "delete")'
+                      class="text-red-600 text-xs font-medium ml-2">
+                      Delete
+                    </button>
+                  </form>
+                    <% } %>
 
         </div>
 
@@ -474,35 +503,39 @@
 </div>
 <script>
   let targetFormId = null;
+let actionType = null;
 
-  function openModal(message, categoryId) {
-    targetFormId = categoryId;
+function openModal(message, categoryId, action = '') {
+  targetFormId = categoryId;
+  actionType = action;
 
-    document.getElementById('modalText').innerText = message;
+  document.getElementById('modalText').innerText = message;
+  document.getElementById('confirmModal').classList.remove('hidden');
+}
 
-    document.getElementById('confirmModal')
-      .classList.remove('hidden');
-  }
+function closeModal() {
+  document.getElementById('confirmModal').classList.add('hidden');
+  targetFormId = null;
+  actionType = null;
+}
 
-  function closeModal() {
-    document.getElementById('confirmModal')
-      .classList.add('hidden');
+document.getElementById('confirmBtn')
+  .addEventListener('click', function () {
 
-    targetFormId = null;
-  }
+    let form = null;
 
-  document.getElementById('confirmBtn')
-    .addEventListener('click', function () {
+    if (actionType === 'delete') {
+      form = document.getElementById('deleteForm-' + targetFormId);
+    } else {
+      form =
+        document.getElementById('blockForm-' + targetFormId) ||
+        document.getElementById('unblockForm-' + targetFormId);
+    }
 
-      if (targetFormId) {
-
-        const form =
-          document.getElementById('blockForm-' + targetFormId) ||
-          document.getElementById('unblockForm-' + targetFormId);
-
-        if (form) form.submit();
-      }
-    });
+    if (form) {
+      form.submit();
+    }
+  });
 
   const searchInput = document.getElementById('searchInput');
 

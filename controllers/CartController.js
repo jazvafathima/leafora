@@ -1,8 +1,18 @@
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const User = require("../models/User");
+const Offer = require("../models/Offer");
 const productvariant = require("../models/productvariant");
 const ProductVariant = require("../models/productvariant");
+const { getBestOffer } = require("../utils/offerHelper");
+const {
+  getActiveOffers,
+  calculateProductPrice,
+} = require("../utils/priceHelper");
+
+
+
+
 
 const MAX_QTY_PER_ITEM = 5; // maximum quantity per cart item
 
@@ -18,34 +28,30 @@ async function getOrCreateCart(userId) {
 // ─────────────────────────────────────────────────────────────
 //  Helper: calculate cart subtotal (only valid items)
 // ─────────────────────────────────────────────────────────────
-function calcSubtotal(items) {
-  return items.reduce((sum, item) => {
-    if (
-      !item.product ||
-      item.product.isBlocked ||
-      item.product.status === "inactive"
-    ) {
-      return sum;
+
+
+async function calcSubtotal(items) {
+
+    const offers = await getActiveOffers();
+
+    let subtotal = 0;
+
+    for (const item of items) {
+
+        if (!item.product || !item.variant) continue;
+
+        const price = calculateProductPrice(
+            item.product,
+            item.variant,
+            offers
+        );
+
+        subtotal += price.offerPrice * item.quantity;
     }
 
-    const variant = item.variant || null;
-
-    const unitPrice = variant
-      ? variant.discountPrice || variant.price || 0
-      : item.product.price || 0;
-
-    const stock = Number(
-      variant?.stockQuantity ?? // since separate collection
-        item.product?.stock ?? // fallback if exists
-        0,
-    );
-
-    if (stock === 0) return sum;
-
-    return sum + unitPrice * item.quantity;
-  }, 0);
+    return subtotal;
 }
-
+ 
 // ─────────────────────────────────────────────────────────────
 //  GET /cart  — Render cart page
 // ─────────────────────────────────────────────────────────────
@@ -58,8 +64,13 @@ exports.getCart = async (req, res) => {
       .populate({
         path: "items.product",
         populate: { path: "category", select: "name" },
+      
       })
       .lean();
+
+
+
+const offers = await getActiveOffers();
 
     // Filter out items where product was deleted from DB entirely
     const cartItems = cart
@@ -71,24 +82,43 @@ exports.getCart = async (req, res) => {
       cartItems.map(async (item) => {
         const product = item.product;
 
-        const variant = item.variant
+          const variant = item.variant
           ? await ProductVariant.findById(item.variant).lean()
           : null;
-        const stock = variant?.stockQuantity || 0;
+          
+       const stock = variant?.stockQuantity || 0;
 
-        return {
-          ...item,
-          product,
-          variant,
-          stock,
-        };
+const price = calculateProductPrice(
+    product,
+    variant,
+    offers
+);
+
+
+      
+
+return {
+    ...item,
+    product,
+    variant,
+    stock,
+
+
+    ...price,
+    
+    finalPrice: price.offerPrice,
+    itemTotal: price.offerPrice * item.quantity
+};
+
       }),
     );
+
+  
     console.log(enriched);
+
     res.render("user/cart", {
       cartItems: enriched,
       success: req.flash ? req.flash("success") : [],
-      error: req.flash ? req.flash("error") : [],
       cartCount: enriched.length,
     });
   } catch (err) {
@@ -97,13 +127,6 @@ exports.getCart = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────
-//  POST /cart/add  — Add product to cart
-//  i.  Prevent adding blocked/unlisted products
-//  ii. Increase quantity if already in cart
-//  iii.Remove from wishlist when added to cart
-//  iv. Validate stock
-// ─────────────────────────────────────────────────────────────
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.session.userId || req.session.user?._id;
@@ -145,15 +168,7 @@ exports.addToCart = async (req, res) => {
       variant = await ProductVariant.findById(variantId).lean();
     }
 
-    console.log("variant:", variant);
-
-    console.log("productId:", productId);
-    console.log("variantId:", variantId);
-    console.log("variant:", variant);
-
-    const stock = Number(variant?.stockQuantity ?? 0);
-
-    console.log("stock:", stock);
+    const stock = Number(variant?.stockQuantity ?? product.stock ?? 0);
 
     if (stock <= 0) {
       console.log("OUT OF STOCK CHECK FAILED");
@@ -169,20 +184,21 @@ exports.addToCart = async (req, res) => {
       new Cart({ user: userId, items: [] });
 
     // ii. If already in cart → increment quantity
-    const existingIdx = cart.items.findIndex(
+
+    const existingItemIndex = cart.items.findIndex(
       (item) =>
-        item.product.toString() === productId &&
-        (item.variant?.toString() || "") === (variantId?.toString() || ""),
+        item.product?.toString() === productId &&
+        item.variant?.toString() === variantId,
     );
 
-    if (existingIdx > -1) {
-      const newQty = cart.items[existingIdx].quantity + qty;
+    if (existingItemIndex > -1) {
+      const newQty = cart.items[existingItemIndex].quantity + qty;
 
       // Stock validation
       if (newQty > stock) {
         return res.status(400).json({
           success: false,
-          message: `Only ${stock} units available. You already have ${cart.items[existingIdx].quantity} in cart.`,
+          message: `Only ${stock} units available. You already have ${cart.items[existingItemIndex].quantity} in cart.`,
         });
       }
 
@@ -194,7 +210,7 @@ exports.addToCart = async (req, res) => {
         });
       }
 
-      cart.items[existingIdx].quantity = newQty;
+      cart.items[existingItemIndex].quantity = newQty;
     } else {
       // Validate requested quantity
       if (qty > stock) {
@@ -219,10 +235,7 @@ exports.addToCart = async (req, res) => {
     await cart.save();
 
     // iii. Remove from wishlist if present
-    await User.findByIdAndUpdate(userId, {
-      $pull: { wishlist: productId },
-    });
-
+    await User.updateOne({ _id: userId }, { $pull: { wishlist: productId } });
     // Update session cart count
     req.session.cartCount = cart.items.length;
 
@@ -235,8 +248,14 @@ exports.addToCart = async (req, res) => {
       });
     }
 
-    req.flash && req.flash("success", "Item added to cart!");
-    res.redirect("/cart");
+    // req.flash && req.flash("success", "Item added to cart!");
+    // res.redirect("/cart")
+
+    return res.json({
+      success: true,
+      message: "Added to cart",
+      cartCount: cart.items.length,
+    });
   } catch (err) {
     console.error("cartController.addToCart:", err);
     res
@@ -245,11 +264,6 @@ exports.addToCart = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────
-//  POST /cart/update  — Increment / decrement with validations
-//  v. Increment/decrement quantity with stock validations
-//  vi. Maximum quantity limits
-// ─────────────────────────────────────────────────────────────
 exports.updateCartItem = async (req, res) => {
   try {
     const userId = req.session.userId || req.session.user?._id;
@@ -273,9 +287,7 @@ exports.updateCartItem = async (req, res) => {
       });
     }
 
-    const cart = await Cart.findOne({ user: userId }).populate(
-      "items.product",
-    );
+    const cart = await Cart.findOne({ user: userId }).populate("items.product");
 
     if (!cart)
       return res
@@ -312,7 +324,11 @@ exports.updateCartItem = async (req, res) => {
         .json({ success: false, message: "Product is out of stock." });
     }
 
-    if (newQty > stock) {
+    // Current quantity already in cart
+    const currentQty = item.quantity;
+
+    // Allow reductions even when cart quantity exceeds stock
+    if (newQty > stock && newQty > currentQty) {
       return res.status(400).json({
         success: false,
         message: `Only ${stock} units available.`,
@@ -323,20 +339,31 @@ exports.updateCartItem = async (req, res) => {
     item.quantity = newQty;
     await cart.save();
 
-    // Recalculate totals
-    const unitPrice = variant
-      ? variant.discountPrice || variant.price || 0
-      : product.price || 0;
-    const itemTotal = unitPrice * newQty;
+   const offers = await Offer.find({
+    isActive: true,
+    isDeleted: false
+}).lean();
 
+
+
+
+    // Recalculate totals
+   const offer = getBestOffer(product, variant, offers);
+
+const unitPrice = offer.hasOffer
+    ? offer.discountedPrice
+    : offer.originalPrice;
+
+const itemTotal = unitPrice * quantity;
     // Full subtotal
     const populated = await Cart.findOne({ user: userId }).populate([
       { path: "items.product" },
       { path: "items.variant" },
     ]);
-    const subtotal = calcSubtotal(populated.items);
+    const subtotal = await calcSubtotal(populated.items);
 
     req.session.cartCount = cart.items.length;
+    console.log("Subtotal after remove:", subtotal);
 
     res.json({
       success: true,
@@ -373,7 +400,7 @@ exports.removeCartItem = async (req, res) => {
     cart.items = cart.items.filter((item) => item._id.toString() !== itemId);
     await cart.save();
 
-    const subtotal = calcSubtotal(cart.items);
+    const subtotal = await  calcSubtotal(cart.items);
     req.session.cartCount = cart.items.length;
 
     return res.json({
@@ -414,21 +441,26 @@ exports.clearCart = async (req, res) => {
 exports.getCartCount = async (req, res) => {
   try {
     const userId = req.session.userId || req.session.user?._id;
-    if (!userId) return res.json({ count: 0 });
 
-    const cart = await Cart.findOne({ user: userId }).select("items").lean();
-    const count = cart ? cart.items.length : 0;
-    req.session.cartCount = count;
+    if (!userId) {
+      return res.json({ count: 0 });
+    }
+
+    const cart = await Cart.findOne({ userId });
+
+    if (!cart) {
+      return res.json({ count: 0 });
+    }
+
+    const count = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+
     res.json({ count });
-  } catch {
+  } catch (err) {
+    console.log(err);
     res.json({ count: 0 });
   }
 };
 
-// ─────────────────────────────────────────────────────────────
-//  Middleware: validate cart before checkout
-//  vii. Disable out-of-stock products and restrict checkout
-// ─────────────────────────────────────────────────────────────
 exports.validateCartForCheckout = async (req, res, next) => {
   try {
     const userId = req.session.userId || req.session.user?._id;
@@ -436,22 +468,22 @@ exports.validateCartForCheckout = async (req, res, next) => {
 
     const cart = await Cart.findOne({ user: userId })
       .populate("items.product")
+      .populate("items.variant")
       .lean();
 
-    if (!cart || cart.items.length === 0) {
+    const validItems = cart.items.filter((item) => item.product !== null);
+
+    // Optional: could update DB here to remove null products, but memory filter is safer for now.
+
+    if (validItems.length === 0) {
       req.flash && req.flash("error", "Your cart is empty.");
       return res.redirect("/cart");
     }
 
     const issues = [];
 
-    for (const item of cart.items) {
+    for (const item of validItems) {
       const product = item.product;
-
-      if (!product) {
-        issues.push("A product in your cart no longer exists.");
-        continue;
-      }
 
       // Blocked / inactive
       if (
@@ -464,13 +496,9 @@ exports.validateCartForCheckout = async (req, res, next) => {
       }
 
       // Resolve variant
-      const variant = item.variant
-        ? product.variants?.find(
-            (v) => v._id?.toString() === item.variant?.toString(),
-          )
-        : product.variants?.[0] || null;
+      const variant = item.variant || null;
 
-      const stock = Number(variant?.stock ?? product?.stock ?? 0);
+      const stock = Number(variant?.stockQuantity ?? product?.stock ?? 0);
 
       // Out of stock
       if (stock === 0) {
@@ -487,6 +515,8 @@ exports.validateCartForCheckout = async (req, res, next) => {
     }
 
     if (issues.length > 0) {
+      console.log("req.flash exists:", typeof req.flash);
+      console.log("Issues:", issues);
       req.flash && req.flash("error", issues[0]);
       return res.redirect("/cart");
     }
@@ -497,5 +527,63 @@ exports.validateCartForCheckout = async (req, res, next) => {
     req.flash &&
       req.flash("error", "Cart validation failed. Please try again.");
     res.redirect("/cart");
+  }
+};
+
+exports.buyNow = async (req, res) => {
+  try {
+    const userId = req.session.userId || req.session.user?._id;
+
+    if (!userId) {
+      return res.redirect("/user/login");
+    }
+
+    const { productId, variantId, quantity } = req.body;
+    const qty = parseInt(quantity) || 1;
+
+    const product = await Product.findById(productId);
+
+    if (!product) {
+      req.flash("error", "Product not found.");
+      return res.redirect("back");
+    }
+
+    if (
+      product.isBlocked ||
+      product.status === "inactive" ||
+      product.status === "blocked"
+    ) {
+      req.flash("error", "Product unavailable.");
+      return res.redirect("back");
+    }
+
+    let variant = null;
+
+    if (variantId) {
+      variant = await ProductVariant.findById(variantId);
+
+      if (!variant) {
+        req.flash("error", "Variant not found.");
+        return res.redirect("back");
+      }
+    }
+
+    const stock = Number(variant?.stockQuantity ?? product.stock ?? 0);
+
+    if (qty > stock) {
+      req.flash("error", `Only ${stock} units available.`);
+      return res.redirect("back");
+    }
+
+    req.session.buyNowItem = {
+      product: productId,
+      variant: variantId || null,
+      quantity: qty,
+    };
+
+    return res.redirect("/checkout");
+  } catch (err) {
+    console.error(err);
+    res.redirect("back");
   }
 };

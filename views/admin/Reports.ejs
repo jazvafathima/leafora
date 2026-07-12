@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora | Reports</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- Chart.js for the two report charts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leaf: {
+              50:  "#eefaf1",
+              100: "#d6f2dd",
+              600: "#1f8a4c",
+              700: "#166534",
+              800: "#14532d",
+              900: "#0f3d22",
+            },
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body { font-family: "Segoe UI", ui-sans-serif, system-ui, sans-serif; }
+    .scrollbar-none::-webkit-scrollbar { display: none; }
+
+        .sidebar{width:175px;background:#fff;min-height:100vh;flex-shrink:0;border-right:1px solid #e5e7eb;display:flex;flex-direction:column}
+    .sidebar-brand{padding:18px 18px 14px}
+    .sidebar-brand p{color:#1a5c1a;font-size:1.25rem;font-weight:700;margin:0}
+    .sidebar-link{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.78rem;color:#4b5563;text-decoration:none;transition:all .15s}
+    .sidebar-link:hover{color:#1a5c1a;background:#f0faf0}
+    .sidebar-link.active{background:#1a5c1a;color:#fff;font-weight:600;margin:2px 8px;border-radius:8px;padding:9px 10px}
+    .sidebar-link i{width:16px;text-align:center;font-size:0.8rem;flex-shrink:0}
+    .sidebar-logout{display:flex;align-items:center;gap:10px;padding:9px 18px;font-size:0.78rem;color:#ef4444;text-decoration:none;transition:all .15s}
+    .sidebar-logout:hover{background:#fef2f2}
+    .sidebar-logout i{width:16px;text-align:center}
+
+  </style>
+</head>
+
+<body class="bg-[#eef1ee] text-slate-800">
+  <div class="flex h-screen w-full overflow-hidden">
+
+    <!-- ============ SIDEBAR ============ -->
+ <aside class="sidebar">
+    <div class="sidebar-brand"><p>leafora</p></div>
+    <nav class="flex-1 py-2">
+      <a href="/admin/dashboard"  class="sidebar-link "><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="/admin/orders"     class="sidebar-link "><i class="fa-solid fa-bag-shopping"></i> Orders</a>
+      <a href="/admin/products"   class="sidebar-link"><i class="fa-solid fa-box"></i> Products</a>
+      <a href="/admin/categories" class="sidebar-link"><i class="fa-solid fa-list"></i> Categories</a>
+      <a href="/admin/users"      class="sidebar-link"><i class="fa-regular fa-user"></i> Users</a>
+      <a href="/admin/offers"     class="sidebar-link"><i class="fa-regular fa-heart"></i> Offers</a>
+      <a href="/admin/coupons"    class="sidebar-link"><i class="fa-solid fa-ticket"></i> Coupons</a>
+      <a href="/admin/reports"    class="sidebar-link active "><i class="fa-solid fa-chart-bar"></i> Reports</a>
+    </nav>
+    <div class="border-t border-gray-100 py-2 mt-auto">
+      <a href="/admin/logout" class="sidebar-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </div>
+  </aside>
+    <!-- ============ MAIN ============ -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+      <!-- Top bar -->
+      <header class="flex items-center justify-between bg-leaf-800 px-6 py-3 text-white">
+        <div class="flex items-center gap-3">
+          <i class="fa-solid fa-bars-staggered"></i>
+          <span class="font-medium"><%= locals.pageTitle || "Reports" %></span>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <!-- empty avatar placeholder -->
+          <div class="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-slate-200/80 ring-2 ring-white/30 flex items-center justify-center">
+            <% if (locals.avatarUrl) { %>
+              <img src="<%= avatarUrl %>" alt="User avatar" class="h-full w-full object-cover" />
+            <% } else { %>
+              <i class="fa-solid fa-user text-slate-400 text-sm"></i>
+            <% } %>
+          </div>
+          <i class="fa-solid fa-ellipsis-vertical opacity-80"></i>
+        </div>
+      </header>
+
+      <!-- Scrollable content -->
+      <main class="flex-1 overflow-y-auto scrollbar-none p-6 space-y-6">
+
+        <!-- Page heading row -->
+       <div class="flex flex-wrap items-center justify-between gap-4">
+
+    <div>
+        <h2 class="text-xl font-bold text-leaf-800">
+            Reports Management
+        </h2>
+
+        <p class="text-sm text-slate-500">
+            Create, manage, and analyze business performance reports
+        </p>
+    </div>
+
+    <form action="/admin/reports"
+          method="GET"
+          class="flex flex-wrap items-center gap-3">
+
+       <select
+       
+    id="filter"
+    name="filter"
+    class="border rounded-lg px-3 py-2">
+
+    <option value="daily"
+        <%= filter==="daily" ? "selected":"" %>>
+        Daily
+    </option>
+
+    <option value="weekly"
+        <%= filter==="weekly" ? "selected":"" %>>
+        Weekly
+    </option>
+
+    <option value="yearly"
+        <%= filter==="yearly" ? "selected":"" %>>
+        Yearly
+    </option>
+
+    <option value="custom"
+        <%= filter==="custom" ? "selected":"" %>>
+        Custom
+    </option>
+
+</select>
+<div id="customDates"
+     class="<%= filter==='custom' ? 'flex' : 'hidden' %> items-center gap-2">
+
+    <input
+        type="date"
+        name="startDate"
+        value="<%= startDate || '' %>"
+        class="border rounded-lg px-3 py-2">
+
+    <span>to</span>
+
+    <input
+        type="date"
+        name="endDate"
+        value="<%= endDate || '' %>"
+        class="border rounded-lg px-3 py-2">
+
+</div>
+
+
+<a
+href="/admin/reports/export/pdf?filter=<%= filter %>&startDate=<%= startDate || '' %>&endDate=<%= endDate || '' %>"
+class="bg-red-600 text-white px-4 py-2 rounded">
+
+PDF
+
+</a>
+
+<a
+href="/admin/reports/export/excel?filter=<%= filter %>&startDate=<%= startDate || '' %>&endDate=<%= endDate || '' %>"
+class="bg-green-600 text-white px-4 py-2 rounded">
+
+Excel
+
+</a>
+
+    </form>
+
+</div>
+
+        <!-- Stat cards -->
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <%
+          const stats = [
+
+{
+label:"Total Orders",
+value: totalOrders || 0,
+icon:"fa-box",
+iconBg:"bg-blue-100",
+iconColor:"text-blue-600",
+border:"border-blue-300"
+},
+
+{
+label:"Gross Sales",
+value:"₹"+Number(grossSales||0).toLocaleString("en-IN"),
+icon:"fa-chart-line",
+iconBg:"bg-green-100",
+iconColor:"text-green-600",
+border:"border-green-300"
+},
+
+{
+label:"Discount",
+value:"₹"+Number(totalDiscount||0).toLocaleString("en-IN"),
+icon:"fa-percent",
+iconBg:"bg-red-100",
+iconColor:"text-red-600",
+border:"border-red-300"
+},
+
+{
+label:"Shipping",
+value:"₹"+Number(shipping||0).toLocaleString("en-IN"),
+icon:"fa-truck",
+iconBg:"bg-yellow-100",
+iconColor:"text-yellow-700",
+border:"border-yellow-300"
+},
+
+{
+label:"Net Sales",
+value:"₹"+Number(netSales||0).toLocaleString("en-IN"),
+icon:"fa-indian-rupee-sign",
+iconBg:"bg-indigo-100",
+iconColor:"text-indigo-600",
+border:"border-indigo-300"
+}
+
+];
+          %>
+          <% stats.forEach(function(s) { %>
+            <div class="rounded-xl border-l-4 <%= s.border %> bg-white p-4 shadow-sm">
+              <div class="flex items-start justify-between">
+                <div>
+                  <p class="text-xs text-slate-500"><%= s.label %></p>
+                  <p class="mt-1 text-lg font-bold text-slate-800"><%= s.value %></p>
+                </div>
+                <div class="flex h-9 w-9 items-center justify-center rounded-full <%= s.iconBg %> <%= s.iconColor %>">
+                  <i class="fa-solid <%= s.icon %> text-sm"></i>
+                </div>
+              </div>
+            
+            </div>
+          <% }); %>
+        </div>
+
+        <!-- Charts row -->
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div class="rounded-xl bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="font-semibold text-slate-800">Orders Over Time</h3>
+                <p class="text-xs text-slate-400">Daily order volume for the last 7 days</p>
+              </div>
+              <i class="fa-regular fa-circle-question text-slate-300"></i>
+            </div>
+            <div class="mt-4 h-56">
+              <canvas id="ordersChart"></canvas>
+            </div>
+          </div>
+
+          <div class="rounded-xl bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="font-semibold text-slate-800">Revenue by Category</h3>
+                <p class="text-xs text-slate-400">Revenue distribution across product categories</p>
+              </div>
+              <i class="fa-regular fa-circle-question text-slate-300"></i>
+            </div>
+            <div class="mt-4 h-56">
+              <canvas id="categoryChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm">
+
+    <div class="px-5 py-4 border-b">
+        <h2 class="text-lg font-semibold">
+            Sales Report
+        </h2>
+    </div>
+
+    <div class="overflow-x-auto">
+
+        <table class="min-w-full">
+
+            <thead class="bg-gray-50">
+
+                <tr>
+
+                    <th class="px-5 py-3 text-left text-xs">Order ID</th>
+
+                    <th class="px-5 py-3 text-left text-xs">Customer</th>
+
+                    <th class="px-5 py-3 text-left text-xs">Date</th>
+
+                    <th class="px-5 py-3 text-right text-xs">Subtotal</th>
+
+                    <th class="px-5 py-3 text-right text-xs">Discount</th>
+
+                    <th class="px-5 py-3 text-right text-xs">Shipping</th>
+
+                    <th class="px-5 py-3 text-right text-xs">Tax</th>
+
+                    <th class="px-5 py-3 text-right text-xs">Total</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <% if(orders.length){ %>
+
+                    <% orders.forEach(order=>{ %>
+
+                    <tr class="border-t hover:bg-gray-50">
+
+                        <td class="px-5 py-3">
+
+                            <%= order.orderId %>
+
+                        </td>
+
+                        <td class="px-5 py-3">
+
+                            <%= order.user.firstName %>
+
+                            <%= order.user.lastName %>
+
+                        </td>
+
+                        <td class="px-5 py-3">
+
+                            <%= new Date(order.createdAt).toLocaleDateString("en-IN") %>
+
+                        </td>
+
+                        <td class="px-5 py-3 text-right">
+
+                            ₹<%= order.subtotal.toLocaleString("en-IN") %>
+
+                        </td>
+
+                        <td class="px-5 py-3 text-right text-red-600">
+
+                            ₹<%= order.discount.toLocaleString("en-IN") %>
+
+                        </td>
+
+                        <td class="px-5 py-3 text-right">
+
+                            ₹<%= order.shipping.toLocaleString("en-IN") %>
+
+                        </td>
+
+                        <td class="px-5 py-3 text-right">
+
+                            ₹<%= order.tax.toLocaleString("en-IN") %>
+
+                        </td>
+
+                        <td class="px-5 py-3 text-right font-semibold text-green-700">
+
+                            ₹<%= order.total.toLocaleString("en-IN") %>
+
+                        </td>
+
+                    </tr>
+
+                    <% }) %>
+
+                <% } else { %>
+
+                    <tr>
+
+                        <td colspan="8"
+                            class="text-center py-10 text-gray-500">
+
+                            No Orders Found
+
+                        </td>
+
+                    </tr>
+
+                <% } %>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Orders Over Time - line chart
+   const ordersCtx = document.getElementById("ordersChart");
+
+new Chart(ordersCtx, {
+  type: "line",
+  data: {
+    labels: <%- JSON.stringify(orderLabels) %>,
+    datasets: [{
+      label: "Orders",
+      data: <%- JSON.stringify(orderValues) %>,
+      borderColor: "#2563eb",
+      backgroundColor: "rgba(37,99,235,0.08)",
+      borderWidth: 2,
+      tension: 0.4,
+      fill: true,
+      pointRadius: 4,
+      pointBackgroundColor: "#2563eb"
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      }
+    }
+  }
+});
+
+    // Revenue by Category - bar chart
+   const categoryCtx = document.getElementById("categoryChart");
+
+new Chart(categoryCtx, {
+  type: "bar",
+  data: {
+    labels: <%- JSON.stringify(categoryLabels || []) %>,
+    datasets: [{
+      label: "Revenue",
+      data: <%- JSON.stringify(categoryValues || []) %>,
+      backgroundColor: "#166534",
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      }
+    }
+  }
+});
+  </script>
+
+  <script>
+
+const filter = document.getElementById("filter");
+const customDates = document.getElementById("customDates");
+
+filter.addEventListener("change", function(){
+
+    if(this.value==="custom"){
+        customDates.classList.remove("hidden");
+        customDates.classList.add("flex");
+    }else{
+        customDates.classList.remove("flex");
+        customDates.classList.add("hidden");
+    }
+
+});
+
+</script>
+
+</body>
+</html>

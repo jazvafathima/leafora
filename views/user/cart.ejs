@@ -99,20 +99,30 @@
     <img src="/images/leafora logo.png" alt="Leafora" onerror="this.style.display='none'" />
     <span>Leafora</span>
   </a>
-  <div class="nav-links">
-    <a href="/">Home</a>
-    <a href="/shop" class="active">Shop</a>
-    <a href="/products">Products</a>
-    <a href="/pages">Pages <i class="fa-solid fa-chevron-down" style="font-size:.6rem"></i></a>
-  </div>
-  <div class="nav-icons">
-    <a href="/search"   title="Search"><i class="fa-solid fa-magnifying-glass"></i></a>
-    <a href="/account"  title="Account"><i class="fa-regular fa-user"></i></a>
-    <a href="/wishlist" title="Wishlist"><i class="fa-regular fa-heart"></i></a>
+ <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+        <a href="/"          class="hover:text-leaf-700 transition-colors">Home</a>
+        <a href="/productlist" class="hover:text-leaf-700 transition-colors"  >products</a>
+        <a href="/about"  class="hover:text-leaf-700 transition-colors">About</a>
+        <a href="/contact"     class="hover:text-leaf-700 transition-colors">Contact</a>
+      </nav>
+     <div class="nav-icons" style="display:flex;align-items:center">
+    <a href="/profile" title="Account"><i class="fa-regular fa-user"></i></a>
+     <a href="/wishlist" class="hidden md:flex flex-col items-center gap-0.5 relative hover:text-leaf-500 transition-colors">
+  <i class="fa-regular fa-heart text-base"></i>
+
+<span
+  id="wishlistCount"
+  class="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold <%= wishlistCount > 0 ? '' : 'hidden' %>">
+  <%= wishlistCount || 0 %>
+</span>
+
+
+</a>
     <a href="/cart" title="Cart" style="position:relative">
       <i class="fa-solid fa-bag-shopping"></i>
-      <% const cartTotal = typeof cartItems !== 'undefined' && cartItems ? cartItems.length : 0; %>
-      <% if (cartTotal > 0) { %><span class="cart-badge"><%= cartTotal %></span><% } %>
+      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+        <span class="cart-badge"><%= cartCount %></span>
+      <% } %>
     </a>
   </div>
 </nav>
@@ -167,12 +177,9 @@ cartItems.forEach(function(item) {
 );
   
   const isOutOfStock = stockQty <= 0;
+const unitPrice = item.finalPrice || item.originalPrice || 0;
 
-  const unitPrice = variant
-    ? (variant.discountPrice || variant.price || 0)
-    : (product.price || 0);
-
-  const itemTotal = unitPrice * qty;
+const itemTotal = unitPrice * qty;
 
   if (!isBlocked && !isOutOfStock) subtotal += itemTotal;
 
@@ -185,8 +192,9 @@ cartItems.forEach(function(item) {
 %>
 
 
-          <tr id="row-<%= item._id || item.productId %>"
-              class="<%= isBlocked || isOutOfStock ? 'opacity-60' : '' %>">
+         <tr id="row-<%= item._id || item.productId %>"
+              class="<%=  isOutOfStock ? 'opacity-60' : '' %>">
+                
 
             <!-- Product -->
             <td class="cart-td">
@@ -223,22 +231,43 @@ cartItems.forEach(function(item) {
                   <% } %>
 
                   <!-- Remove -->
-                  <button
-                    class="text-red-400 hover:text-red-600 text-xs font-medium mt-1 transition-colors flex items-center gap-1"
-                    onclick="removeItem('<%= item._id || item.productId %>', this)">
-                    <i class="fa-regular fa-trash-can" style="font-size:0.65rem"></i> Remove
-                  </button>
+                <button
+  class="text-red-500 hover:text-red-700 text-xs font-medium mt-1 flex items-center gap-1"
+  onclick="removeItem('<%= item._id || item.productId %>', this)">
+  <i class="fa-regular fa-trash-can"></i> Remove
+</button>
                 </div>
               </div>
             </td>
 
             <!-- Price -->
-            <td class="cart-td">
-              <span class="font-medium text-gray-800">₹<%= Number(unitPrice).toLocaleString('en-IN') %></span>
-              <% if (variant && variant.price && variant.discountPrice && variant.discountPrice < variant.price) { %>
-                <span class="line-through text-gray-400 text-xs ml-1">₹<%= Number(variant.price).toLocaleString('en-IN') %></span>
-              <% } %>
-            </td>
+          <td class="cart-td">
+        <div class="flex items-center gap-2">
+
+  <% if (item.hasOffer) { %>
+
+<span class="text-lg font-bold text-green-700">
+  ₹<%= item.offerPrice.toLocaleString("en-IN") %>
+</span>
+
+<span class="line-through text-gray-400">
+  ₹<%= item.originalPrice.toLocaleString("en-IN") %>
+</span>
+
+<span class="text-red-600 font-semibold">
+  <%= item.offerDiscount %>% OFF
+</span>
+
+<% } else { %>
+
+<span class="text-lg font-bold">
+  ₹<%= item.originalPrice.toLocaleString("en-IN") %>
+</span>
+
+<% } %>
+
+</div>
+</td>
 
             <!-- Quantity stepper -->
             <td class="cart-td">
@@ -255,7 +284,7 @@ cartItems.forEach(function(item) {
                   <button class="qty-btn"
                     onclick="updateQty('<%= item._id || item.productId %>', 1, this)"
                     <%= qty >= MAX_QTY ? 'disabled' : '' %>
-                    data-max="<%= MAX_QTY %>">
+                    data-max="<%= Math.min(stockQty, MAX_QTY) %>">
                     <i class="fa-solid fa-plus" style="font-size:0.6rem"></i>
                   </button>
                 </div>
@@ -266,7 +295,7 @@ cartItems.forEach(function(item) {
             <!-- Total -->
             <td class="cart-td text-right">
               <span class="font-semibold text-gray-900" id="total-<%= item._id || item.productId %>">
-                <% if (isBlocked || isOutOfStock) { %>—<% } else { %>₹<%= Number(itemTotal).toLocaleString('en-IN') %><% } %>
+                <% if (isBlocked || isOutOfStock) { %>—<% } else { %>₹<%= Number(item.itemTotal).toLocaleString('en-IN') %><% } %>
               </span>
             </td>
 
@@ -451,11 +480,12 @@ cartItems.forEach(function(item) {
 </footer>
 
 <!-- ════════ SCRIPTS ════════ -->
+
 <script>
   const MAX_QTY_GLOBAL = 5; // hard cap per item
 
   /* ── Update quantity (increment / decrement) ── */
-  async function updateQty(itemId, delta, btn) {
+  window.updateQty = async function(itemId, delta, btn) {
     const qtyEl   = document.getElementById('qty-'   + itemId);
     const totalEl = document.getElementById('total-' + itemId);
     if (!qtyEl) return;
@@ -465,10 +495,16 @@ cartItems.forEach(function(item) {
     const maxAllowed = parseInt(btn.closest('.qty-stepper').querySelector('[data-max]')?.dataset.max || MAX_QTY_GLOBAL);
 
     // Client-side guard
-    if (newQty < 1 || newQty > maxAllowed) {
-      if (newQty > maxAllowed) showToast('Maximum ' + maxAllowed + ' units allowed.', 'error');
-      return;
-    }
+if (delta < 0) {
+  // Decrement: always allow
+}
+else if (delta > 0) {
+  // Increment: check stock
+  if (newQty > maxAllowed) {
+    showToast(`Only ${maxAllowed} units available.`, 'error');
+    return;
+  }
+}
 
     // Disable buttons while request is in flight
     btn.disabled = true;
@@ -506,8 +542,7 @@ cartItems.forEach(function(item) {
   }
 
   /* ── Remove item ── */
-  async function removeItem(itemId, btn) {
-
+window.removeItem = async function(itemId, btn) {
   const result = await Swal.fire({
     title: 'Remove item?',
     text: 'This item will be removed from your cart.',
@@ -530,24 +565,15 @@ cartItems.forEach(function(item) {
     });
 
     const data = await res.json();
-// window.location.reload();
 
     if (data.success) {
-
       const row = document.getElementById('row-' + itemId);
 
       if (row) {
         row.style.transition = 'opacity .3s';
         row.style.opacity = '0';
 
-        setTimeout(() => {
-          row.remove();
-
-          const tbody = document.getElementById('cartTableBody');
-          if (tbody && tbody.children.length === 0) {
-            // window.location.reload();
-          }
-        }, 300);
+        setTimeout(() => row.remove(), 300);
       }
 
       if (data.subtotal !== undefined) {
@@ -575,7 +601,9 @@ cartItems.forEach(function(item) {
       });
     }
 
-  } catch {
+  } catch (err) {
+    console.error(err);
+
     Swal.fire({
       icon: 'error',
       title: 'Network Error',
@@ -584,7 +612,7 @@ cartItems.forEach(function(item) {
   } finally {
     btn.classList.remove('btn-loading');
   }
-}
+};
   /* ── Mini toast ── */
   function showToast(msg, type) {
     const old = document.getElementById('miniToast');
@@ -603,6 +631,7 @@ cartItems.forEach(function(item) {
   const flashToast = document.getElementById('flashToast');
   if (flashToast) setTimeout(() => flashToast.remove(), 5000);
 </script>
+<!-- <script src="/js/autoReload.js"></script> -->
 
 </body>
 </html>

@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leafora Admin - Offers</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { body: ['Poppins', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #e8ede8; }
+
+    /* ── Sidebar ── */
+    .sidebar { width: 180px; background: #fff; min-height: 100vh; flex-shrink: 0; border-right: 1px solid #e5e7eb; }
+    .sidebar-brand { padding: 20px 18px 16px; border-bottom: 1px solid #f0f0f0; }
+    .sidebar-brand p { color: #1a5c1a; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.01em; }
+    .sidebar-link {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 16px; font-size: 0.8rem;
+      color: #4b5563; text-decoration: none;
+      transition: all 0.15s;
+    }
+    .sidebar-link:hover  { color: #1a5c1a; background: #f0faf0; }
+    .sidebar-link.active { background: #1a5c1a; color: #fff; font-weight: 600; margin: 2px 8px; border-radius: 8px; padding: 9px 10px; }
+    .sidebar-link i { width: 15px; text-align: center; font-size: 0.82rem; }
+
+    /* ── Top bar ── */
+    .topbar { background: #1a5c1a; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .topbar-title { color: #fff; font-size: 0.88rem; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+
+    /* ── Table ── */
+    .th { font-size: 0.72rem; color: #6b7280; font-weight: 600; padding: 12px 14px; text-align: left; border-bottom: 1px solid #f3f4f6; }
+    .td { font-size: 0.78rem; color: #374151; padding: 13px 14px; border-bottom: 1px solid #f9fafb; vertical-align: middle; }
+
+    /* ── Badges ── */
+    .badge-active   { background: #d1fae5; color: #065f46; font-size: 0.65rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+    .badge-inactive { background: #f3f4f6; color: #6b7280; font-size: 0.65rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+    .badge-expired  { background: #fee2e2; color: #991b1b; font-size: 0.65rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+    .badge-product  { background: #d1fae5; color: #065f46; font-size: 0.65rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+    .badge-category { background: #e0f2fe; color: #0369a1; font-size: 0.65rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+    .badge-type     { background: #f3f4f6; color: #374151; font-size: 0.65rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; border: 1px solid #e5e7eb; }
+
+    /* ── Filters ── */
+    .filter-input  { border: 1px solid #e5e7eb; border-radius: 8px; padding: 7px 12px 7px 32px; font-size: 0.78rem; color: #374151; outline: none; background: #fff; transition: border-color 0.2s; font-family: 'Poppins',sans-serif; width: 100%; }
+    .filter-input:focus { border-color: #1a5c1a; box-shadow: 0 0 0 2px rgba(26,92,26,0.08); }
+    .filter-select { border: 1px solid #e5e7eb; border-radius: 8px; padding: 7px 28px 7px 12px; font-size: 0.78rem; color: #374151; outline: none; background: #fff; cursor: pointer; font-family: 'Poppins',sans-serif; appearance: none; transition: border-color 0.2s; }
+    .filter-select:focus { border-color: #1a5c1a; }
+
+    /* ── Pagination ── */
+    .page-btn { width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; cursor: pointer; border: 1px solid #e5e7eb; background: #fff; color: #374151; transition: all 0.15s; text-decoration: none; }
+    .page-btn:hover  { border-color: #1a5c1a; color: #1a5c1a; }
+    .page-btn.active { background: #1a5c1a; color: #fff; border-color: #1a5c1a; font-weight: 600; }
+    .page-nav { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 0.75rem; color: #374151; cursor: pointer; background: #fff; text-decoration: none; transition: all 0.15s; }
+    .page-nav:hover { border-color: #1a5c1a; color: #1a5c1a; }
+    .page-nav.disabled { opacity: 0.4; pointer-events: none; }
+
+    /* ── Toggle Switch ── */
+    .toggle-switch { position: relative; width: 36px; height: 20px; display: inline-block; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: #d1d5db;
+      border-radius: 999px; cursor: pointer; transition: 0.25s;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute;
+      height: 14px; width: 14px; left: 3px; top: 3px;
+      background: white; border-radius: 50%; transition: 0.25s;
+    }
+    input:checked + .toggle-slider { background: #1a5c1a; }
+    input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+    /* ── Modal ── */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(2px); z-index: 50; display: flex; align-items: center; justify-content: center; }
+    .modal-box { background: #fff; border-radius: 14px; padding: 24px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+    .modal-label { display: block; font-size: 0.72rem; font-weight: 600; color: #374151; margin-bottom: 5px; }
+    .modal-input {
+      width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 8px 12px; font-size: 0.78rem; font-family: 'Poppins', sans-serif;
+      color: #374151; outline: none; transition: border-color 0.2s;
+    }
+    .modal-input:focus { border-color: #1a5c1a; box-shadow: 0 0 0 2px rgba(26,92,26,0.08); }
+    .modal-select {
+      width: 100%; border: 1px solid #e5e7eb; border-radius: 8px;
+      padding: 8px 12px; font-size: 0.78rem; font-family: 'Poppins', sans-serif;
+      color: #374151; outline: none; background: #fff; appearance: none;
+      transition: border-color 0.2s; cursor: pointer;
+    }
+    .modal-select:focus { border-color: #1a5c1a; }
+    .error-text { font-size: 0.68rem; color: #dc2626; margin-top: 3px; display: none; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<%
+  const current   = currentPage || 1;
+  const limit     = 10;
+  const start     = offers && offers.length > 0 ? (current - 1) * limit + 1 : 0;
+  const end       = offers && offers.length > 0 ? start + offers.length - 1 : 0;
+  const total     = totalOffers || 0;
+  const totalPgs  = totalPages  || 1;
+%>
+
+<div class="flex min-h-screen">
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar flex flex-col">
+    <div class="sidebar-brand">
+      <p>leafora</p>
+    </div>
+    <nav class="flex-1 py-3 space-y-0.5">
+      <a href="/admin/dashboard"  class="sidebar-link"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      <a href="/admin/orders"     class="sidebar-link"><i class="fa-solid fa-bag-shopping"></i> Orders</a>
+      <a href="/admin/products"   class="sidebar-link"><i class="fa-solid fa-box"></i> Products</a>
+      <a href="/admin/categories" class="sidebar-link"><i class="fa-solid fa-list"></i> Categories</a>
+      <a href="/admin/users"      class="sidebar-link"><i class="fa-regular fa-user"></i> Users</a>
+      <a href="/admin/offers"     class="sidebar-link active"><i class="fa-regular fa-heart"></i> Offers</a>
+      <a href="/admin/coupons"    class="sidebar-link"><i class="fa-solid fa-ticket"></i> Coupons</a>
+      <a href="/admin/reports"    class="sidebar-link"><i class="fa-solid fa-chart-bar"></i> Reports</a>
+    </nav>
+  </aside>
+
+  <!-- ═══ RIGHT PANEL ═══ -->
+  <div class="flex-1 flex flex-col">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="topbar-title">
+        <i class="fa-regular fa-heart text-sm"></i>
+        Offers
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- IMAGE SLOT: Admin avatar 34×34px circle -->
+        <div class="w-9 h-9 rounded-full overflow-hidden border-2 border-white border-opacity-40 bg-green-800 flex items-center justify-center flex-shrink-0">
+          <% if (typeof admin !== 'undefined' && admin && admin.avatar) { %>
+            <img src="<%= admin.avatar %>" alt="Admin" class="w-full h-full object-cover" />
+          <% } else { %>
+            <i class="fa-regular fa-user text-white text-sm"></i>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Main Content ── -->
+    <main class="flex-1 p-6">
+
+      <!-- Page heading + Add button -->
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <h1 class="text-lg font-semibold text-gray-800">Offers Management</h1>
+          <p class="text-xs text-gray-400 mt-0.5">Create and manage promotional product & category offers</p>
+        </div>
+        <button onclick="openAddModal()"
+          class="flex items-center gap-2 bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition-colors">
+          <i class="fa-solid fa-plus text-xs"></i>
+          Add New Offer
+        </button>
+      </div>
+
+      <!-- Flash messages -->
+      <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+        <div class="bg-green-50 border border-green-200 text-green-700 text-xs rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-circle-check"></i> <%= success[0] %>
+        </div>
+      <% } %>
+      <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+        <div class="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg px-4 py-2.5 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-circle-exclamation"></i> <%= error[0] %>
+        </div>
+      <% } %>
+
+      <!-- Filter Card -->
+      <div class="bg-white rounded-xl border border-gray-200 p-5 mb-4 shadow-sm">
+        <form method="GET" action="/admin/offers" id="filterForm">
+          <div class="flex flex-wrap items-end gap-4">
+
+            <!-- Search -->
+            <div class="flex-1 min-w-48">
+              <label class="block text-xs text-gray-500 font-medium mb-1.5">Search</label>
+              <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" style="font-size:11px"></i>
+                <input type="text" name="search" id="searchInput"
+                  placeholder="Search offer by name..."
+                  value="<%= typeof search !== 'undefined' ? search : '' %>"
+                  class="filter-input" />
+              </div>
+            </div>
+
+            <!-- Offer Type -->
+            <div>
+              <label class="block text-xs text-gray-500 font-medium mb-1.5">Offer Type</label>
+              <div class="relative">
+                <select name="type" class="filter-select pr-8"
+                  onchange="document.getElementById('filterForm').submit()">
+                  <option value="">All Types</option>
+                  <option value="product"  <%= (typeof offerType !== 'undefined' && offerType === 'product')  ? 'selected' : '' %>>Product</option>
+                  <option value="category" <%= (typeof offerType !== 'undefined' && offerType === 'category') ? 'selected' : '' %>>Category</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+              </div>
+            </div>
+
+            <!-- Status -->
+            <div>
+              <label class="block text-xs text-gray-500 font-medium mb-1.5">Status</label>
+              <div class="relative">
+                <select name="status" class="filter-select pr-8"
+                  onchange="document.getElementById('filterForm').submit()">
+                  <option value="">All Status</option>
+                  <option value="active"   <%= (typeof statusFilter !== 'undefined' && statusFilter === 'active')   ? 'selected' : '' %>>Active</option>
+                  <option value="inactive" <%= (typeof statusFilter !== 'undefined' && statusFilter === 'inactive') ? 'selected' : '' %>>Inactive</option>
+                  <option value="expired"  <%= (typeof statusFilter !== 'undefined' && statusFilter === 'expired')  ? 'selected' : '' %>>Expired</option>
+                </select>
+                <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+              </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex gap-2">
+             
+              <a href="/admin/offers"
+                class="border border-gray-300 hover:border-gray-400 text-gray-600 text-xs font-semibold px-4 py-2 rounded-lg transition-colors bg-white">
+                Clear
+              </a>
+            </div>
+
+          </div>
+        </form>
+      </div>
+
+      <!-- Offers Table Card -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead class="bg-white">
+              <tr>
+                <th class="th">Offer Name</th>
+                <th class="th">Type</th>
+                <th class="th">Discount</th>
+                <th class="th">Applicable To</th>
+                <th class="th">Valid From</th>
+                <th class="th">Valid To</th>
+                <th class="th">Status</th>
+                <th class="th text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+
+              <% if (offers && offers.length > 0) { %>
+                <% offers.forEach(function(offer) {
+                    const now     = new Date();
+                    const isExpired = new Date(offer.endDate) < now;
+                    const isActive  = offer.isActive && !isExpired;
+                  %>
+                <tr class="hover:bg-gray-50 transition-colors duration-100">
+
+                  <!-- Offer Name -->
+                  <td class="td font-medium text-gray-800"><%= offer.name %></td>
+
+                  <!-- Type badge: percent / flat -->
+                  <td class="td">
+                    <span class="badge-type">
+                      <%= offer.discountType === 'percent' ? 'PERCENT' : 'FLAT' %>
+                    </span>
+                  </td>
+
+                  <!-- Discount Value -->
+                  <td class="td font-semibold text-gray-700">
+                    <% if (offer.discountType === 'percent') { %>
+                      <%= offer.discountValue %>% OFF
+                    <% } else { %>
+                      ₹<%= offer.discountValue %> OFF
+                    <% } %>
+                  </td>
+
+                  <!-- Applicable To: target name + type badge -->
+                  <td class="td">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span class="text-gray-700">
+                        <%= offer.targetName || '—' %>
+                      </span>
+                      <% if (offer.type === 'product') { %>
+                        <span class="badge-product">Product</span>
+                      <% } else { %>
+                        <span class="badge-category">Category</span>
+                      <% } %>
+                    </div>
+                  </td>
+
+                  <!-- Valid From -->
+                  <td class="td text-gray-500">
+                    <%= new Date(offer.startDate).toISOString().split('T')[0] %>
+                  </td>
+
+                  <!-- Valid To -->
+                  <td class="td text-gray-500">
+                    <%= new Date(offer.endDate).toISOString().split('T')[0] %>
+                  </td>
+
+                  <!-- Status -->
+                  <td class="td">
+                    <% if (isExpired) { %>
+                      <span class="badge-expired">Expired</span>
+                    <% } else if (offer.isActive) { %>
+                      <span class="badge-active">Active</span>
+                    <% } else { %>
+                      <span class="badge-inactive">Inactive</span>
+                    <% } %>
+                  </td>
+
+                  <!-- Actions: Edit + Toggle -->
+                  <td class="td text-right">
+                    <div class="flex items-center justify-end gap-3">
+
+                      <!-- Edit -->
+                      <button
+                        onclick='openEditModal(<%= JSON.stringify({
+                          _id:           offer._id,
+                          name:          offer.name,
+                          type:          offer.type,
+                          discountType:  offer.discountType,
+                          discountValue: offer.discountValue,
+                          maxDiscountAmount: offer.maxDiscountAmount || "null",
+                          targetId:      offer.target,
+                          startDate:     new Date(offer.startDate).toISOString().split("T")[0],
+                          endDate:       new Date(offer.endDate).toISOString().split("T")[0],
+                          isActive:      offer.isActive
+                        }) %>)'
+                        class="text-gray-400 hover:text-gray-700 transition-colors"
+                        title="Edit offer">
+                        <i class="fa-regular fa-pen-to-square text-sm"></i>
+                      </button>
+
+                      <!-- Toggle active/inactive -->
+                     <!-- Activate / Deactivate -->
+<% if (offer.isActive) { %>
+
+<form
+    id="deactivateForm-<%= offer._id %>"
+    action="/admin/offers/<%= offer._id %>/toggle"
+    method="POST">
+
+    <button
+        type="button"
+        onclick='openOfferModal(
+            "Are you sure you want to DEACTIVATE this offer?",
+            "<%= offer._id %>",
+            "deactivate"
+        )'
+        class="text-red-600 text-xs font-medium">
+
+        block
+
+    </button>
+
+</form>
+
+<% } else { %>
+
+<form
+    id="activateForm-<%= offer._id %>"
+    action="/admin/offers/<%= offer._id %>/toggle"
+    method="POST">
+
+    <button
+        type="button"
+        onclick='openOfferModal(
+            "Are you sure you want to ACTIVATE this offer?",
+            "<%= offer._id %>",
+            "activate"
+        )'
+        class="text-green-600 text-xs font-medium">
+        unblock
+
+        
+
+    </button>
+
+</form>
+
+<% } %>
+
+<!-- Delete -->
+<form
+    id="deleteForm-<%= offer._id %>"
+    action="/admin/offers/<%= offer._id %>/delete"
+    method="POST">
+
+    <button
+        type="button"
+        onclick='openOfferModal(
+            "Are you sure you want to DELETE this offer?",
+            "<%= offer._id %>",
+            "delete"
+        )'
+        class="text-red-600 text-xs font-medium ml-2">
+
+        Delete
+
+    </button>
+
+</form>
+
+                    </div>
+                  </td>
+
+                </tr>
+              <% }) %>
+
+              <% } else { %>
+              <tr>
+                <td colspan="8" class="text-center py-14">
+                  <!-- Empty state image slot — replace with your illustration -->
+                  <div class="flex flex-col items-center gap-3">
+                    <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center">
+                      <i class="fa-regular fa-heart text-2xl text-gray-300"></i>
+                      <%#
+                        To use an image:
+                        <img src="/images/empty-offers.png" alt="No offers" class="w-16 h-16 object-contain">
+                      %>
+                    </div>
+                    <p class="text-sm font-medium text-gray-500">No offers found</p>
+                    <p class="text-xs text-gray-400">Click "Add New Offer" to create your first offer</p>
+                  </div>
+                </td>
+              </tr>
+              <% } %>
+
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
+          <p class="text-xs text-gray-500">
+            Showing
+            <span class="font-semibold text-gray-700"><%= start %>–<%= end %></span>
+            of
+            <span class="font-semibold text-gray-700"><%= total %></span>
+            offers
+          </p>
+          <div class="flex items-center gap-2">
+            <a href="<%= current > 1 ? '/admin/offers?page=' + (current - 1) : '#' %>"
+               class="page-nav <%= current > 1 ? '' : 'disabled' %>">
+              <i class="fa-solid fa-chevron-left text-xs"></i> Previous
+            </a>
+            <% for (let p = 1; p <= totalPgs; p++) { %>
+              <a href="/admin/offers?page=<%= p %>"
+                 class="page-btn <%= p === current ? 'active' : '' %>"><%= p %></a>
+            <% } %>
+            <a href="<%= current < totalPgs ? '/admin/offers?page=' + (current + 1) : '#' %>"
+               class="page-nav <%= current < totalPgs ? '' : 'disabled' %>">
+              Next <i class="fa-solid fa-chevron-right text-xs"></i>
+            </a>
+          </div>
+        </div>
+
+      </div><!-- /table card -->
+    </main>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     ADD OFFER MODAL
+════════════════════════════════════════════ -->
+<div id="addModal" class="modal-backdrop hidden">
+  <div class="modal-box max-w-md">
+
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h2 class="text-base font-semibold text-gray-800">Add New Offer</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Fill in the details below</p>
+      </div>
+      <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <form action="/admin/offers/add" method="POST" id="addOfferForm" novalidate>
+      <div class="space-y-4">
+
+        <!-- Offer Name -->
+        <div>
+          <label class="modal-label">Offer Name <span class="text-red-500">*</span></label>
+          <input type="text" name="name" id="add_name" placeholder="e.g. Summer Sale"
+            class="modal-input" />
+          <p class="error-text" id="err_add_name">Offer name is required</p>
+        </div>
+
+        <!-- Offer Type: product / category -->
+        <div>
+          <label class="modal-label">Offer Type <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <select name="type" id="add_type" class="modal-select pr-8"
+              onchange="onAddTypeChange(this.value)">
+              <option value="">Select type</option>
+              <option value="product">Product Offer</option>
+              <option value="category">Category Offer</option>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+          </div>
+          <p class="error-text" id="err_add_type">Please select an offer type</p>
+        </div>
+
+        <!-- Target: product dropdown (hidden until type selected) -->
+        <div id="add_product_row" class="hidden">
+          <label class="modal-label">Select Product <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <select name="target" id="add_product_target" class="modal-select pr-8">
+              <option value="">Choose a product</option>
+              <% if (typeof products !== 'undefined') { %>
+                <% products.forEach(function(p) { %>
+                  <option value="<%= p._id %>"><%= p.name %></option>
+                <% }) %>
+              <% } %>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+          </div>
+          <p class="error-text" id="err_add_product">Please select a product</p>
+        </div>
+
+        <!-- Target: category dropdown -->
+        <div id="add_category_row" class="hidden">
+          <label class="modal-label">Select Category <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <select name="target" id="add_category_target" class="modal-select pr-8">
+              <option value="">Choose a category</option>
+              <% if (typeof categories !== 'undefined') { %>
+                <% categories.forEach(function(c) { %>
+                  <option value="<%= c._id %>"><%= c.name %></option>
+                <% }) %>
+              <% } %>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+          </div>
+          <p class="error-text" id="err_add_category">Please select a category</p>
+        </div>
+
+        <!-- Discount Type + Value in a row -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="modal-label">Discount Type <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <select name="discountType" id="add_discountType" class="modal-select pr-8">
+                <option value="percent">Percent (%)</option>
+                <option value="flat">Flat (₹)</option>
+              </select>
+              <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+            </div>
+          </div>
+          <div>
+            <label class="modal-label">Discount Value <span class="text-red-500">*</span></label>
+            <input type="number" name="discountValue" id="add_discountValue"
+              placeholder="e.g. 20" min="1"
+              class="modal-input" />
+            <p class="error-text" id="err_add_value">Enter a valid value</p>
+          </div>
+        </div>
+        <div id="maxDiscountRow" class="hidden">
+    <label class="modal-label">
+        Maximum Discount Amount
+    </label>
+
+    <input
+        type="number"
+        name="maxDiscountAmount"
+        id="add_maxDiscountAmount"
+        class="modal-input"
+        min="1"
+        placeholder="Enter maximum discount amount">
+
+    <p class="text-xs text-gray-400 mt-1">
+        Applicable only for percentage offers.
+    </p>
+</div>
+
+        <!-- Start / End Date -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="modal-label">Start Date <span class="text-red-500">*</span></label>
+            <input type="date" name="startDate" id="add_startDate" class="modal-input" />
+            <p class="error-text" id="err_add_start">Required</p>
+          </div>
+          <div>
+            <label class="modal-label">End Date <span class="text-red-500">*</span></label>
+            <input type="date" name="endDate" id="add_endDate" class="modal-input" />
+            <p class="error-text" id="err_add_end">Must be after start date</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        <button type="button" onclick="closeAddModal()"
+          class="flex-1 border border-gray-300 text-gray-600 text-xs font-semibold py-2.5 rounded-lg hover:bg-gray-50 transition-colors">
+          Cancel
+        </button>
+        <button type="button" onclick="submitAddOffer()"
+          class="flex-1 bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-lg transition-colors">
+          Add Offer
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<div id="offerActionModal" class="modal-backdrop hidden">
+
+    <div class="modal-box max-w-sm text-center">
+
+        <h2 class="text-lg font-semibold mb-3">
+            Confirmation
+        </h2>
+
+        <p id="offerActionMessage" class="text-gray-600 mb-6"></p>
+
+        <div class="flex gap-3">
+
+            <button
+                onclick="closeOfferModal()"
+                class="flex-1 border rounded-lg py-2">
+
+                Cancel
+
+            </button>
+
+            <button
+                onclick="submitOfferAction()"
+                class="flex-1 bg-red-600 text-white rounded-lg py-2">
+
+                Yes
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════
+     EDIT OFFER MODAL
+════════════════════════════════════════════ -->
+<div id="editModal" class="modal-backdrop hidden">
+  <div class="modal-box max-w-md">
+
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h2 class="text-base font-semibold text-gray-800">Edit Offer</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Update offer details</p>
+      </div>
+      <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <form id="editOfferForm" method="POST" novalidate>
+      <div class="space-y-4">
+
+        <div>
+          <label class="modal-label">Offer Name <span class="text-red-500">*</span></label>
+          <input type="text" name="name" id="edit_name" class="modal-input" />
+          <p class="error-text" id="err_edit_name">Offer name is required</p>
+        </div>
+
+        <!-- Read-only type indicator -->
+       <div>
+          <label class="modal-label">Offer Type <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <select name="type" id="edit_type" class="modal-select pr-8"
+              onchange="onAddTypeChange(this.value)">
+              <option value="">Select type</option>
+              <option value="product">Product Offer</option>
+              <option value="category">Category Offer</option>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+          </div>
+          <p class="error-text" id="err_add_type">Please select an offer type</p>
+        </div>
+
+
+        <!-- Target display (read-only in edit — changing target of an offer is confusing UX) -->
+         <!-- Target: product dropdown (hidden until type selected) -->
+        <div id="edit_product_row" class="hidden">
+          <label class="modal-label">Select Product <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <select name="target" id="edit_product_target" class="modal-select pr-8">
+              <option value="">Choose a product</option>
+              <% if (typeof products !== 'undefined') { %>
+                <% products.forEach(function(p) { %>
+                  <option value="<%= p._id %>"><%= p.name %></option>
+                <% }) %>
+              <% } %>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+          </div>
+          <p class="error-text" id="err_add_product">Please select a product</p>
+        </div>
+
+        <!-- Target: category dropdown -->
+        <div id="edit_category_row" class="hidden">
+          <label class="modal-label">Select Category <span class="text-red-500">*</span></label>
+          <div class="relative">
+            <select name="target" id="edit_category_target" class="modal-select pr-8">
+              <option value="">Choose a category</option>
+              <% if (typeof categories !== 'undefined') { %>
+                <% categories.forEach(function(c) { %>
+                  <option value="<%= c._id %>"><%= c.name %></option>
+                <% }) %>
+              <% } %>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+          </div>
+          <p class="error-text" id="err_add_category">Please select a category</p>
+        </div>
+
+       
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="modal-label">Discount Type <span class="text-red-500">*</span></label>
+            <div class="relative">
+              <select name="discountType" id="edit_discountType" class="modal-select pr-8">
+                <option value="percent">Percent (%)</option>
+                <option value="flat">Flat (₹)</option>
+              </select>
+              <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+            </div>
+          </div>
+          <div>
+            <label class="modal-label">Discount Value <span class="text-red-500">*</span></label>
+            <input type="number" name="discountValue" id="edit_discountValue"
+              min="1" class="modal-input" />
+            <p class="error-text" id="err_edit_value">Enter a valid value</p>
+          </div>
+        </div>
+        <div id="editMaxDiscountRow" class="hidden">
+
+    <label class="modal-label">
+        Maximum Discount Amount
+    </label>
+
+    <input
+        type="number"
+        id="edit_maxDiscountAmount"
+        name="maxDiscountAmount"
+        class="modal-input">
+
+</div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="modal-label">Start Date <span class="text-red-500">*</span></label>
+            <input type="date" name="startDate" id="edit_startDate" class="modal-input" />
+            <p class="error-text" id="err_edit_start">Required</p>
+          </div>
+          <div>
+            <label class="modal-label">End Date <span class="text-red-500">*</span></label>
+            <input type="date" name="endDate" id="edit_endDate" class="modal-input" />
+            <p class="error-text" id="err_edit_end">Must be after start date</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex gap-3 mt-6">
+        <button type="button" onclick="closeEditModal()"
+          class="flex-1 border border-gray-300 text-gray-600 text-xs font-semibold py-2.5 rounded-lg hover:bg-gray-50 transition-colors">
+          Cancel
+        </button>
+        <button type="button" onclick="submitEditOffer()"
+          class="flex-1 bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold py-2.5 rounded-lg transition-colors">
+          Save Changes
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     DELETE CONFIRM MODAL
+════════════════════════════════════════════ -->
+<div id="deleteModal" class="modal-backdrop hidden">
+  <div class="modal-box max-w-xs text-center">
+    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+      <i class="fa-solid fa-triangle-exclamation text-red-500 text-lg"></i>
+    </div>
+    <h2 class="text-sm font-semibold text-gray-800 mb-1">Delete Offer</h2>
+    <p class="text-xs text-gray-400 mb-1">You are about to delete</p>
+    <p class="text-xs font-semibold text-gray-700 mb-4" id="deleteOfferName">—</p>
+    <p class="text-xs text-gray-400 mb-5">This action cannot be undone.</p>
+    <form id="deleteForm" method="POST">
+      <div class="flex gap-3">
+        <button type="button" onclick="closeDeleteModal()"
+          class="flex-1 border border-gray-300 text-gray-600 text-xs font-semibold py-2.5 rounded-lg hover:bg-gray-50 transition-colors">
+          Cancel
+        </button>
+        <button type="submit"
+          class="flex-1 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold py-2.5 rounded-lg transition-colors">
+          Yes, Delete
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════════ -->
+<script>
+
+    let currentOfferAction = null;
+let currentOfferId = null;
+
+function openOfferModal(message, id, action) {
+
+    currentOfferAction = action;
+    currentOfferId = id;
+
+    document.getElementById("offerActionMessage").textContent = message;
+
+    document.getElementById("offerActionModal")
+        .classList.remove("hidden");
+}
+
+function closeOfferModal() {
+
+    document.getElementById("offerActionModal")
+        .classList.add("hidden");
+}
+
+function submitOfferAction() {
+
+    if (currentOfferAction === "activate") {
+
+        document.getElementById(
+            `activateForm-${currentOfferId}`
+        ).submit();
+
+    }
+
+    else if (currentOfferAction === "deactivate") {
+
+        document.getElementById(
+            `deactivateForm-${currentOfferId}`
+        ).submit();
+
+    }
+
+    else if (currentOfferAction === "delete") {
+
+        document.getElementById(
+            `deleteForm-${currentOfferId}`
+        ).submit();
+
+    }
+}
+
+  // ── Helpers ──────────────────────────────────
+  function showError(id, show) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? 'block' : 'none';
+  }
+  function val(id) { return (document.getElementById(id)?.value || '').trim(); }
+
+  // ── Add Modal ────────────────────────────────
+  function openAddModal() {
+    document.getElementById('addOfferForm').reset();
+  
+    ['add_product_row','add_category_row'].forEach(id =>
+      document.getElementById(id).classList.add('hidden'));
+         toggleAddMaxDiscount();
+
+    ['err_add_name','err_add_type','err_add_product','err_add_category','err_add_value','err_add_start','err_add_end']
+      .forEach(id => showError(id, false));
+    document.getElementById('addModal').classList.remove('hidden');
+  }
+  function closeAddModal() {
+    document.getElementById('addModal').classList.add('hidden');
+  }
+
+  function onAddTypeChange(type) {
+    document.getElementById('add_product_row').classList.toggle('hidden',  type !== 'product');
+    document.getElementById('add_category_row').classList.toggle('hidden', type !== 'category');
+  }
+
+  function submitAddOffer() {
+    let valid = true;
+
+    if (!val('add_name'))          { showError('err_add_name', true);     valid = false; }
+    else                             showError('err_add_name', false);
+
+    const type = val('add_type');
+    if (!type)                     { showError('err_add_type', true);     valid = false; }
+    else                             showError('err_add_type', false);
+
+    if (type === 'product'  && !val('add_product_target'))  { showError('err_add_product',  true); valid = false; }
+    else                                                       showError('err_add_product',  false);
+
+    if (type === 'category' && !val('add_category_target')) { showError('err_add_category', true); valid = false; }
+    else                                                       showError('err_add_category', false);
+
+    const dv = parseFloat(document.getElementById('add_discountValue')?.value);
+    if (!dv || dv <= 0)            { showError('err_add_value', true);    valid = false; }
+    else                             showError('err_add_value', false);
+
+    const s = val('add_startDate'), e = val('add_endDate');
+    if (!s)                        { showError('err_add_start', true);    valid = false; }
+    else                             showError('err_add_start', false);
+
+    if (!e || (s && e && e <= s))  { showError('err_add_end', true);      valid = false; }
+    else                             showError('err_add_end', false);
+
+    if (!valid) return;
+
+    // Sync the right target input name so only one goes through
+    if (type === 'product')  document.getElementById('add_category_target').name = '';
+    if (type === 'category') document.getElementById('add_product_target').name  = '';
+
+    document.getElementById('addOfferForm').submit();
+  }
+
+ function toggleAddMaxDiscount() {
+
+    const type = document.getElementById("add_discountType").value;
+    const row = document.getElementById("maxDiscountRow");
+
+    if (type === "percent") {
+        row.classList.remove("hidden");
+    } else {
+        row.classList.add("hidden");
+        document.getElementById("add_maxDiscountAmount").value = "";
+    }
+
+}
+document.getElementById("add_startDate").addEventListener("change", function () {
+
+    const endDate = document.getElementById("add_endDate");
+
+    endDate.min = this.value;
+
+    if (endDate.value < this.value) {
+        endDate.value = "";
+    }
+
+});
+document
+    .getElementById("add_discountType")
+    .addEventListener("change", toggleAddMaxDiscount);
+
+// ── Edit Modal ───────────────────────────────
+function openEditModal(offer) {
+
+  document.getElementById('edit_name').value = offer.name;
+  document.getElementById('edit_type').value = offer.type;
+
+  // Show correct dropdown
+  if (offer.type === 'product') {
+    document.getElementById('edit_product_row').classList.remove('hidden');
+    document.getElementById('edit_category_row').classList.add('hidden');
+
+    document.getElementById('edit_product_target').value = offer.targetId;
+  } else {
+    document.getElementById('edit_category_row').classList.remove('hidden');
+    document.getElementById('edit_product_row').classList.add('hidden');
+
+    document.getElementById('edit_category_target').value = offer.targetId;
+  }
+
+  document.getElementById('edit_discountType').value = offer.discountType;
+  document.getElementById('edit_discountValue').value = offer.discountValue;
+  document.getElementById('edit_startDate').value = offer.startDate;
+  document.getElementById('edit_endDate').value = offer.endDate;
+  document.getElementById("edit_endDate").min = offer.startDate;
+
+  document.getElementById('editOfferForm').action = `/admin/offers/${offer._id}/edit`;
+
+  ['err_edit_name', 'err_edit_value', 'err_edit_start', 'err_edit_end']
+    .forEach(id => showError(id, false));
+
+  document.getElementById('editModal').classList.remove('hidden');
+
+  document.getElementById('edit_discountType').value = offer.discountType;
+
+if (offer.discountType === "percent") {
+
+    document.getElementById("editMaxDiscountRow")
+        .classList.remove("hidden");
+
+    document.getElementById("edit_maxDiscountAmount").value =
+        offer.maxDiscountAmount || "";
+
+} else {
+
+    document.getElementById("editMaxDiscountRow")
+        .classList.add("hidden");
+
+    document.getElementById("edit_maxDiscountAmount").value = "";
+
+}
+}
+  function closeEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
+  }
+
+  function submitEditOffer() {
+    let valid = true;
+
+    if (!val('edit_name'))         { showError('err_edit_name',  true);  valid = false; }
+    else                             showError('err_edit_name',  false);
+
+    const dv = parseFloat(document.getElementById('edit_discountValue')?.value);
+    if (!dv || dv <= 0)            { showError('err_edit_value', true);  valid = false; }
+    else                             showError('err_edit_value', false);
+
+    const s = val('edit_startDate'), e = val('edit_endDate');
+    if (!s)                        { showError('err_edit_start', true);  valid = false; }
+    else                             showError('err_edit_start', false);
+
+    if (!e || (s && e && e <= s))  { showError('err_edit_end',   true);  valid = false; }
+    else                             showError('err_edit_end',   false);
+
+    if (!valid) return;
+    document.getElementById('editOfferForm').submit();
+  }
+function toggleEditMaxDiscount(){
+
+    const type = document.getElementById("edit_discountType").value;
+
+    if(type === "percent"){
+
+        document.getElementById("editMaxDiscountRow")
+            .classList.remove("hidden");
+
+    }else{
+
+        document.getElementById("editMaxDiscountRow")
+            .classList.add("hidden");
+
+        document.getElementById("edit_maxDiscountAmount").value = "";
+
+    }
+
+}
+document.getElementById("edit_startDate").addEventListener("change", function () {
+
+    const endDate = document.getElementById("edit_endDate");
+
+    endDate.min = this.value;
+
+    if (endDate.value < this.value) {
+        endDate.value = "";
+    }
+
+});
+
+document
+    .getElementById("edit_discountType")
+    .addEventListener("change", toggleEditMaxDiscount);
+  // ── Delete Modal ─────────────────────────────
+  function openDeleteModal(id, name) {
+    document.getElementById('deleteOfferName').textContent = name;
+    document.getElementById('deleteForm').action = `/admin/offers/${id}/delete`;
+    document.getElementById('deleteModal').classList.remove('hidden');
+  }
+  function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+  }
+
+  // Close any modal on backdrop click
+  ['addModal','editModal','deleteModal'].forEach(function(id) {
+    document.getElementById(id).addEventListener('click', function(e) {
+      if (e.target === this) this.classList.add('hidden');
+    });
+  });
+
+  // Search debounce
+  const filterForm = document.getElementById('filterForm');
+  const searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('input', function() {
+    clearTimeout(this._t);
+    this._t = setTimeout(() => filterForm.submit(), 500);
+  });
+
+
+const today = new Date().toISOString().split("T")[0];
+
+document.getElementById("add_startDate").min = today;
+document.getElementById("edit_startDate").min = today;
+
+document.getElementById("add_endDate").min = today;
+document.getElementById("edit_endDate").min = today;
+
+document.getElementById("add_startDate").addEventListener("change", function () {
+
+    document.getElementById("add_endDate").min = this.value;
+
+});
+
+document.getElementById("edit_startDate").addEventListener("change", function () {
+
+    document.getElementById("edit_endDate").min = this.value;
+
+});
+</script>
+
+</body>
+</html>

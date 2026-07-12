@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order Details - Leafora</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leaf: { 50:'#f0faf0', 100:'#dcf5dc', 600:'#1f7a1f', 700:'#185c18', 800:'#124512' },
+            cream: '#f5f0e8',
+          },
+          fontFamily: {
+            display: ['"Playfair Display"','serif'],
+            body:    ['Poppins','sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f5f0e8; margin: 0; }
+
+    /* ── Navbar ── */
+    .navbar { background: #f5f0e8; padding: 0 40px; display: flex; align-items: center; justify-content: space-between; height: 56px; border-bottom: 1px solid #e8e2d8; position: sticky; top: 0; z-index: 100; }
+    .nav-logo { display: flex; align-items: center; gap: 6px; text-decoration: none; }
+    .nav-logo img { height: 32px; }
+    .nav-logo span { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: #1a5c1a; }
+    .nav-links a { font-size: 0.78rem; color: #374151; text-decoration: none; font-weight: 500; margin-left: 22px; transition: color .15s; }
+    .nav-links a:hover { color: #1a5c1a; }
+    .nav-links a.active { border-bottom: 2px solid #374151; }
+    .nav-icons a { color: #374151; font-size: 0.88rem; text-decoration: none; margin-left: 14px; transition: color .15s; position: relative; }
+    .nav-icons a:hover { color: #1a5c1a; }
+    .cart-badge { position: absolute; top: -6px; right: -7px; background: #1a5c1a; color: #fff; font-size: 0.5rem; font-weight: 700; width: 14px; height: 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    /* ── Section card ── */
+    .s-card { background: #fff; border-radius: 14px; border: 1px solid #ece8e0; padding: 22px 24px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+    .s-title { font-size: 0.82rem; font-weight: 700; color: #1f2937; margin-bottom: 14px; }
+
+    /* ── Tracking stepper ── */
+    .stepper { display: flex; align-items: flex-start; width: 100%; }
+    .step { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+    .step:not(:last-child)::after {
+      content: ''; position: absolute; top: 18px; left: 50%;
+      width: 100%; height: 2px; background: #e5e7eb; z-index: 0;
+    }
+    .step.done:not(:last-child)::after  { background: #1a5c1a; }
+    .step-icon {
+      width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 0.8rem; z-index: 1;
+      border: 2px solid #e5e7eb; background: #fff; color: #9ca3af;
+    }
+    .step.done   .step-icon { background: #1a5c1a; border-color: #1a5c1a; color: #fff; }
+    .step.active .step-icon { background: #fff; border-color: #1a5c1a; color: #1a5c1a; }
+    .step-label  { font-size: 0.6rem; color: #9ca3af; margin-top: 6px; text-align: center; font-weight: 500; max-width: 72px; line-height: 1.3; }
+    .step.done  .step-label,
+    .step.active .step-label { color: #1a5c1a; font-weight: 600; }
+    .step-date  { font-size: 0.55rem; color: #adb5bd; text-align: center; margin-top: 2px; max-width: 72px; line-height: 1.3; }
+
+    /* ── Product image slot ── */
+    .prod-img { width: 60px; height: 60px; border-radius: 10px; overflow: hidden; background: #e8ede8; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .prod-img img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ── Price row ── */
+    .price-row { display: flex; justify-content: space-between; font-size: 0.78rem; padding: 5px 0; }
+
+    /* ── Badge ── */
+    .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 0.65rem; font-weight: 700; padding: 4px 12px; border-radius: 999px; }
+    .badge-pending       { background: #fef9c3; color: #92400e; }
+    .badge-processing    { background: #dbeafe; color: #1d4ed8; }
+    .badge-shipped       { background: #ede9fe; color: #6d28d9; }
+    .badge-outfordelivery{ background: #ffedd5; color: #c2410c; }
+    .badge-delivered,
+    .badge-completed     { background: #dcfce7; color: #15803d; }
+    .badge-cancelled     { background: #fee2e2; color: #991b1b; }
+    .badge-returned      { background: #f3f4f6; color: #374151; }
+
+    /* ── Modal overlay ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: center; justify-content: center; z-index: 50; }
+
+    /* ── Form fields in modal ── */
+    .f-textarea {
+      width: 100%; border: 1.5px solid #e5e7eb; border-radius: 10px;
+      padding: 12px 14px; font-size: 0.82rem; color: #374151;
+      outline: none; font-family: 'Poppins', sans-serif;
+      resize: vertical; min-height: 90px; transition: border-color .2s;
+    }
+    .f-textarea:focus { border-color: #1a5c1a; }
+    .f-textarea::placeholder { color: #adb5bd; }
+
+    .f-select-modal {
+      width: 100%; border: 1.5px solid #e5e7eb; border-radius: 10px;
+      padding: 12px 14px; font-size: 0.82rem; color: #374151;
+      outline: none; font-family: 'Poppins', sans-serif;
+      appearance: none; cursor: pointer; background: #fff;
+      transition: border-color .2s;
+    }
+    .f-select-modal:focus { border-color: #1a5c1a; }
+
+    /* ── Toast ── */
+    .toast { position: fixed; top: 1rem; right: 1rem; z-index: 9999; display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 10px; font-size: .82rem; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,.12); animation: slideIn .3s ease; }
+    @keyframes slideIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* ── Action link button ── */
+    .action-btn { width: 100%; display: flex; align-items: center; gap: 8px; font-size: 0.78rem; font-weight: 500; padding: 9px 12px; border-radius: 8px; transition: background .15s; cursor: pointer; border: none; background: transparent; text-align: left; }
+    .action-btn:hover { background: #f9fafb; }
+    .action-btn.green { color: #374151; }
+    .action-btn.red   { color: #ef4444; }
+    .action-btn.red:hover { background: #fef2f2; }
+  </style>
+</head>
+
+<body class="min-h-screen">
+
+<!-- ════ FLASH TOASTS ════ -->
+<% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+  <div class="toast bg-green-50 border border-green-200 text-green-700" id="flashToast">
+    <i class="fa-solid fa-circle-check"></i> <%= success[0] %>
+  </div>
+<% } %>
+<% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+  <div class="toast bg-red-50 border border-red-200 text-red-700" id="flashToast">
+    <i class="fa-solid fa-circle-exclamation"></i> <%= error[0] %>
+  </div>
+<% } %>
+
+<!-- ════ NAVBAR ════ -->
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <img src="/images/leafora logo.png" alt="Leafora" onerror="this.style.display='none'" />
+    <span>Leafora</span>
+  </a>
+      <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+        <a href="/"          class="hover:text-leaf-700 transition-colors">Home</a>
+        <a href="/productlist" class="hover:text-leaf-700 transition-colors"  >products</a>
+        <a href="/about"  class="hover:text-leaf-700 transition-colors">About</a>
+        <a href="/contact"     class="hover:text-leaf-700 transition-colors">Contact</a>
+      </nav>
+
+  <div class="nav-icons" style="display:flex;align-items:center">
+    <a href="/profile" title="Account"><i class="fa-regular fa-user"></i></a>
+ 
+       <a href="/wishlist" class="hidden md:flex flex-col items-center gap-0.5 relative hover:text-leaf-500 transition-colors">
+  <i class="fa-regular fa-heart text-base"></i>
+
+<span
+  id="wishlistCount"
+  class="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold <%= wishlistCount > 0 ? '' : 'hidden' %>">
+  <%= wishlistCount || 0 %>
+</span>
+
+
+</a>
+
+ <a href="/cart" title="Cart" style="position:relative">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
+        <span class="cart-badge"><%= cartCount %></span>
+      <% } %>
+    </a>
+  </div>
+</nav>
+
+<%
+  /* ── Resolve order data ── */
+  const o         = typeof order !== 'undefined' ? order : {};
+  const items     = o.items || [];
+  const addr      = o.address || {};
+  const statusKey = (o.orderStatus || 'pending').toLowerCase().replace(/\s/g,'');
+  const statusLabel = o.orderStatus === 'outForDelivery' ? 'Out for Delivery'
+    : (o.orderStatus || 'pending').charAt(0).toUpperCase() + (o.orderStatus || 'pending').slice(1);
+const badgeClass = {
+  pending:'badge-pending',
+  processing:'badge-processing',
+  shipped:'badge-shipped',
+  outfordelivery:'badge-outfordelivery',
+  delivered:'badge-delivered',
+  completed:'badge-completed',
+  cancelled:'badge-cancelled',
+  returned:'badge-returned',
+
+  returnrejected:'badge-rejected',
+}[statusKey] || 'badge-pending';
+
+
+  const orderDate = o.createdAt
+    ? new Date(o.createdAt).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
+    : 'Feb 10, 2022';
+  const estDelivery = o.createdAt
+    ? new Date(new Date(o.createdAt).getTime() + 5*24*60*60*1000).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
+    : 'June 2, 2022';
+
+  const canCancel  = ['pending','processing'].includes(statusKey);
+  const canReturn  = statusKey === 'delivered';
+  const canReview  = statusKey === 'delivered';
+
+  /* ── Stepper config ── */
+  const stepOrder = ['pending','shipped','outfordelivery','delivered'];
+  const curStepIdx = stepOrder.indexOf(
+    statusKey === 'processing' ? 'pending' : statusKey
+  );
+  const stepDefs = [
+    { icon:'fa-circle-check', label:'Order Confirmed', date: orderDate },
+    { icon:'fa-truck',        label:'Shipped',         date: '' },
+    { icon:'fa-motorcycle',   label:'Out For Delivery',date: '' },
+    { icon:'fa-house-chimney',label:'Delivered',       date: `Expected by, ${estDelivery}` },
+  ];
+%>
+
+
+
+<!-- ════ MAIN CONTENT ════ -->
+<div class="max-w-4xl mx-auto px-4 py-7">
+
+  <!-- ── Top bar: Order ID + Download Invoice ── -->
+  <div class="flex items-start justify-between mb-1 flex-wrap gap-3">
+    <div>
+  <p class="text-xs text-gray-400 mb-0.5">Invoice</p>
+
+  <div class="flex items-center gap-3 flex-wrap">
+    <h1 class="text-base font-bold text-gray-900">
+      Order ID:
+      <span class="font-mono">
+        <%= o.orderId || ('#ORD-' + (o._id||'').toString().slice(-10).toUpperCase()) %>
+      </span>
+    </h1>
+
+    <span class="badge <%= badgeClass %>">
+      <%= statusLabel %>
+    </span>
+  </div>
+
+  <p class="text-[10px] text-gray-400 mt-1">
+    Order date: <%= orderDate %>
+    &nbsp;&nbsp;
+    Estimated delivery: <%= estDelivery %>
+  </p>
+</div>
+
+
+    <!-- vi. Download Invoice -->
+    <a href="/orders/<%= o._id %>/invoice"
+       class="flex items-center gap-2 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors flex-shrink-0">
+      <i class="fa-solid fa-download text-xs"></i> Download invoice
+    </a>
+  </div>
+
+  <!-- ── Tracking stepper (hidden when cancelled/returned) ── -->
+  <!-- <% if (!['cancelled','returned'].includes(statusKey)) { %>
+  <div class="s-card mb-5 mt-4">
+    <div class="stepper">
+      <% stepDefs.forEach(function(step, si) {
+           const isDone   = curStepIdx > si;
+           const isActive = curStepIdx === si;
+      %>
+      <div class="step <%= isDone ? 'done' : (isActive ? 'active' : '') %>">
+        <div class="step-icon"><i class="fa-solid <%= step.icon %>"></i></div>
+        <p class="step-label"><%= step.label %></p>
+        <% if (step.date) { %><p class="step-date"><%= step.date %></p><% } %>
+      </div>
+      <% }) %>
+    </div>
+  </div>
+  <% } %> -->
+
+  <!-- ── Two-column layout ── -->
+  <div class="flex gap-5 items-start flex-wrap lg:flex-nowrap">
+
+    <!-- ════ LEFT COLUMN ════ -->
+    <div class="flex-1 min-w-0 space-y-4">
+
+      <!-- Items in your Order -->
+      <div class="s-card">
+        <p class="s-title">Items in your Order</p>
+        <% if (items.length > 0) { %>
+          <% items.forEach(function(item) {
+               const product   = item.product || item;
+               const variant = item.productVariant;
+               const img = item.image || variant?.images?.[0] || '';
+               const price     = item.price || 0;
+               const qty       = item.quantity || 1;
+          %>
+          <div class="flex items-center gap-3 mb-3 pb-3 border-b border-gray-50 last:border-0 last:mb-0 last:pb-0">
+            <!-- image slot -->
+            <div class="prod-img">
+              <% if (img) { %>
+                <img src="/uploads/products/<%= item.image %>"
+            alt="<%= item.name || 'product' %>"
+            class="w-full h-full object-cover"
+                     onerror="this.parentNode.innerHTML='<i class=\'fa-solid fa-seedling\' style=\'color:#b8d4b8;font-size:1.1rem\'></i>'" />
+              <% } else { %>
+                <i class="fa-solid fa-seedling" style="color:#b8d4b8;font-size:1.1rem"></i>
+              <% } %>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-semibold text-gray-800 text-xs truncate">
+                <%= item.name || (typeof product === 'object' && product ? product.name : '—') %>
+              </p>
+              <p class="text-gray-400 text-[10px]">Qty: <%= qty %></p>
+            </div>
+          <div class="flex flex-col items-end gap-1">
+
+  <% if (item.offerDiscount > 0) { %>
+
+    <div class="flex flex-col items-end">
+
+      <span class="font-semibold text-green-700 text-sm">
+        ₹<%= Number(item.price * qty).toLocaleString('en-IN') %>
+      </span>
+
+      <span class="line-through text-gray-400 text-xs">
+        ₹<%= Number(item.originalPrice * qty).toLocaleString('en-IN') %>
+      </span>
+
+      <span class="text-red-600 text-[11px] font-medium">
+        Save ₹<%= Number(item.savings * qty).toLocaleString('en-IN') %>
+      </span>
+
+    </div>
+
+  <% } else { %>
+
+    <span class="font-semibold text-gray-800 text-sm">
+      ₹<%= Number(item.price * qty).toLocaleString('en-IN') %>
+    </span>
+
+  <% } %>
+<%
+const itemStatusKey = (item.itemStatus || 'pending')
+  .toLowerCase()
+  .replace(/\s/g,'');
+%>
+
+<span class="badge
+<%= {
+  pending:'badge-pending',
+  processing:'badge-processing',
+  shipped:'badge-shipped',
+  outfordelivery:'badge-outfordelivery',
+  delivered:'badge-delivered',
+  cancelled:'badge-cancelled'
+}[itemStatusKey] || 'badge-pending' %>">
+
+<%= item.itemStatus === 'outForDelivery'
+    ? 'Out for Delivery'
+    : item.itemStatus.charAt(0).toUpperCase() + item.itemStatus.slice(1) %>
+</span>
+
+<% if (item.status === 'cancelled' || item.itemStatus === 'cancelled') { %>
+  <!-- <span class="badge badge-cancelled">Cancelled</span> -->
+  <% if (item.cancelReason) { %>
+    <span class="text-xs text-gray-500 ml-1">(<%= item.cancelReason %>)</span>
+  <% } %>
+<% } else if (['pending', 'processing'].includes(item.itemStatus) && item.itemStatus !== 'cancelled') { %>
+  <button
+    onclick="openCancelItemModal('<%= o._id %>','<%= item._id %>')"
+    class="text-red-600 text-xs font-medium hover:underline">
+    Cancel Item
+  </button>
+<% } %>
+ <!-- <% if (['shipped', 'outForDelivery'].includes(item.itemStatus)) { %>
+    <span class="text-blue-600 text-xs font-medium">
+      Shipping
+    </span>
+  <% } %> -->
+
+<% if (item.itemStatus === 'delivered') { %>
+  
+
+<% if (item.returnStatus === 'requested') { %>
+
+  <span class="text-orange-500 text-xs font-medium">
+    Return Requested
+  </span>
+
+<% } else if (item.returnStatus === 'approved') { %>
+
+  <span class="text-green-600 text-xs font-medium">
+    Return Approved
+  </span>
+
+<% } else if (item.returnStatus === 'rejected') { %>
+
+  <span class="text-red-600 text-xs font-medium">
+    Return Rejected
+  </span>
+
+<% } else if (item.returnStatus === 'returned') { %>
+
+  <span class="text-gray-600 text-xs font-medium">
+    Returned
+  </span>
+
+<% } else if (
+      item.itemStatus === 'delivered' &&
+      item.returnStatus === 'none'
+) { %>
+
+  <button
+    onclick="openReturnItemModal('<%= o._id %>','<%= item._id %>')"
+    class="text-green-600 text-xs font-medium hover:underline">
+    Return Item
+  </button>
+
+<% } %>
+ 
+    <button
+  type="button"
+  onclick="openReviewModal(
+    '<%= item.productId %>',
+    '<%= item.image || '' %>',
+    '<%= item.name || '' %>'
+  )"
+  class="flex items-center gap-1.5 border border-yellow-200 text-yellow-600 hover:bg-yellow-50 text-xs font-medium px-4 py-2 rounded-lg transition-colors">
+  <i class="fa-regular fa-star text-xs"></i>
+  Review Item
+</button>
+  <% } %>
+</div>
+          </div>
+          <% }) %>
+        <% } else { %>
+          <p class="text-xs text-gray-400 text-center py-4">No items found.</p>
+        <% } %>
+      </div>
+
+   
+
+      <!-- Payment Summary -->
+      <div class="s-card">
+        <p class="s-title">Payment Summary</p>
+       <div class="price-row">
+  <span class="text-gray-500">
+    Original Price (<%= activeItemCount %> items)
+  </span>
+
+  <span class="font-medium text-gray-800">
+    ₹<%= originalSubtotal.toLocaleString("en-IN") %>
+  </span>
+</div>
+
+<% if (offerDiscount > 0) { %>
+<div class="price-row">
+  <span class="text-gray-500">Offer Discount</span>
+
+  <span class="font-semibold text-green-600">
+    -₹<%= offerDiscount.toLocaleString("en-IN") %>
+  </span>
+</div>
+<% } %>
+
+<% if (couponDiscount > 0) { %>
+<div class="price-row">
+  <span class="text-gray-500">
+    Coupon Discount
+    <% if (o.couponCode) { %>
+      (<%= o.couponCode %>)
+    <% } %>
+  </span>
+
+  <span class="font-semibold text-red-500">
+    -₹<%= couponDiscount.toLocaleString("en-IN") %>
+  </span>
+</div>
+<% } %>
+
+<div class="price-row">
+  <span class="text-gray-500">Subtotal</span>
+
+  <span class="font-medium text-gray-800">
+    ₹<%= subtotal.toLocaleString("en-IN") %>
+  </span>
+</div>
+
+<div class="price-row">
+  <span class="text-gray-500">Shipping Fee</span>
+
+  <span class="font-medium <%= shipping === 0 ? 'text-green-600' : 'text-gray-800' %>">
+    <%= shipping === 0 ? 'Free' : '₹' + shipping.toLocaleString('en-IN') %>
+  </span>
+</div>
+
+<div class="price-row border-t border-gray-100 pt-2 mt-1 font-bold text-sm">
+  <span>Order Total</span>
+
+  <span class="text-gray-900">
+    ₹<%= total.toLocaleString("en-IN") %>
+  </span>
+</div>
+
+        <!-- Payment chip -->
+        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
+          <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+            <i class="fa-regular fa-credit-card text-blue-400" style="font-size:.8rem"></i>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-medium text-gray-700 leading-tight">
+              Paid via <%= o.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Visa' %> ending in &nbsp;
+              <span class="font-mono font-semibold text-gray-900"><%= o.cardLast4 || '****' %></span>
+            </p>
+            <p class="text-[10px] font-mono text-gray-400">
+              Order ID: <%= o.orderId || o._id %>
+            </p>
+          </div>
+          <% if (o.paymentStatus === 'paid') { %>
+            <span class="text-xs font-bold text-green-600 bg-green-50 border border-green-100 px-2.5 py-0.5 rounded-full">Paid</span>
+          <% } %>
+        </div>
+      </div>
+
+    </div>
+    <!-- /left column -->
+
+    <!-- ════ RIGHT COLUMN ════ -->
+    <div style="width:220px;flex-shrink:0">
+
+      <!-- Shipping Details -->
+      <div class="s-card mb-4">
+        <div class="flex items-center justify-between mb-3">
+          <p class="s-title mb-0">Shipping Details</p>
+          <i class="fa-regular fa-copy text-gray-400 text-xs cursor-pointer hover:text-[#1a5c1a]" title="Copy address"></i>
+        </div>
+        <div class="flex items-start gap-2">
+          <div class="w-6 h-6 rounded-full bg-green-50 border border-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <i class="fa-solid fa-location-dot text-[#1a5c1a]" style="font-size:.6rem"></i>
+          </div>
+          <div class="text-xs text-gray-500 leading-relaxed break-words overflow-hidden">
+            <p class="font-bold text-gray-800 mb-0.5"><%= addr.fullName || '—' %></p>
+            <p><%= addr.addressLine1 || '' %><% if (addr.addressLine2) { %>, <%= addr.addressLine2 %><% } %></p>
+            <p><%= [addr.city, addr.state].filter(Boolean).join(', ') %></p>
+            <% if (addr.pincode) { %><p><%= addr.pincode %></p><% } %>
+            <% if (addr.phone) { %><p>+<%= addr.phone %></p><% } %>
+          </div>
+        </div>
+        <div class="mt-3 flex items-center gap-1.5 text-[10px] text-gray-400">
+          <i class="fa-regular fa-bell" style="font-size:.6rem"></i>
+          Updates sent via SMS &amp; Email
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="s-card">
+        <p class="s-title">Actions</p>
+        <div class="space-y-1">
+          <% if (canReturn) { %>
+            <button onclick="openReturnModal('<%= o._id %>')" class="action-btn green">
+              <i class="fa-solid fa-rotate-left" style="color:#1a5c1a;width:14px;text-align:center"></i>
+              Return order
+            </button>
+          <% } %>
+
+        
+          <% if (canCancel) { %>
+            <button onclick="openCancelModal('<%= o._id %>')" class="action-btn red">
+              <i class="fa-solid fa-circle-xmark" style="width:14px;text-align:center"></i>
+              Cancel Order
+            </button>
+          <% } %>
+
+          
+          <% if (statusKey === 'shipped') { %>
+              <i class="fa-solid fa-circle-xmark" style="width:14px;text-align:center"></i>
+              shipped can't cancel
+            </button>
+          <% } %>
+
+          
+         
+
+<!-- 
+          <% if (canReview) { %>
+            <button onclick="openReviewModal('<%= o._id %>','<%= (items[0] && items[0].image) || '' %>','<%= (items[0] && items[0].name) || 'Product' %>')"
+              class="action-btn" style="color:#ca8a04">
+              <i class="fa-regular fa-star" style="width:14px;text-align:center"></i>
+              Write a Review
+            </button>
+          <% } %>
+-->
+        </div>
+      </div>
+
+    </div>
+    <!-- /right column -->
+
+  </div>
+  <!-- /two-column -->
+
+</div>
+<!-- /max-w -->
+
+<!-- ════ FOOTER ════ -->
+<footer style="background-color:#1a2e1a;font-family:'Poppins',sans-serif;margin-top:24px">
+  <div class="max-w-6xl mx-auto px-6 pt-10 pb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
+      <div>
+        <p class="text-white text-2xl font-bold mb-4" style="font-family:'Playfair Display',serif">Leafora</p>
+        <p class="text-xs text-gray-300 mb-3">Download the Leafora App Now</p>
+        <div class="w-24 h-24 bg-white rounded-lg mb-4 flex items-center justify-center">
+          <i class="fa-solid fa-qrcode text-3xl text-gray-400"></i>
+        </div>
+        <div class="flex gap-2">
+          <a href="#" class="flex items-center gap-1.5 bg-black text-white text-[10px] px-3 py-2 rounded-lg">
+            <i class="fa-brands fa-google-play text-sm"></i>
+            <span><span class="block text-[8px] text-gray-400">Get it on</span>Play Store</span>
+          </a>
+          <a href="#" class="flex items-center gap-1.5 bg-black text-white text-[10px] px-3 py-2 rounded-lg">
+            <i class="fa-brands fa-apple text-sm"></i>
+            <span><span class="block text-[8px] text-gray-400">Download on</span>App Store</span>
+          </a>
+        </div>
+      </div>
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Helpful Links</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Care Guide</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Shipping Policy</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Returns &amp; Refunds</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Track Order</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Locate Stores</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Information</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Blog</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Care Tips</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">FAQs</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">About Us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Contact Us</h4>
+        <ul class="space-y-2 mb-4">
+          <li class="text-gray-300 text-xs">+91 9000000000</li>
+          <li><a href="mailto:support@leafora.com" class="text-gray-300 text-xs hover:text-white">Email Us: support@leafora.com</a></li>
+        </ul>
+        <div class="flex gap-2">
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-brands fa-whatsapp text-sm"></i></a>
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-regular fa-envelope text-sm"></i></a>
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-brands fa-telegram text-sm"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="border-t border-gray-600 mx-6"></div>
+  <div class="max-w-6xl mx-auto px-6 py-5">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-gray-300 text-xs font-medium mr-1">Social</span>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-instagram text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-x-twitter text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-facebook-f text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-youtube text-white text-xs"></i></a>
+      </div>
+      <div class="flex items-center gap-2">
+        <i class="fa-brands fa-cc-visa text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-mastercard text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-amex text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-paypal text-gray-300 text-xl"></i>
+        <span class="text-[9px] font-bold text-gray-300 border border-gray-500 px-1.5 py-0.5 rounded">RuPay</span>
+      </div>
+    </div>
+    <div class="border-t border-gray-600 mt-4 mb-4"></div>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+      <p class="text-gray-400 text-[11px]">© 2026 Leafora – All Rights Reserved.</p>
+      <div class="flex gap-4">
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Terms &amp; Conditions</a>
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Privacy Policy</a>
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Disclaimer</a>
+      </div>
+    </div>
+    <p class="text-right mt-3 text-sm font-medium" style="color:#6aaa6a;font-family:'Playfair Display',serif">Grow Green, Live Fresh 🌿</p>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════════════
+     CANCEL ORDER MODAL
+     iii. Optional reason for cancellation
+══════════════════════════════════════════ -->
+<!-- Cancel Item Modal -->
+<div id="cancelItemModal" class="hidden modal-overlay">
+  <div class="bg-white rounded-2xl shadow-2xl w-96 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-bold text-gray-800">Cancel Item</h2>
+      <button onclick="document.getElementById('cancelItemModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <p class="text-xs text-gray-500 mb-3">Reason for cancellation</p>
+    <textarea id="cancelItemReason" class="f-textarea" placeholder="Type the reason for cancellation"></textarea>
+    <div class="flex justify-end gap-3 mt-5">
+      <button onclick="document.getElementById('cancelItemModal').classList.add('hidden')" class="px-5 py-2 text-xs font-medium border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
+      <button onclick="submitCancelItem()" class="px-5 py-2 text-xs font-semibold bg-[#1a5c1a] hover:bg-[#144d14] text-white rounded-lg">Submit</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let _cancelItemOrderId = '';
+  let _cancelItemId = '';
+  function openCancelItemModal(orderId, itemId) {
+    _cancelItemOrderId = orderId;
+    _cancelItemId = itemId;
+    document.getElementById('cancelItemReason').value = '';
+    document.getElementById('cancelItemModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  async function submitCancelItem() {
+    const reason = document.getElementById('cancelItemReason').value.trim();
+    try {
+      const res = await fetch(`/orders/${_cancelItemOrderId}/item/${_cancelItemId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason })
+      });
+      const data = await res.json();
+      document.getElementById('cancelItemModal').classList.add('hidden');
+      document.body.style.overflow = '';
+      if (data.success) {
+        showToast('Item cancelled.', 'success');
+        setTimeout(() => window.location.reload(), 800);
+      } else {
+        showToast(data.message || 'Could not cancel item.', 'error');
+      }
+    } catch {
+      showToast('Network error. Please try again.', 'error');
+    }
+  }
+</script>
+
+<!-- Cancel Order Modal -->
+<div id="cancelModal" class="hidden modal-overlay">
+  <div class="bg-white rounded-2xl shadow-2xl w-96 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-bold text-gray-800">Cancel Order</h2>
+      <button onclick="document.getElementById('cancelModal').classList.add('hidden')"
+        class="text-gray-400 hover:text-gray-600 transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <p class="text-xs text-gray-500 mb-3">Reason for cancellation</p>
+    <textarea id="cancelReason" class="f-textarea"
+      placeholder="Type the reason for cancellation"></textarea>
+    <div class="flex justify-end gap-3 mt-5">
+      <button onclick="document.getElementById('cancelModal').classList.add('hidden')"
+        class="px-5 py-2 text-xs font-medium border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+        Cancel
+      </button>
+      <button onclick="submitCancel()"
+        class="px-5 py-2 text-xs font-semibold bg-[#1a5c1a] hover:bg-[#144d14] text-white rounded-lg transition-colors">
+        Submit
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     RETURN ORDER MODAL  (Image 2)
+     iv. Mandatory reason for return
+══════════════════════════════════════════ -->
+<div id="returnModal" class="hidden modal-overlay">
+  <div class="bg-white rounded-2xl shadow-2xl w-[360px] p-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl border border-gray-200 bg-gray-50 flex items-center justify-center">
+          <i class="fa-solid fa-rotate-left text-[#1a5c1a]" style="font-size:1rem"></i>
+        </div>
+        <h2 class="text-sm font-bold text-gray-900">Return Order</h2>
+      </div>
+      <button onclick="document.getElementById('returnModal').classList.add('hidden')"
+        class="text-gray-400 hover:text-gray-600 transition-colors text-base">
+        ×
+      </button>
+    </div>
+
+    <!-- Reason (mandatory) -->
+    <div class="mb-5">
+      <label class="block text-xs font-semibold text-gray-700 text-center mb-3">
+        Reason for Return <span class="text-red-500">*</span>
+      </label>
+      <div class="relative">
+        <select id="returnReason" class="f-select-modal pr-10 text-center"
+          style="border-radius:10px">
+          <option value="">Select a reason</option>
+          <option value="damaged">Item arrived damaged</option>
+          <option value="wrong">Wrong item received</option>
+          <option value="notAsDescribed">Not as described</option>
+          <option value="noLongerNeeded">No longer needed</option>
+          <option value="quality">Poor quality</option>
+          <option value="other">Other</option>
+        </select>
+        <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" style="font-size:9px"></i>
+      </div>
+    </div>
+
+    <!-- Additional comments -->
+    <div class="mb-5">
+      <label class="block text-xs font-semibold text-gray-700 text-center mb-3">
+        Additional Comments (Optional)
+      </label>
+      <textarea id="returnComments" class="f-textarea"
+        style="min-height:100px;border-radius:10px"
+        placeholder="Please provide any additional details about your return..."></textarea>
+    </div>
+
+    <!-- Note box -->
+    <div class="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-6">
+      <p class="text-[10px] text-gray-500 leading-relaxed">
+        <strong class="text-gray-700">Note:</strong>&nbsp; Once submitted, you will receive a return
+        confirmation email with further instructions within 24 hours.
+      </p>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex gap-3">
+      <button onclick="document.getElementById('returnModal').classList.add('hidden')"
+        class="flex-1 py-3 text-xs font-semibold border border-gray-200 rounded-2xl text-gray-700 hover:bg-gray-50 transition-colors">
+        Cancel
+      </button>
+      <button onclick="submitReturn()"
+        class="flex-1 py-3 text-xs font-semibold bg-[#1a5c1a] hover:bg-[#144d14] text-white rounded-2xl transition-colors">
+        Request Refund
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     REVIEW MODAL
+══════════════════════════════════════════ -->
+<div id="reviewModal" class="hidden modal-overlay">
+  <div class="bg-white rounded-2xl shadow-2xl w-96 p-6" style="position:relative">
+    <button onclick="document.getElementById('reviewModal').classList.add('hidden')"
+      class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-sm transition-colors">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <div class="text-center mb-5">
+      <p class="text-base font-bold text-gray-900 uppercase tracking-wider mb-0.5">Help Us</p>
+      <p class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-2">Make Our Products Better</p>
+      <div class="w-16 h-[2px] bg-gray-800 mx-auto"></div>
+    </div>
+    <!-- Product image slot -->
+    <div id="reviewProductImg"
+         class="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 mx-auto mb-4 flex items-center justify-center">
+      <i class="fa-solid fa-seedling text-3xl" style="color:#b8d4b8"></i>
+    </div>
+    <p class="text-xs font-semibold text-gray-700 mb-2">Overall Product Feedback</p>
+    <div class="flex gap-1 mb-4" id="starRow">
+      <% for(let s=1;s<=5;s++){ %>
+        <i class="fa-regular fa-star" data-val="<%= s %>"
+           onclick="setRating(<%= s %>)"
+           style="cursor:pointer;font-size:1.4rem;color:#d1d5db;transition:color .15s"
+           id="star-<%= s %>"></i>
+      <% } %>
+    </div>
+    <p class="text-xs font-semibold text-gray-700 mb-2">Tell Us More</p>
+    <textarea id="reviewText" class="f-textarea"
+      placeholder="Type any additional feedback here"></textarea>
+    <button onclick="submitReview()"
+      class="w-full mt-4 bg-[#8b1a1a] hover:bg-[#6e1414] text-white font-bold text-xs py-3 rounded-lg uppercase tracking-widest transition-colors">
+      Submit
+    </button>
+  </div>
+</div>
+
+<script>
+  const ORDER_ID     = '<%= o._id %>';
+  let _cancelOrderId = ORDER_ID;
+  let _returnOrderId = ORDER_ID;
+  let _reviewOrderId = ORDER_ID;
+  
+
+
+
+  function openReturnModal(orderId) {
+    _returnOrderId = orderId;
+    _returnItemId = null; // Reset item ID to distinguish from item-level return
+    document.getElementById('returnReason').value   = '';
+    document.getElementById('returnComments').value = '';
+    document.getElementById('returnModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  /* ── Cancel modal ── */
+  function openCancelModal() {
+    document.getElementById('cancelReason').value = '';
+    document.getElementById('cancelModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  async function submitCancel() {
+    const reason = document.getElementById('cancelReason').value.trim();
+    try {
+      const res  = await fetch(`/orders/${_cancelOrderId}/cancel`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json();
+      document.getElementById('cancelModal').classList.add('hidden');
+      document.body.style.overflow = '';
+      if (data.success) { showToast('Order cancelled.', 'success'); setTimeout(() => window.location.reload(), 800); }
+      else showToast(data.message || 'Could not cancel order.', 'error');
+    } catch { showToast('Network error. Please try again.', 'error'); }
+  }
+
+  /* ── Return modal ── */
+  let _returnItemId = null;
+  function openReturnItemModal(orderId, itemId) {
+    _returnOrderId = orderId;
+    _returnItemId = itemId;
+    document.getElementById('returnReason').value   = '';
+    document.getElementById('returnComments').value = '';
+    document.getElementById('returnModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+  async function submitReturn() {
+    const reason   = document.getElementById('returnReason').value;
+    const comments = document.getElementById('returnComments').value.trim();
+    if (!reason) { showToast('Please select a reason for return.', 'error'); return; }
+
+    if (_returnItemId) {
+      try {
+        const res = await fetch(`/orders/${_returnOrderId}/item/${_returnItemId}/return`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason, comments }),
+        });
+        const data = await res.json();
+        document.getElementById('returnModal').classList.add('hidden');
+        document.body.style.overflow = '';
+        if (data.success) { showToast('Return request submitted!', 'success'); setTimeout(() => window.location.reload(), 800); }
+        else showToast(data.message || 'Could not submit return.', 'error');
+      } catch { showToast('Network error.', 'error'); }
+    } else {
+      // Full order return uses form submission based on original logic
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `/orders/${_returnOrderId}/return`;
+
+      const reasonInput = document.createElement('input');
+      reasonInput.type = 'hidden';
+      reasonInput.name = 'reason';
+      reasonInput.value = reason;
+
+      const commentsInput = document.createElement('input');
+      commentsInput.type = 'hidden';
+      commentsInput.name = 'comments';
+      commentsInput.value = comments;
+
+      form.appendChild(reasonInput);
+      form.appendChild(commentsInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    }
+  }
+
+  /* ── Review modal ── */
+ let _reviewProductId = null;
+let _reviewRating = 0;
+
+function openReviewModal(productId, imgSrc, productName) {
+
+  _reviewProductId = productId;
+  _reviewRating = 0;
+
+  document.getElementById('reviewText').value = '';
+
+  for (let s = 1; s <= 5; s++) {
+    const star = document.getElementById('star-' + s);
+
+    if (star) {
+      star.className = 'fa-regular fa-star';
+      star.style.color = '#d1d5db';
+    }
+  }
+
+  document.getElementById('reviewModal').classList.remove('hidden');
+}
+
+function setRating(rating) {
+  _reviewRating = rating;
+
+  for (let i = 1; i <= 5; i++) {
+    const star = document.getElementById('star-' + i);
+
+    if (i <= rating) {
+      star.className = 'fa-solid fa-star';
+      star.style.color = '#facc15';
+    } else {
+      star.className = 'fa-regular fa-star';
+      star.style.color = '#d1d5db';
+    }
+  }
+}
+
+async function submitReview() {
+  const comment = document.getElementById('reviewText').value.trim();
+
+  // if (!_reviewProductId) {
+  //   return showToast('Product not found', 'error');
+  // }
+
+  if (_reviewRating === 0) {
+    return showToast('Please select a rating', 'error');
+  }
+
+  try {
+    const res = await fetch(
+      `/orders/${ORDER_ID}/review/${_reviewProductId}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          rating: _reviewRating,
+          comment
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    if (data.success) {
+      showToast('Review submitted successfully', 'success');
+
+      document.getElementById('reviewModal').classList.add('hidden');
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } else {
+      showToast(data.message || 'Failed to submit review', 'error');
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('Network error', 'error');
+  }
+}
+
+  /* ── Close modals on overlay click ── */
+  ['cancelModal','returnModal','reviewModal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e) {
+      if (e.target === this) { this.classList.add('hidden'); document.body.style.overflow = ''; }
+    });
+  });
+
+  /* ── Mini toast ── */
+  function showToast(msg, type) {
+    const old = document.getElementById('miniToast');
+    if (old) old.remove();
+    const t = document.createElement('div');
+    t.id = 'miniToast';
+    t.className = 'toast ' + (type === 'success'
+      ? 'bg-green-50 border border-green-200 text-green-700'
+      : 'bg-red-50 border border-red-200 text-red-700');
+    t.innerHTML = `<i class="fa-solid fa-${type === 'success' ? 'circle-check' : 'circle-exclamation'}"></i> ${msg}`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  /* ── Auto dismiss flash toast ── */
+  const ft = document.getElementById('flashToast');
+  if (ft) setTimeout(() => ft.remove(), 5000);
+</script>
+<script>
+async function addToCart(event, productId, variantId) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  try {
+    const res = await fetch('/cart/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        productId,
+        variantId,
+        quantity: 1
+      })
+    });
+
+    const data = await res.json();
+
+    console.log(data);
+
+    if (data.success) {
+
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Added to cart',
+        timer: 1500,
+        showConfirmButton: false
+      });
+
+      updateCartBadge(data.cartCount);
+
+    } else {
+
+      Swal.fire({
+        icon: 'error',
+        title: data.message
+      });
+
+    }
+
+  } catch(err){
+    console.error(err);
+  }
+}
+
+function updateCartBadge(count) {
+
+    const badge = document.getElementById("cartCount");
+
+    if(!badge) return;
+
+    badge.textContent = count;
+
+    if(count > 0){
+        badge.classList.remove("hidden");
+    }else{
+        badge.classList.add("hidden");
+    }
+
+}
+</script>
+
+</body>
+</html>

@@ -116,17 +116,26 @@
     <img src="/images/leafora logo.png" alt="Leafora" onerror="this.style.display='none'" />
     <span>Leafora</span>
   </a>
-  <div class="nav-links">
-    <a href="/">Home</a>
-    <a href="/blog">Blog</a>
-    <a href="/products" class="text-leaf-700 font-semibold">Products</a>
-    <a href="/pages">Pages</a>
-  </div>
+      <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+        <a href="/"          class="hover:text-leaf-700 transition-colors">Home</a>
+        <a href="/productlist" class="hover:text-leaf-700 transition-colors"  >products</a>
+        <a href="/about"  class="hover:text-leaf-700 transition-colors">About</a>
+        <a href="/contact"     class="hover:text-leaf-700 transition-colors">Contact</a>
+      </nav>
+
   <div class="nav-icons" style="display:flex;align-items:center">
-    <a href="/search"  title="Search"><i class="fa-solid fa-magnifying-glass"></i></a>
-    <a href="/account" title="Account"><i class="fa-regular fa-user"></i></a>
-    <a href="/wishlist" title="Wishlist"><i class="fa-regular fa-heart"></i></a>
-    <a href="/store-locator" title="Stores"><i class="fa-solid fa-location-dot"></i></a>
+    <a href="/profile" title="Account"><i class="fa-regular fa-user"></i></a>
+          <a href="/wishlist" class="hidden md:flex flex-col items-center gap-0.5 relative hover:text-leaf-500 transition-colors">
+  <i class="fa-regular fa-heart text-base"></i>
+
+<span
+  id="wishlistCount"
+  class="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold <%= wishlistCount > 0 ? '' : 'hidden' %>">
+  <%= wishlistCount || 0 %>
+</span>
+
+  <!-- <span class="text-[10px] text-gray-500">Wishlist</span> -->
+</a>
     <a href="/cart" title="Cart" style="position:relative">
       <i class="fa-solid fa-bag-shopping"></i>
       <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
@@ -163,7 +172,7 @@
         <% } %>
         <% if (typeof minPrice !== 'undefined' && minPrice) { %>
           <span class="active-chip">
-            ₹<%= minPrice %>–₹<%= typeof maxPrice !== 'undefined' ? maxPrice : '∞' %>
+            ₹<%= minPrice %>–₹<%= typeof maxPrice !== 'undefined' ? maxPrice-1 : '∞' %>
             <button onclick="clearFilter('price')"><i class="fa-solid fa-xmark"></i></button>
           </span>
         <% } %>
@@ -288,10 +297,7 @@
               </span>
             <% } %>
           </div>
-          <button type="submit"
-            class="bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
-            Search
-          </button>
+         
         </form>
 
         <!-- Sort -->
@@ -359,9 +365,9 @@
               <div class="absolute inset-0 bg-black/35"></div>
 
               <!-- Badge: Discount % or "New Arrival" -->
-              <span class="absolute top-3 left-3 text-white text-[10px] font-bold px-2 py-1 rounded-full z-10 <%= hasDiscount ? 'bg-orange-500' : 'bg-green-700' %>">
-                <%= hasDiscount ? discPct + '% OFF' : 'New Arrival' %>
-              </span>
+            <span class="absolute top-3 left-3 text-white text-[10px] font-bold px-2 py-1 rounded-full z-10 <%= p.hasOffer ? 'bg-orange-500' : 'bg-green-700' %>">
+    <%= p.hasOffer ? p.offerDiscount + '% OFF' : 'New Arrival' %>
+</span>
 
               <!-- Out of Stock overlay -->
               <% if (!inStock) { %>
@@ -371,11 +377,17 @@
               <% } %>
 
               <!-- Wishlist -->
-              <button onclick="event.preventDefault()" class="absolute top-3 right-3 bg-white/90 rounded-full w-8 h-8 flex items-center justify-center shadow text-gray-500 hover:text-red-500 z-10">
-                <i class="<%= wishlistIds.includes(p._id.toString())
-      ? 'fa-solid text-red-500'
-      : 'fa-regular text-gray-500' %> fa-heart text-xs"></i>
-              </button>
+             <%
+               const _wlIds = typeof wishlistIds !== 'undefined' ? wishlistIds : [];
+               const _inWL  = _wlIds.includes(p._id.toString());
+             %>
+             <button
+  type="button"
+  onclick="event.preventDefault();event.stopPropagation();toggleWishlist('<%= p._id %>', this)"
+  class="absolute top-3 right-3 bg-white/90 rounded-full w-8 h-8 flex items-center justify-center shadow z-10"
+>
+  <i class="<%= _inWL ? 'fa-solid text-red-500' : 'fa-regular' %> fa-heart text-xs"></i>
+</button>
 
               <!-- Content -->
               <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
@@ -388,20 +400,38 @@
                   </p>
                 <% } %>
 
-                <div class="flex items-center gap-2 mb-3">
-                  <span class="font-bold text-lg">₹<%= Number(currentPrice).toLocaleString('en-IN') %></span>
-                  <% if (origPrice) { %>
-                    <span class="text-sm line-through text-gray-300">₹<%= Number(origPrice).toLocaleString('en-IN') %></span>
-                  <% } %>
-                </div>
+<div class="flex items-center gap-2">
 
+    <% if (p.hasOffer) { %>
+
+        <span class="text-lg font-bold text-green-700">
+            ₹<%= p.offerPrice.toLocaleString("en-IN") %>
+        </span>
+
+        <span class="line-through text-gray-400">
+            ₹<%= p.originalPrice.toLocaleString("en-IN") %>
+        </span>
+
+        <span class="text-red-600 font-semibold">
+            <%= p.offerDiscount %>% OFF
+        </span>
+
+    <% } else { %>
+
+        <span class="text-lg font-bold">
+            ₹<%= p.originalPrice.toLocaleString("en-IN") %>
+        </span>
+
+    <% } %>
+
+</div>
                 <button
-                  onclick="event.preventDefault()"
+                  type="button"
+                  onclick="addToCart(event, '<%= p._id %>', '<%= firstVar ? firstVar._id : '' %>')"
                   class="w-full bg-white text-green-700 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 hover:text-white transition <%= !inStock ? 'opacity-50 cursor-not-allowed' : '' %>"
-                  <%= !inStock ? 'disabled' : '' %>>
-                  <i class="fa-solid fa-cart-plus mr-1"></i>
-                  <%= inStock ? 'Add to Cart' : 'Out of Stock' %>
-                </button>
+                  <%= !inStock ? 'disabled' : '' %>><i class="fa-solid fa-cart-plus mr-1"></i> <%= inStock ? 'Add to Cart' : 'Out of Stock' %></button>
+
+              
 
               </div>
             </div>
@@ -414,7 +444,7 @@
         const cur    = currentPage  || 1;
         const totPg  = totalPages   || 1;
         const totPr  = totalProducts|| 0;
-        const lim    = limit || 9;
+        const lim    = 12;
         const st     = totPr > 0 ? (cur-1)*lim+1 : 0;
         const en     = totPr > 0 ? Math.min(st+products.length-1, totPr) : 0;
 
@@ -625,6 +655,7 @@
     <p class="text-right mt-3 text-sm font-medium" style="color:#6aaa6a;font-family:'Playfair Display',serif">Grow Green, Live Fresh 🌿</p>
   </div>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
   /* ── Clear search ── */
@@ -674,6 +705,129 @@
     });
   }
 </script>
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50 hidden"></div>
+<script>
 
+
+async function toggleWishlist(productId, btn) {
+  try {
+    const res = await fetch('/wishlist/toggle', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ productId })
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      showToast(data.message, 'error');
+      return;
+    }
+
+    const icon = btn.querySelector('i');
+
+    if (data.inWishlist) {
+      icon.classList.remove('fa-regular');
+      icon.classList.add('fa-solid', 'text-red-500');
+      showToast('Added to wishlist ❤️', 'success');
+    } else {
+      icon.classList.remove('fa-solid', 'text-red-500');
+      icon.classList.add('fa-regular');
+      showToast('Removed from wishlist', 'info');
+    }
+
+    refreshWishlistCount(); // <-- Add this line
+
+  } catch (err) {
+    console.error(err);
+    showToast('Something went wrong', 'error');
+  }
+}
+
+async function refreshWishlistCount() {
+  console.log("Refreshing wishlist count...");
+
+  const res = await fetch('/wishlist/count');
+  const data = await res.json();
+
+  console.log("Count response:", data);
+
+  const badge = document.getElementById('wishlistCount');
+
+  if (!badge) return;
+
+  badge.textContent = data.count;
+
+  if (data.count > 0) {
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+
+   
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+  toast.textContent = message;
+  // Reset classes
+  toast.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50';
+  // Set background based on type
+  let bg = '';
+  if (type === 'success') bg = '#38a169'; // green-600
+  else if (type === 'error') bg = '#e53e3e'; // red-600
+  else if (type === 'info') bg = '#3182ce'; // blue-600
+  else bg = '#38a169';
+  toast.style.background = bg;
+  toast.style.color = '#fff';
+  toast.classList.remove('hidden');
+  setTimeout(() => { toast.classList.add('hidden'); }, 3000);
+}
+</script>
+<script>
+async function addToCart(event, productId, variantId) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  try {
+    const res = await fetch('/cart/add', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        productId,
+           variantId,
+        quantity: 1
+      
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Added to cart',
+        showConfirmButton: false,
+        timer: 1500
+      });
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: data.message || 'Could not add to cart'
+      });
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+
+</script>
 </body>
 </html>

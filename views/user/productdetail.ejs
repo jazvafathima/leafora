@@ -128,12 +128,7 @@
   const isUnavailable = !p || p.isBlocked || p.status === 'inactive' || p.status === 'blocked';
 %>
 
-<% if (isUnavailable) { %>
-  <script>
-    /* Redirect to shop listing immediately */
-    window.location.replace('/products');
-  </script>
-<% } %>
+
 
 <body class="min-h-screen" id="pageBody">
 
@@ -160,23 +155,30 @@
     <img src="/images/leafora logo.png" alt="Leafora" onerror="this.style.display='none'" />
     <span>Leafora</span>
   </a>
-  <div class="nav-links">
-    <a href="/">Home</a>
-    <a href="/blog">Blog</a>
-    <a href="/products">Products</a>
-    <a href="/pages">Pages</a>
-  </div>
-  <div class="nav-icons">
-    <a href="/search"  title="Search"><i class="fa-solid fa-magnifying-glass"></i></a>
-    <a href="/account" title="Account"><i class="fa-regular fa-user"></i></a>
-    <a href="/wishlist" title="Wishlist"><i class="fa-regular fa-heart"></i></a>
-    <a href="/location" title="Store Locator"><i class="fa-solid fa-location-dot"></i></a>
-    <a href="/cart" title="Cart" style="position:relative">
-      <i class="fa-solid fa-bag-shopping"></i>
-      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
-        <span class="cart-badge"><%= cartCount %></span>
-      <% } %>
-    </a>
+     <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+        <a href="/"          class="hover:text-leaf-700 transition-colors">Home</a>
+        <a href="/productlist" class="hover:text-leaf-700 transition-colors"  >products</a>
+        <a href="/about"  class="hover:text-leaf-700 transition-colors">About</a>
+        <a href="/contact"     class="hover:text-leaf-700 transition-colors">Contact</a>
+      </nav>
+   <div class="nav-icons" style="display:flex;align-items:center">
+    <a href="/profile" title="Account"><i class="fa-regular fa-user"></i></a>
+<a href="/wishlist" title="Wishlist" style="position:relative">
+    <i class="fa-regular fa-heart"></i>
+
+    <span id="wishlistBadge" class="cart-badge" style="display:none">
+        0
+    </span>
+</a>
+   <a href="/cart" title="Cart" style="position:relative">
+    <i class="fa-solid fa-bag-shopping"></i>
+
+    <span id="cartBadge"
+          class="cart-badge"
+          style="<%= cartCount > 0 ? 'display:flex' : 'display:none' %>">
+        <%= cartCount || 0 %>
+    </span>
+</a>
   </div>
 </nav>
 
@@ -210,6 +212,17 @@
     <span class="sep">/</span>
     <span class="current"><%= p ? p.name : 'Product' %></span>
   </div>
+  <% if (unavailable) { %>
+<div class="mb-6 rounded-lg border border-red-300 bg-red-50 p-4">
+    <h2 class="text-red-700 font-bold text-lg">
+        Product Unavailable
+    </h2>
+
+    <p class="text-red-600 text-sm mt-1">
+        This product has been removed or is currently unavailable.
+    </p>
+</div>
+<% } %>
 
   <!-- Product grid -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -260,10 +273,30 @@
       <!-- Title + wishlist -->
       <div class="flex items-start justify-between gap-3 mb-2">
         <h1 class="font-display text-2xl font-semibold text-gray-900 leading-tight">
-          <%= p ? p.name : 'Product Name' %>
-        </h1>
-        <button onclick="toggleWishlist('<%= product._id %>')">
-  <i class="fa-regular fa-heart"></i>
+            <%= p ? p.name : 'Product Name' %>
+            <% if (p && p.returnStatus) { %>
+              <span class="badge <%= (function(){
+                const map={
+                  approved:'badge-processing',
+                  rejected:'badge-cancelled',
+                  returned:'badge-returned',
+                  requested:'badge-pending'
+                };
+                return map[p.returnStatus] || 'badge-pending';
+              })() %>"><%= p.returnStatus.charAt(0).toUpperCase() + p.returnStatus.slice(1) %></span>
+            <% } %>
+          </h1>
+        <%
+  const _wlIds = typeof wishlistIds !== 'undefined' ? wishlistIds : [];
+  const _inWL = _wlIds.includes(p._id.toString());
+%>
+
+<button
+  type="button"
+  onclick="toggleWishlist('<%= p._id %>', this)"
+  class="bg-white/90 rounded-full w-10 h-10 flex items-center justify-center shadow"
+>
+  <i class="<%= _inWL ? 'fa-solid text-red-500' : 'fa-regular text-gray-500' %> fa-heart"></i>
 </button>
       </div>
 
@@ -281,20 +314,38 @@
         </span>
       </div>
 
-      <% if (typeof unavailable !== 'undefined' && unavailable) { %>
-  <div class="max-w-4xl mx-auto mt-6">
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-      <strong>Unavailable:</strong>
-      This product is currently unavailable.
-    </div>
+      <% if (isUnavailable) { %>
+<div class="max-w-4xl mx-auto mt-6">
+  <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+    <strong>Unavailable:</strong>
+    This product is currently unavailable.
   </div>
+</div>
 <% } %>
 
       <!-- Price block -->
       <div class="flex items-center gap-3 mb-1">
-      <span id="displayPrice" class="font-display text-2xl font-bold text-gray-900">
-  ₹<%= Number(discPrice || basePrice).toLocaleString('en-IN') %>
-</span>
+      <% if (product.hasOffer) { %>
+
+    <span class="text-2xl font-bold text-green-700">
+        ₹<%= product.offerPrice %>
+    </span>
+
+    <span class="ml-2 text-gray-400 line-through">
+        ₹<%= product.originalPrice %>
+    </span>
+
+    <span class="ml-2 text-red-600 font-semibold">
+        <%= product.offerDiscount %>% OFF
+    </span>
+
+<% } else { %>
+
+    <span class="text-2xl font-bold">
+        ₹<%= product.originalPrice %>
+    </span>
+
+<% } %>
       </div>
 
       <!-- Stock info -->
@@ -367,7 +418,7 @@
             <input type="hidden" name="productId" value="<%= p ? p._id : '' %>" />
             <input type="hidden" name="variantId" id="cartVariantId" value="<%= firstVar ? firstVar._id : '' %>" />
             <input type="hidden" name="quantity"  id="cartQty" value="1" />
-          <% if (typeof unavailable !== 'undefined' && unavailable) { %>
+          <% if (isUnavailable) { %>
   <button
     class="w-full bg-gray-400 text-white py-3 rounded cursor-not-allowed"
     disabled>
@@ -383,15 +434,15 @@
 <% } %>
 
           </form>
-          <form action="/checkout/buy-now" method="POST" class="flex-1">
-            <input type="hidden" name="productId" value="<%= p ? p._id : '' %>" />
-            <input type="hidden" name="variantId" id="buyVariantId" value="<%= firstVar ? firstVar._id : '' %>" />
-            <input type="hidden" name="quantity"  id="buyQty" value="1" />
-            <button type="submit"
-              class="w-full border-2 border-[#1a5c1a] text-[#1a5c1a] hover:bg-[#1a5c1a] hover:text-white font-semibold text-sm py-3 rounded-lg transition-colors">
-              BUY IT NOW
-            </button>
-          </form>
+        <!-- <form action="/buy-now" method="POST">
+    <input type="hidden" name="productId" value="<%= p._id %>">
+    <input type="hidden" name="variantId" id="buyVariantId" value="<%= firstVar ? firstVar._id : '' %>">
+    <input type="hidden" name="quantity" id="buyQty" value="1">
+
+    <button type="submit">
+        BUY IT NOW
+    </button>
+</form> -->
         </div>
       <% } else { %>
         <div class="mb-5">
@@ -558,44 +609,105 @@
   <!-- ════════════════════════════════════════
        RELATED PRODUCTS
   ════════════════════════════════════════ -->
-  <% if (typeof relatedProducts !== 'undefined' && relatedProducts && relatedProducts.length > 0) { %>
-    <div class="mt-12 mb-6">
-      <h2 class="font-display text-xl font-semibold text-gray-900 mb-5">You May Also Like</h2>
-      <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-        <% relatedProducts.forEach(function(rp){ %>
-          <%
-            const rpVar   = rp.variants && rp.variants.length > 0 ? rp.variants[0] : null;
-            const rpPrice = rpVar ? (rpVar.price || 0) : (rp.price || 0);
-            const rpDisc  = rpVar ? (rpVar.discountPrice || rpVar.discount || null) : null;
-          %>
-          <a href="/products/<%= rp._id %>" class="related-card" style="text-decoration:none">
-            <div class="related-img">
-              <% if (rp.images && rp.images.length > 0) { %>
-                <img src="<%= rp.images[0] %>" alt="<%= rp.name %>" />
-              <% } else { %>
-                <i class="fa-solid fa-seedling text-3xl" style="color:#c0d8c0"></i>
-              <% } %>
-            </div>
-            <div class="p-3">
-              <p class="text-xs font-semibold text-gray-800 mb-1 leading-tight line-clamp-2"><%= rp.name %></p>
-              <div class="flex items-center gap-1.5">
-                <% if (rpDisc) { %>
-                  <span class="text-xs font-bold text-gray-900">₹<%= Number(rpDisc).toLocaleString('en-IN') %></span>
-                  <span class="text-gray-400 line-through" style="font-size:0.65rem">₹<%= Number(rpPrice).toLocaleString('en-IN') %></span>
-                <% } else { %>
-                  <span class="text-xs font-bold text-gray-900">₹<%= Number(rpPrice).toLocaleString('en-IN') %></span>
-                <% } %>
-              </div>
-            </div>
-          </a>
-        <% }) %>
+ <% if (relatedProducts && relatedProducts.length > 0) { %>
+
+<section class="max-w-7xl mx-auto px-4 py-12">
+  <div class="text-center mb-8">
+    <p class="section-title mb-1">★ YOU MAY ALSO LIKE ★</p>
+    <h2 class="font-display text-2xl md:text-3xl font-bold text-leaf-800">
+      Related Plants
+    </h2>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+
+    <% relatedProducts.forEach(p => { 
+      
+      const mainVariant = p.variants?.[0];
+
+      const currentPrice = mainVariant?.discountPrice || mainVariant?.price || 0;
+      const originalPrice = mainVariant?.discountPrice ? mainVariant.price : null;
+
+      const hasDiscount = !!mainVariant?.discountPrice;
+
+      const discountPct = hasDiscount
+        ? Math.round((1 - mainVariant.discountPrice / mainVariant.price) * 100)
+        : 0;
+
+      const imageFile = mainVariant?.images?.[0];
+
+      const productImage = imageFile
+        ? '/uploads/products/' + imageFile
+        : 'https://placehold.co/400x500/2e9e2e/white?text=No+Image';
+
+      const stockQty = Number(
+  mainVariant?.stockQuantity ??
+  mainVariant?.stock ??
+  0
+);
+
+const inStock = stockQty > 0;
+
+    %>
+
+    <a href="/product/<%= p._id %>" class="block">
+
+      <div class="relative h-80 rounded-2xl overflow-hidden group shadow-md">
+
+        <img
+          src="<%= productImage %>"
+          alt="<%= p.name %>"
+          class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+        >
+
+        <div class="absolute inset-0 bg-black/35"></div>
+
+        <span class="absolute top-3 left-3 text-white text-[10px] font-bold px-2 py-1 rounded-full z-10 <%= hasDiscount ? 'bg-orange-500' : 'bg-leaf-600' %>">
+          <%= hasDiscount ? discountPct + '% OFF' : 'Related' %>
+        </span>
+
+        <% if (!inStock) { %>
+          <div class="absolute inset-0 bg-black/50 flex items-center justify-center z-20">
+            <span class="text-white font-bold text-sm uppercase">
+              Out of Stock
+            </span>
+          </div>
+        <% } %>
+
+        <div class="absolute bottom-0 left-0 right-0 p-4 text-white z-10">
+
+          <h3 class="text-lg font-bold mb-1">
+            <%= p.name %>
+          </h3>
+
+          <div class="flex items-center gap-2 mb-3">
+            <span class="font-bold text-lg">
+              ₹<%= currentPrice.toLocaleString('en-IN') %>
+            </span>
+
+            <% if (originalPrice) { %>
+              <span class="text-sm line-through text-gray-300">
+                ₹<%= originalPrice.toLocaleString('en-IN') %>
+              </span>
+            <% } %>
+          </div>
+
+          <div class="w-full bg-white text-leaf-700 py-2 rounded-lg text-center text-sm font-semibold">
+            View Product
+          </div>
+
+        </div>
+
       </div>
-    </div>
-  <% } %>
 
-</div>
-<!-- /max-w -->
+    </a>
 
+    <% }) %>
+
+  </div>
+</section>
+
+<% } %>
 <!-- ════════════════════════════════════════
      FOOTER
 ════════════════════════════════════════ -->
@@ -694,6 +806,7 @@
     <p class="text-right mt-3 text-sm font-medium" style="color:#6aaa6a;font-family:'Playfair Display',serif">Grow Green, Live Fresh 🌿</p>
   </div>
 </footer>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <!-- ════════════════════════════════════════
      SCRIPTS
@@ -718,19 +831,27 @@ document.getElementById("addToCartForm").addEventListener("submit", async functi
     });
 
     const result = await res.json();
+if (result.success) {
+    showToast(result.message, "success");
+    loadCartCount();      // Refresh cart badge
+   // Refresh wishlist badge if needed
+    // Unfill wishlist heart
+    const wishIcon = document.querySelector(
+      'button[onclick*="toggleWishlist"] i'
+    );
 
-    if (result.success) {
-        showToast(result.message, "success");
-    } else {
+    if (wishIcon) {
+      wishIcon.classList.remove('fa-solid', 'text-red-500');
+      wishIcon.classList.add('fa-regular', 'text-gray-500');
+    }
+
+    showToast(result.message, "success");
+} else {
         showToast(result.message, "error");
     }
 });
 </script>
 <script>
-  /* ── Redirect guard: if product unavailable ── */
-  <% if (isUnavailable) { %>
-    window.location.replace('/products');
-  <% } %>
 
   /* ── Image zoom on mouse move ── */
   const wrap = document.getElementById('mainImgWrap');
@@ -898,7 +1019,7 @@ Swal.fire({
 <script>
 Swal.fire({
   toast: true,
-  position: 'top-end',
+  position: 'bottom',
   icon: 'error',
   title: '<%= error_msg[0] %>',
   showConfirmButton: false,
@@ -907,6 +1028,89 @@ Swal.fire({
 });
 </script>
 <% } %>
+<div id="toast"
+     class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg hidden z-50">
+</div>
+
+<script>
+async function toggleWishlist(productId, btn) {
+  try {
+    const res = await fetch('/wishlist/toggle', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ productId })
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      showToast(data.message, 'error');
+      return;
+    }
+
+    const icon = btn.querySelector('i');
+
+    if (data.inWishlist) {
+      icon.classList.remove('fa-regular');
+      icon.classList.add('fa-solid', 'text-red-500');
+
+      showToast('Added to wishlist ❤️', 'success');
+    } else {
+      icon.classList.remove('fa-solid', 'text-red-500');
+      icon.classList.add('fa-regular');
+
+      showToast('Removed from wishlist', 'info');
+    }
+
+  } catch (err) {
+    console.error(err);
+    showToast('Something went wrong', 'error');
+  }
+}
+</script>
+<script>
+async function loadWishlistCount() {
+    try {
+        const res = await fetch('/wishlist/count');
+        const data = await res.json();
+
+        const badge = document.getElementById('wishlistBadge');
+
+        if (data.count > 0) {
+            badge.textContent = data.count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (err) {
+        console.error(err);
+    }
+}
+
+loadWishlistCount();
+</script>
+<script>
+async function loadCartCount() {
+    const res = await fetch('/cart/count');
+    const data = await res.json();
+
+const badge = document.getElementById("cartBadge");
+
+if (!badge) return;
+
+if (data.count > 0) {
+        badge.textContent = data.count;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+loadCartCount();
+</script>
+
 
 </body>
 </html>
