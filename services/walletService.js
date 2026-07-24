@@ -9,7 +9,7 @@ exports.getOrCreateWallet = async (userId) => {
     wallet = await Wallet.create({
       user: userId,
       balance: 0,
-      transactions: []
+      transactions: [],
     });
   }
 
@@ -17,18 +17,18 @@ exports.getOrCreateWallet = async (userId) => {
 };
 
 // Credit Wallet
-exports.creditWallet = async (
-  userId,
-  amount,
-  reason,
-  orderId = null
-) => {
+exports.creditWallet = async (userId, amount, reason, orderId = null) => {
+  console.log("Wallet Credit");
+  console.log(userId);
+  console.log(amount);
 
   if (!amount || amount <= 0) {
     throw new Error("Credit amount must be positive");
   }
 
   const wallet = await exports.getOrCreateWallet(userId);
+
+  console.log("Old Balance:", wallet.balance);
 
   wallet.balance += amount;
 
@@ -37,25 +37,18 @@ exports.creditWallet = async (
     amount,
     reason,
     orderId,
-    transactionId:
-      "TXN-" +
-      crypto.randomBytes(4).toString("hex").toUpperCase(),
-    createdAt: new Date()
+    transactionId: "TXN-" + crypto.randomBytes(4).toString("hex").toUpperCase(),
+    createdAt: new Date(),
   });
 
   await wallet.save();
+  console.log("Wallet Saved");
 
   return wallet;
 };
 
 // Debit Wallet
-exports.debitWallet = async (
-  userId,
-  amount,
-  reason,
-  orderId = null
-) => {
-
+exports.debitWallet = async (userId, amount, reason, orderId = null) => {
   if (!amount || amount <= 0) {
     throw new Error("Debit amount must be positive");
   }
@@ -73,10 +66,8 @@ exports.debitWallet = async (
     amount,
     reason,
     orderId,
-    transactionId:
-      "TXN-" +
-      crypto.randomBytes(4).toString("hex").toUpperCase(),
-    createdAt: new Date()
+    transactionId: "TXN-" + crypto.randomBytes(4).toString("hex").toUpperCase(),
+    createdAt: new Date(),
   });
 
   await wallet.save();

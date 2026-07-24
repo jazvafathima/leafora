@@ -120,9 +120,7 @@
 </a>
     <a href="/cart" title="Cart" style="position:relative">
       <i class="fa-solid fa-bag-shopping"></i>
-      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
-        <span class="cart-badge"><%= cartCount %></span>
-      <% } %>
+      <span id="cartBadge" class="cart-badge" style="<%= (typeof cartCount !== 'undefined' && cartCount > 0) ? 'display:flex;' : 'display:none;' %>"><%= (typeof cartCount !== 'undefined') ? cartCount : 0 %></span>
     </a>
   </div>
 </nav>
@@ -241,6 +239,13 @@ const itemTotal = unitPrice * qty;
             </td>
 
             <!-- Price -->
+        <div class="flex items-center gap-2">
+  <!-- <td class="cart-td">
+              <span class="font-medium text-gray-800">₹<%= Number(unitPrice).toLocaleString('en-IN') %></span>
+              <% if (variant && variant.price && variant.discountPrice && variant.discountPrice < variant.price) { %>
+                <span class="line-through text-gray-400 text-xs ml-1">₹<%= Number(variant.price).toLocaleString('en-IN') %></span>
+              <% } %>
+            </td> -->
           <td class="cart-td">
         <div class="flex items-center gap-2">
 
@@ -255,7 +260,7 @@ const itemTotal = unitPrice * qty;
 </span>
 
 <span class="text-red-600 font-semibold">
-  <%= item.offerDiscount %>% OFF
+  <%= item.offerDiscount %> ₹ OFF
 </span>
 
 <% } else { %>
@@ -268,6 +273,10 @@ const itemTotal = unitPrice * qty;
 
 </div>
 </td>
+
+  
+
+</div>
 
             <!-- Quantity stepper -->
             <td class="cart-td">
@@ -516,7 +525,7 @@ else if (delta > 0) {
         body:    JSON.stringify({ itemId, quantity: newQty }),
       });
       const data = await res.json();
-// window.location.reload();
+ window.location.reload();
 
       if (data.success) {
         qtyEl.textContent = newQty;
@@ -566,32 +575,20 @@ window.removeItem = async function(itemId, btn) {
 
     const data = await res.json();
 
-    if (data.success) {
-      const row = document.getElementById('row-' + itemId);
-
-      if (row) {
-        row.style.transition = 'opacity .3s';
-        row.style.opacity = '0';
-
-        setTimeout(() => row.remove(), 300);
-      }
-
-      if (data.subtotal !== undefined) {
-        const sub = document.getElementById('subtotalDisplay');
-        if (sub) {
-          sub.textContent =
-            '₹' + Number(data.subtotal).toLocaleString('en-IN');
-        }
-      }
-
-      Swal.fire({
+   if (data.success) {
+    Swal.fire({
         toast: true,
         position: 'top-end',
         icon: 'success',
         title: 'Item removed from cart',
         showConfirmButton: false,
-        timer: 2000
-      });
+        timer: 1000
+    }).then(() => {
+        location.reload();
+    });
+
+    return;
+
 
     } else {
       Swal.fire({

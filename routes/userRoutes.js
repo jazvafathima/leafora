@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 
-
 const upload = require("../middleware/profileMulters");
 
 const User = require("../models/User");
@@ -19,12 +18,9 @@ const cartController = require("../controllers/cartController");
 const wishlistController = require("../controllers/wishlistController");
 const checkoutCtrl = require("../controllers/checkoutController");
 const orderController = require("../controllers/orderController");
-const walletController=require("../controllers/walletController");
+const walletController = require("../controllers/walletController");
 
 const { generateOTP, sendOTP, createAndSendOTP } = require("../utils/otp");
-
-
-
 
 router.use((req, res, next) => {
   console.log("ROUTE HIT:", req.method, req.url);
@@ -53,30 +49,6 @@ router.post(
   authController.postLogin,
 );
 
-// show email input page
-// router.get('/login-otp', (req, res) => {
-//   res.render('user/login-otp');
-// });
-
-// // send OTP
-// router.post('/login-otp', authController.sendLoginOTP);
-
-// // verify OTP
-// router.post('/verify-otp', authController.verifyLoginOTP);
-
-// const passport = require('passport');
-
-// Show OTP page
-// router.get('/verify-otp', async (req, res) => {
-
-//   try {
-
-//     const user = await User.findById(req.session.tempUser);
-
-//     if (!user) {
-//       return res.redirect('/signup');
-//     }
-
 router.post("/verify-otp", authController.verifyOtp);
 
 router.get("/verify-otp", authController.getVerifyOtp);
@@ -96,7 +68,7 @@ router.get(
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
     req.session.userId = req.user._id;
-    res.redirect("/dashboard");
+    res.redirect("/");
   },
 );
 
@@ -105,7 +77,7 @@ router.get("/forgot-password", (req, res) => {
   res.render("user/forgot-password");
 });
 
-router.post("/forgot-password", authController.forgotPassword);
+// router.post("/forgot-password", authController.forgotPassword);
 
 // Reset password
 router.get("/reset-password", (req, res) => {
@@ -122,7 +94,7 @@ router.get("/logout", (req, res) => {
   req.session.destroy((err) => {
     if (err) {
       console.log("Logout error:", err);
-      return res.redirect("/dashboard"); // fallback
+      return res.redirect("/"); // fallback
     }
 
     res.clearCookie("connect.sid"); // remove session cookie
@@ -131,8 +103,8 @@ router.get("/logout", (req, res) => {
 });
 
 // ── Dashboard ────────────────────────────────────────────────
-// router.get('/dashboard', isAuthenticated, authController.getDashboard);
-router.get("/dashboard", authController.getDashboard);
+// router.get('/', isAuthenticated, authController.getDashboard);
+router.get("/", authController.getDashboard);
 
 // ── Profile ─────────────────────────────────────────────────
 const Address = require("../models/address");
@@ -141,16 +113,7 @@ const Order = require("../models/Order");
 router.get("/profile", isAuthenticated, authController.getProfile);
 
 // ── Profile Edit ─────────────────────────────────────────────
-router.get("/profileEdit", isAuthenticated, async (req, res) => {
-  try {
-    const user = await User.findById(req.session.userId);
-
-    res.render("user/profileEdit", { user });
-  } catch (err) {
-    console.log("PROFILE EDIT ERROR:", err);
-    res.redirect("/profile");
-  }
-});
+router.get("/profileEdit", isAuthenticated, authController.profileEdit);
 
 router.post(
   "/profileEdit",
@@ -183,15 +146,9 @@ router.get("/addresses", addressController.getAddresses);
 // ✅ 3. ADD ACTION
 router.post("/add-address", addressController.getAddAddress);
 
-router.get("/addresses/:id/edit", async (req, res) => {
-  const address = await Address.findById(req.params.id);
-  res.render("user/addresses/editaddress", { address });
-});
+router.get("/addresses/:id/edit", addressController.loadEditAddress);
 
-router.post("/addresses/:id/update", async (req, res) => {
-  await Address.findByIdAndUpdate(req.params.id, req.body);
-  res.redirect("/addresses");
-});
+router.post("/addresses/:id/update", addressController.editAddress);
 
 router.post("/addresses/:id/delete", addressController.deleteAddress);
 
@@ -209,16 +166,14 @@ router.post("/cart/update", cartController.updateCartItem);
 
 router.post("/cart/remove", cartController.removeCartItem);
 
-router.get('/cart/count', cartController.getCartCount);
+router.get("/cart/count", cartController.getCartCount);
 
 router.post("/buy-now", cartController.buyNow);
 
 router.get("/wishlist", wishlistController.getWishlist);
 
-
 // Toggle (add/remove) from product detail heart button
 router.post("/wishlist/toggle", wishlistController.toggleWishlist);
-
 
 // Explicitly remove one item
 router.post("/wishlist/remove", wishlistController.removeFromWishlist);
@@ -249,33 +204,34 @@ router.post("/checkout/add-address", checkoutCtrl.addAddress); // also at /user/
 //
 router.post("/checkout/address/:addressId", checkoutCtrl.editAddress);
 
-router.post('/checkout/apply-coupon', checkoutCtrl.applyCoupon);
-router.post('/checkout/remove-coupon', checkoutCtrl.removeCoupon);
+router.post("/checkout/apply-coupon", checkoutCtrl.applyCoupon);
+router.post("/checkout/remove-coupon", checkoutCtrl.removeCoupon);
 router.post(
   "/checkout/create-razorpay-order",
-  checkoutCtrl.createRazorpayOrder
+  checkoutCtrl.createRazorpayOrder,
 );
 
-router.post(
-  "/checkout/verify-razorpay",
-  checkoutCtrl.verifyRazorpayPayment
-);
+router.post("/checkout/verify-razorpay", checkoutCtrl.verifyRazorpayPayment);
 
+router.get("/checkout/orderFailed", checkoutCtrl.orderFailed);
 
 // -------wallet-----------
 
+router.get("/wallet", isAuthenticated, walletController.getWalletPage);
 
-router.get('/wallet', isAuthenticated, walletController.getWalletPage);
- 
 // Add funds (Razorpay)
-router.post('/wallet/add-funds', isAuthenticated, walletController.createRazorpayOrder);
-router.post('/wallet/verify-payment', isAuthenticated, walletController.verifyAddFundsPayment);
+router.post(
+  "/wallet/add-funds",
+  isAuthenticated,
+  walletController.createRazorpayOrder,
+);
+router.post(
+  "/wallet/verify-payment",
+  isAuthenticated,
+  walletController.verifyAddFundsPayment,
+);
 
- 
-
-
-
-router.get("/orderhistory",orderController.getOrderHistory);
+router.get("/orderhistory", orderController.getOrderHistory);
 
 router.get("/orders/:id", orderController.getOrderDetail);
 
@@ -285,30 +241,22 @@ router.post("/orders/:orderId/item/:itemId/cancel", orderController.cancelItem);
 
 router.post("/orders/:id/return", orderController.returnOrder);
 
-router.post('/orders/:id/review', orderController.submitReview);
-
-router.get(
-  '/orders/:id/invoice',
-  orderController.downloadInvoice
-);
-
-
-router.post(
-  "/orders/:orderId/item/:itemId/return",
-  orderController.returnItem
-);
+router.post("/orders/:id/review", orderController.submitReview);
 
 router.get("/orders/:id/invoice", orderController.downloadInvoice);
 
+router.post("/orders/:orderId/item/:itemId/return", orderController.returnItem);
 
+router.get("/orders/:id/invoice", orderController.downloadInvoice);
 
-
-
+router.get("/contact", authController.getconctact);
+router.post("/contact/submit", authController.postContact);
+router.get("/about", authController.getAbout);
 
 // ── ROOT ROUTE (KEEP THIS LAST ALWAYS) ───────────────────────
 router.get("/", (req, res) => {
-  if (req.session && req.session.userId) return res.redirect("/dashboard");
-  res.redirect("/dashboard");
+  if (req.session && req.session.userId) return res.redirect("/");
+  res.redirect("/");
 });
 
 module.exports = router;

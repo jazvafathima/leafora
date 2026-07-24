@@ -29,7 +29,7 @@
 
     /* ── Invoice wrapper ── */
     .invoice-page {
-      max-width: 680px;
+      max-width: 800px;
       margin: 32px auto;
       background: #fff;
       border-radius: 4px;
@@ -38,24 +38,73 @@
     }
 
     /* ── Header ── */
-    .inv-header {
-      background: #1a2e1a;
-      padding: 22px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .brand-name {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #fff;
-    }
-    .brand-name span { color: #6aaa6a; }
-    .inv-title-block { text-align: right; }
-    .inv-title-block h1 { font-size: 1.6rem; font-weight: 800; color: #fff; letter-spacing: .08em; margin: 0; line-height: 1; }
-    .inv-title-block p  { font-size: 0.65rem; color: #9ca3af; margin-top: 3px; letter-spacing: .04em; }
+ .inv-header{
+    background:linear-gradient(135deg,#1b5e20,#143d14);
+    color:#fff;
+    padding:28px 32px;
 
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+}
+
+.brand-name{
+    font-family:'Playfair Display',serif;
+    font-size:34px;
+    font-weight:700;
+    margin:0;
+    color:#fff;
+}
+
+.brand-name span{
+    color:#8BC34A;
+}
+
+.brand-tagline{
+    margin-top:4px;
+    font-size:12px;
+    color:#d1d5db;
+}
+
+.brand-contact{
+    margin-top:18px;
+    font-size:11px;
+    color:#d1d5db;
+    line-height:1.8;
+}
+
+.brand-contact i{
+    width:16px;
+    color:#8BC34A;
+}
+
+.invoice-info{
+    text-align:right;
+}
+
+.invoice-info h1{
+    margin:0;
+    font-size:42px;
+    letter-spacing:4px;
+    font-weight:800;
+}
+
+.invoice-number{
+    margin-top:10px;
+    display:inline-block;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.2);
+    padding:6px 14px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.invoice-info p{
+    margin-top:10px;
+    font-size:12px;
+    color:#d1d5db;
+}
     /* ── Meta grid ── */
     .meta-grid {
       display: grid;
@@ -187,7 +236,28 @@
     </button>
   </div>
 
+
+
   <%
+
+      
+const badgeMap = {
+  placed: "badge-placed",
+  processing: "badge-processing",
+  shipped: "badge-shipped",
+  outfordelivery: "badge-outfordelivery",
+  delivered: "badge-delivered",
+  cancelled: "badge-cancelled",
+  returned: "badge-returned",
+
+  pending: "badge-pending",
+  paid: "badge-paid",
+  failed: "badge-failed",
+  refunded: "badge-refunded",
+  "partially paid": "badge-partially-paid"
+};
+
+
     const o      = typeof order !== 'undefined' ? order : {};
     const addr   = o.address || {};
     const items  = o.items   || [];
@@ -203,16 +273,36 @@
       : '—';
 
     const statusKey   = (o.orderStatus  || 'placed').toLowerCase().replace(/\s/g,'');
-    const payStatusKey= (o.paymentStatus|| 'pending').toLowerCase();
+    
     const statusLabel = o.orderStatus === 'outForDelivery' ? 'Out for Delivery'
       : (o.orderStatus || 'Placed').charAt(0).toUpperCase() + (o.orderStatus || 'Placed').slice(1);
-    const payLabel = (o.paymentStatus || 'Pending').charAt(0).toUpperCase() + (o.paymentStatus || 'Pending').slice(1);
+   
+let payStatusKey = (o.paymentStatus || "pending").toLowerCase();
 
-    const badgeMap = {
-      placed:'badge-placed', pending:'badge-pending', paid:'badge-paid',
-      processing:'badge-processing', shipped:'badge-shipped',
-      delivered:'badge-delivered', cancelled:'badge-cancelled',
-    };
+if (o.paymentMethod === "cod") {
+
+  const deliveredCount = o.items.filter(
+    item => item.itemStatus === "delivered"
+  ).length;
+
+  if (deliveredCount === o.items.length) {
+    payStatusKey = "paid";
+  } else if (deliveredCount > 0) {
+    payStatusKey = "partially paid";
+  } else {
+    payStatusKey = "pending";
+  }
+}
+
+const payLabel = payStatusKey
+  .split(" ")
+  .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+  .join(" ");
+%>
+
+  
+
+  
   %>
 
   <!-- ══════════════════════════════════
@@ -221,15 +311,25 @@
   <div class="invoice-page">
 
     <!-- ── Header ── -->
-    <div class="inv-header">
-      <div>
-        <p class="brand-name">Leaf<span>ora</span></p>
-        <p style="font-size:0.65rem;color:#9ca3af;margin-top:2px">Thank you for shopping with us 🌿</p>
-      </div>
-      <div class="inv-title-block">
-        <h1>INVOICE</h1>
-        <p>System-generated document</p>
-      </div>
+  <div class="inv-header">
+  <!-- Left -->
+  <div class="brand">
+    <h1 class="brand-name">Leaf<span>ora</span></h1>
+   
+
+   
+
+  <!-- Right -->
+  <div class="invoice-info text-white">
+    <h1>INVOICE</h1>
+
+    <div class="invoice-number text-white">
+      Invoice #INV-<%= (o._id||'000000').toString().slice(-8).toUpperCase() %>
+    </div>
+
+    <p>Issued on <%= orderDate %></p>
+  </div>
+</div>>
     </div>
 
     <!-- ── Meta grid: 4 cells ── -->
@@ -251,9 +351,11 @@
       </div>
 
       <div class="meta-cell">
-        <p class="meta-label">Payment Status</p>
-        <span class="badge <%= badgeMap[payStatusKey] || 'badge-pending' %>"><%= payLabel %></span>
-      </div>
+  <p class="meta-label">Payment Status</p>
+  <span class="badge <%= badgeMap[payStatusKey] || "badge-pending" %>">
+    <%= payLabel %>
+  </span>
+</div>
 
       <div class="meta-cell" style="border-bottom:none">
         <p class="meta-label">Payment Method</p>

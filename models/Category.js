@@ -18,19 +18,18 @@ const categorySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-  
+
     isDeleted: {
-    type: Boolean,
-    default: false
-  }
-},
+      type: Boolean,
+      default: false,
+    },
+  },
   {
     timestamps: true,
-  }
+  },
 );
 
-
-categorySchema.pre('save', function () {
+categorySchema.pre("save", function () {
   if (this.name) {
     this.name = this.name.toLowerCase();
   }

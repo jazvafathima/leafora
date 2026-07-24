@@ -1,17 +1,16 @@
 const isAdminLoggedIn = (req, res, next) => {
-
   if (!req.session.adminId) {
-    return res.redirect('/admin/login');
+    return res.redirect("/admin/login");
   }
 
   next();
 };
 
-const checkAuth = (req,res,next)=>{
+const checkAuth = (req, res, next) => {
   if (req.session.adminId) {
-    return res.redirect('/admin/dashboard');
+    return res.redirect("/admin/dashboard");
   }
-  next(); 
-}
+  next();
+};
 
-module.exports = { isAdminLoggedIn ,checkAuth};
+module.exports = { isAdminLoggedIn, checkAuth };

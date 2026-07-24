@@ -1,4 +1,4 @@
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
 // 🔢 Generate OTP
 function generateOTP() {
@@ -8,24 +8,23 @@ function generateOTP() {
 // 📧 Send OTP email
 const sendOTP = async (email, otp) => {
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    service: "gmail",
     auth: {
       user: process.env.EMAIL,
-      pass: process.env.EMAIL_PASS
-    }
+      pass: process.env.EMAIL_PASS,
+    },
   });
 
   await transporter.sendMail({
     from: process.env.EMAIL,
     to: email,
     subject: "Your OTP Code",
-    text: `Your OTP is ${otp}. It expires in 5 minutes.`
+    text: `Your OTP is ${otp}. It expires in 5 minutes.`,
   });
 };
 
 // 🔥 NEW: COMMON FUNCTION (THIS IS THE MAIN PART)
 const createAndSendOTP = async (user, newEmail = null) => {
-
   const otp = generateOTP().toString();
 
   user.otp = otp;
@@ -39,7 +38,5 @@ const createAndSendOTP = async (user, newEmail = null) => {
 
   await sendOTP(emailToSend, otp);
 };
-
-
 
 module.exports = { generateOTP, sendOTP, createAndSendOTP };

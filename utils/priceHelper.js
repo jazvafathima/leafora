@@ -17,60 +17,51 @@ function calculateProductPrice(product, variant, offers) {
   let bestPrice = originalPrice;
   let bestDiscount = 0;
 
-  const applicableOffers = offers.filter(
-    offer =>
-      (offer.type === "product" &&
-        offer.target.toString() === product._id.toString()) ||
+  const categoryId = product.category?._id || product.category;
 
-      (offer.type === "category" &&
-        offer.target.toString() === product.category.toString())
-  );
+  const applicableOffers = offers.filter((offer) => {
+    if (offer.type === "product") {
+      return offer.target.toString() === product._id.toString();
+    }
 
+    if (offer.type === "category") {
+      return offer.target.toString() === categoryId.toString();
+    }
 
-
- 
+    return false;
+  });
 
   for (const offer of applicableOffers) {
-  let discountedPrice = originalPrice;
+    console.log({
+      product: product.name,
+      offer: offer.name,
+      type: offer.type,
+      discountType: offer.discountType,
+      value: offer.discountValue,
+    });
+
+    let discountedPrice = originalPrice;
 
     if (offer.discountType === "percent") {
+      let discount = originalPrice * (offer.discountValue / 100);
 
-        let discount =
-            originalPrice * (offer.discountValue / 100);
+      if (offer.maxDiscountAmount && discount > offer.maxDiscountAmount) {
+        discount = offer.maxDiscountAmount;
+      }
 
-        if (
-            offer.maxDiscountAmount &&
-            discount > offer.maxDiscountAmount
-        ) {
-            discount = offer.maxDiscountAmount;
-        }
-
-        discountedPrice = originalPrice - discount;
-
+      discountedPrice = originalPrice - discount;
     } else if (offer.discountType === "flat") {
-
-        discountedPrice =
-            originalPrice - offer.discountValue;
+      discountedPrice = originalPrice - offer.discountValue;
     }
 
-    discountedPrice = Math.max(
-        0,
-        Math.round(discountedPrice)
-    );
+    discountedPrice = Math.max(0, Math.round(discountedPrice));
 
     if (discountedPrice < bestPrice) {
+      bestPrice = discountedPrice;
 
-        bestPrice = discountedPrice;
-
-        bestDiscount =
-            originalPrice - discountedPrice;
+      bestDiscount = originalPrice - discountedPrice;
     }
   }
-
-
-
-
-
 
   return {
     originalPrice,

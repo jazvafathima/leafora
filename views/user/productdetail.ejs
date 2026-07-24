@@ -249,7 +249,7 @@
       </div>
 
       <!-- Thumbnails -->
-      <div class="flex gap-2 flex-wrap">
+      <div id="thumbnailContainer" class="flex gap-2 flex-wrap">
         <% if (allImages.length > 0) { %>
           <% allImages.forEach(function(img, i){ %>
             <div class="thumb <%= i===0?'active':'' %>" onclick="switchImg(this,'<%= img %>')">
@@ -324,29 +324,27 @@
 <% } %>
 
       <!-- Price block -->
-      <div class="flex items-center gap-3 mb-1">
-      <% if (product.hasOffer) { %>
+    <div class="flex items-center gap-3 mb-1">
 
-    <span class="text-2xl font-bold text-green-700">
-        ₹<%= product.offerPrice %>
+    <span id="displayPrice" class="text-2xl font-bold text-green-700">
+        ₹<%= product.offerPrice || product.originalPrice %>
     </span>
 
-    <span class="ml-2 text-gray-400 line-through">
+    <span
+        id="originalPrice"
+        class="ml-2 text-gray-400 line-through <%= product.hasOffer ? '' : 'hidden' %>">
+
         ₹<%= product.originalPrice %>
     </span>
 
-    <span class="ml-2 text-red-600 font-semibold">
-        <%= product.offerDiscount %>% OFF
+    <span
+        id="discountPercent"
+        class="ml-2 text-red-600 font-semibold <%= product.hasOffer ? '' : 'hidden' %>">
+
+        <%= product.offerDiscount %>₹ OFF
     </span>
 
-<% } else { %>
-
-    <span class="text-2xl font-bold">
-        ₹<%= product.originalPrice %>
-    </span>
-
-<% } %>
-      </div>
+</div>
 
       <!-- Stock info -->
       <div class="flex items-center gap-3 mb-4">
@@ -663,7 +661,7 @@ const inStock = stockQty > 0;
         <div class="absolute inset-0 bg-black/35"></div>
 
         <span class="absolute top-3 left-3 text-white text-[10px] font-bold px-2 py-1 rounded-full z-10 <%= hasDiscount ? 'bg-orange-500' : 'bg-leaf-600' %>">
-          <%= hasDiscount ? discountPct + '% OFF' : 'Related' %>
+          <%= hasDiscount ? discountPct + '₹ OFF' : 'Related' %>
         </span>
 
         <% if (!inStock) { %>
@@ -881,8 +879,10 @@ if (result.success) {
 
     const images = JSON.parse(btn.dataset.images || "[]");
 
-    console.log("IMAGES:", images);
+   
 
+    console.log("DATASET:", btn.dataset);
+console.log("IMAGES:", images);
   
 
    
@@ -900,7 +900,37 @@ if (result.success) {
    
 
     // Update Price
-  const priceEl = document.getElementById('displayPrice');
+  const priceEl = document.getElementById("displayPrice");
+const originalPrice = document.getElementById("originalPrice");
+const discountPercent = document.getElementById("discountPercent");
+
+if (Number(discount) > 0) {
+
+    priceEl.textContent =
+        "₹" + Number(discount).toLocaleString("en-IN");
+
+    originalPrice.textContent =
+        "₹" + Number(price).toLocaleString("en-IN");
+
+    originalPrice.classList.remove("hidden");
+
+    const off =
+        Math.round((1 - discount / price) * 100);
+
+    discountPercent.textContent = off + " ₹ OFF";
+
+    discountPercent.classList.remove("hidden");
+
+}
+else {
+
+    priceEl.textContent =
+        "₹" + Number(price).toLocaleString("en-IN");
+
+    originalPrice.classList.add("hidden");
+
+    discountPercent.classList.add("hidden");
+}
 
 if (priceEl) {
   console.log("priceEl:", document.getElementById('displayPrice'));
@@ -920,18 +950,33 @@ console.log("stockEl:", document.getElementById('stockText'));
         stockEl.textContent = stock + ' units available';
     }
 
+    const qtyInput = document.getElementById("qtyInput");
+
+qtyInput.max = stock;
+
+if (+qtyInput.value > +stock) {
+    qtyInput.value = stock || 1;
+}
+
     // Update Hidden Inputs
     document.getElementById('cartVariantId').value = variantId;
-    document.getElementById('buyVariantId').value = variantId;
+   const buyVariant = document.getElementById("buyVariantId");
+if (buyVariant) {
+    buyVariant.value = variantId;
+}
 
     // Update Main Image
-    if (images.length > 0) {
-        document.getElementById('mainImg').src = images[0];
-    }
+    const mainImg = document.getElementById("mainImg");
+console.log("Main Image:", mainImg);
+
+if (images.length > 0 && mainImg) {
+    mainImg.src = images[0];
+    console.log("Updated to:", images[0]);
+}
 
     // Update Thumbnail Gallery
-    const thumbContainer =
-      document.querySelector('.flex.gap-2.flex-wrap');
+ const thumbContainer = document.getElementById("thumbnailContainer");
+console.log("Thumb container:", thumbContainer);
 
     if (thumbContainer && images.length > 0) {
 

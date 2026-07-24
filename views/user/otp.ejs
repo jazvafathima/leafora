@@ -154,6 +154,7 @@
         <span class="text-sm text-gray-500">remaining</span>
       </div>
 
+      <p id="otpError" class="text-red-600 text-sm text-center mb-3"></p>
       <%# Verify button %>
       <button type="submit" id="verifyBtn" class="verify-btn mb-4">
         Verify OTP
@@ -197,6 +198,10 @@
   <script>
     <%# ── OTP box auto-advance ── %>
     var boxes = document.querySelectorAll('.otp-input');
+    var timerEl = document.getElementById('timerDisplay');
+    var resendBtn = document.getElementById('resendBtn');
+    var countdown;
+    var seconds = parseInt(sessionStorage.getItem("otpSeconds")) || 45;
 
     boxes.forEach(function(box, i) {
       box.addEventListener('input', function() {
@@ -246,10 +251,7 @@
     }
 
     <%# ── Countdown timer ── %>
-    var seconds = <% if (typeof timerSeconds !== 'undefined' && timerSeconds) { %><%= timerSeconds %><% } else { %>45<% } %>;
-    var timerEl  = document.getElementById('timerDisplay');
-    var resendBtn = document.getElementById('resendBtn');
-    var countdown;
+
 
     function startTimer(secs) {
       seconds = secs;
@@ -263,11 +265,18 @@
           return;
         }
         seconds--;
+        sessionStorage.setItem("otpSeconds", seconds);
         var m = Math.floor(seconds / 60);
         var s = seconds % 60;
         timerEl.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
       }, 1000);
     }
+    if (seconds <= 0) {
+    clearInterval(countdown);
+    sessionStorage.removeItem("otpSeconds");
+    resendBtn.disabled = false;
+    return;
+}
 
     startTimer(seconds);
 
@@ -289,7 +298,8 @@
         if (data.success) {
           boxes.forEach(function(b) { b.value = ''; b.classList.remove('is-filled','is-error'); });
           document.getElementById('otpHidden').value = '';
-          startTimer(60);
+          sessionStorage.removeItem("otpSeconds");
+startTimer(45);
         }
       })
       .catch(function() {
@@ -299,29 +309,264 @@
     }
 
     <%# ── Form submit validation ── %>
-    document.getElementById('otpForm').addEventListener('submit', function(e) {
-      var otp = document.getElementById('otpHidden').value;
-      var allFilled = true;
 
-      boxes.forEach(function(b) {
-        if (!b.value) { b.classList.add('is-error'); allFilled = false; }
-        else          { b.classList.remove('is-error'); }
-      });
-
-      if (!allFilled || otp.length < 6) {
-        e.preventDefault();
-        return;
-      }
-
-      var btn = document.getElementById('verifyBtn');
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2 text-sm"></i>Verifying...';
-      btn.disabled = true;
-    });
 
     <%# Focus first box on load %>
     window.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('otp1').focus();
+  document.getElementById('otp1').focus();
+
+  // Form submit handler using fetch
+  const form = document.getElementById('otpForm');
+  const errorEl = document.getElementById('otpError');
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (errorEl) errorEl.textContent = '';
+    let allFilled = true;
+    boxes.forEach(function(b) {
+      if (!b.value) {
+        allFilled = false;
+        b.classList.add('is-error');
+      } else {
+        b.classList.remove('is-error');
+      }
     });
+    if (!allFilled) {
+      if (errorEl) errorEl.textContent = 'Please enter the complete OTP.';
+      return;
+    }
+    const btn = document.getElementById('verifyBtn');
+    if (btn) {
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2 text-sm"></i>Verifying...';
+      btn.disabled = true;
+    }
+    // Send form data via fetch
+    fetch(form.action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(new FormData(form)).toString()
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // redirect if provided
+          if (data.redirect) {
+            window.location.href = data.redirect;
+          } else {
+            // fallback: reload page
+            window.location.reload();
+          }
+        } else {
+          if (errorEl) errorEl.textContent = data.error || 'Verification failed';
+          if (btn) {
+            btn.innerHTML = 'Verify OTP';
+            btn.disabled = false;
+          }
+        }
+      })
+      .catch(() => {
+        if (errorEl) errorEl.textContent = 'Server error. Please try again.';
+        if (btn) {
+          btn.innerHTML = 'Verify OTP';
+          btn.disabled = false;
+      <a href="/signup" class="text-leaf-700 hover:underline flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-phone text-xs"></i>
+        Change Your Email id
+      </a>
+    </p>
+
+    <%# Security notice %>
+    <div class="security-box">
+      <i class="fa-solid fa-shield-halved text-leaf-700 text-sm flex-shrink-0 mt-0.5"></i>
+      <p class="text-xs text-gray-500 leading-relaxed">
+        Your information is secure and will be used only for verification purposes
+      </p>
+    </div>
+
+  </div>
+
+  <%# Back to login %>
+  <a href="/login" class="mt-5 text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1.5 transition-colors">
+    <i class="fa-solid fa-arrow-left text-xs"></i>
+    Back to login
+  </a>
+
+  <script>
+    <%# ── OTP box auto-advance ── %>
+    var boxes = document.querySelectorAll('.otp-input');
+    var timerEl = document.getElementById('timerDisplay');
+    var resendBtn = document.getElementById('resendBtn');
+    var countdown;
+    var seconds = parseInt(sessionStorage.getItem("otpSeconds")) || 45;
+
+    boxes.forEach(function(box, i) {
+      box.addEventListener('input', function() {
+        var val = box.value.replace(/[^0-9]/g,'');
+        box.value = val;
+        if (val) {
+          box.classList.add('is-filled');
+          box.classList.remove('is-error');
+          if (i < boxes.length - 1) boxes[i+1].focus();
+        } else {
+          box.classList.remove('is-filled');
+        }
+        updateHidden();
+      });
+
+      box.addEventListener('keydown', function(e) {
+        if (e.key === 'Backspace') {
+          if (!box.value && i > 0) {
+            boxes[i-1].focus();
+            boxes[i-1].value = '';
+            boxes[i-1].classList.remove('is-filled');
+            updateHidden();
+          }
+        }
+        if (e.key === 'ArrowLeft' && i > 0)              boxes[i-1].focus();
+        if (e.key === 'ArrowRight' && i < boxes.length-1) boxes[i+1].focus();
+      });
+
+      <%# Handle paste on first box %>
+      box.addEventListener('paste', function(e) {
+        e.preventDefault();
+        var pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g,'');
+        boxes.forEach(function(b, j) {
+          b.value = pasted[j] || '';
+          if (b.value) { b.classList.add('is-filled'); } else { b.classList.remove('is-filled'); }
+        });
+        var nextEmpty = pasted.length < boxes.length ? pasted.length : boxes.length - 1;
+        boxes[nextEmpty].focus();
+        updateHidden();
+      });
+    });
+
+    function updateHidden() {
+      var otp = '';
+      boxes.forEach(function(b) { otp += b.value; });
+      document.getElementById('otpHidden').value = otp;
+    }
+
+    <%# ── Countdown timer ── %>
+
+
+    function startTimer(secs) {
+      seconds = secs;
+      resendBtn.disabled = true;
+      clearInterval(countdown);
+      countdown = setInterval(function() {
+        if (seconds <= 0) {
+          clearInterval(countdown);
+          timerEl.textContent = '00:00';
+          resendBtn.disabled = false;
+          return;
+        }
+        seconds--;
+        sessionStorage.setItem("otpSeconds", seconds);
+        var m = Math.floor(seconds / 60);
+        var s = seconds % 60;
+        timerEl.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+      }, 1000);
+    }
+    if (seconds <= 0) {
+    clearInterval(countdown);
+    sessionStorage.removeItem("otpSeconds");
+    resendBtn.disabled = false;
+    
+}
+
+    startTimer(seconds);
+
+    function resendOtp() {
+      resendBtn.disabled = true;
+      resendBtn.textContent = 'Sending...';
+      fetch('/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: '<% if (typeof phone !== "undefined" && phone) { %><%= phone %><% } %>',
+          email: '<% if (typeof email !== "undefined" && email) { %><%= email %><% } %>',
+          userId: '<% if (typeof userId !== "undefined" && userId) { %><%= userId %><% } %>',
+        })
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        resendBtn.textContent = 'Resend OTP';
+        if (data.success) {
+          boxes.forEach(function(b) { b.value = ''; b.classList.remove('is-filled','is-error'); });
+          document.getElementById('otpHidden').value = '';
+          sessionStorage.removeItem("otpSeconds");
+startTimer(45);
+        }
+      })
+      .catch(function() {
+        resendBtn.textContent = 'Resend OTP';
+        resendBtn.disabled = false;
+      });
+    }
+
+    <%# ── Form submit validation ── %>
+
+
+    <%# Focus first box on load %>
+    window.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('otp1').focus();
+
+  // Form submit handler using fetch
+  const form = document.getElementById('otpForm');
+  const errorEl = document.getElementById('otpError');
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (errorEl) errorEl.textContent = '';
+    let allFilled = true;
+    boxes.forEach(function(b) {
+      if (!b.value) {
+        allFilled = false;
+        b.classList.add('is-error');
+      } else {
+        b.classList.remove('is-error');
+      }
+    });
+    if (!allFilled) {
+      if (errorEl) errorEl.textContent = 'Please enter the complete OTP.';
+      return;
+    }
+    const btn = document.getElementById('verifyBtn');
+    if (btn) {
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2 text-sm"></i>Verifying...';
+      btn.disabled = true;
+    }
+    // Send form data via fetch
+    fetch(form.action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(new FormData(form)).toString()
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          // redirect if provided
+          if (data.redirect) {
+            window.location.href = data.redirect;
+          } else {
+            // fallback: reload page
+            window.location.reload();
+          }
+        } else {
+          if (errorEl) errorEl.textContent = data.error || 'Verification failed';
+          if (btn) {
+            btn.innerHTML = 'Verify OTP';
+            btn.disabled = false;
+          }
+        }
+      })
+      .catch(() => {
+        if (errorEl) errorEl.textContent = 'Server error. Please try again.';
+        if (btn) {
+          btn.innerHTML = 'Verify OTP';
+          btn.disabled = false;
+        }
+      });
+  });
+});
   </script>
 
 </body>

@@ -250,11 +250,11 @@
                   </td>
 
                   <!-- Total -->
-                  <td class="td">
-                    <span class="font-semibold text-gray-800 text-xs">
-                      ₹<%= order.total ? Number(order.total).toLocaleString('en-IN') : '0' %>
-                    </span>
-                  </td>
+           <td class="td">
+  <span class="font-semibold text-gray-800 text-xs">
+    ₹<%= Number(order.total || 0).toLocaleString("en-IN") %>
+  </span>
+</td>
 
                   <!-- Status badge -->
                   <td class="td">

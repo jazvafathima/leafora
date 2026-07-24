@@ -156,7 +156,7 @@
                    Prevents looping over string characters
               ═════════════════════════════════════════════════════════ -->
               <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.firstName) { %>
-                <p class="field-error">
+               <p id="firstNameError" class="field-error">
                   <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
                   <%= errors.firstName %>
                 </p>
@@ -169,7 +169,7 @@
                 class="field-input <%= (typeof errors !== 'undefined' && errors && errors.lastName) ? 'is-error' : '' %>"
               />
               <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.lastName) { %>
-                <p class="field-error">
+                <p id="lastNameError" class="field-error">
                   <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
                   <%= errors.lastName %>
                 </p>
@@ -187,7 +187,7 @@
                 class="field-input <%= (typeof errors !== 'undefined' && errors && errors.email) ? 'is-error' : '' %>"
               />
               <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.email) { %>
-                <p class="field-error">
+               <p id="emailError" class="field-error">
                   <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
                   <%= errors.email %>
                 </p>
@@ -200,7 +200,7 @@
                 class="field-input <%= (typeof errors !== 'undefined' && errors && errors.phone) ? 'is-error' : '' %>"
               />
               <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.phone) { %>
-                <p class="field-error">
+                <p id="phoneError" class="field-error">
                   <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
                   <%= errors.phone %>
                 </p>
@@ -228,7 +228,7 @@
               </div>
               <p id="strengthLabel" class="text-[10px] text-gray-400 mt-0.5 h-3"></p>
               <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.password) { %>
-                <p class="field-error">
+                <p id="passwordError" class="field-error">
                   <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
                   <%= errors.password %>
                 </p>
@@ -246,7 +246,7 @@
                 </button>
               </div>
               <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.confirmPassword) { %>
-                <p class="field-error">
+                <p id="confirmPasswordError" class="field-error">
                   <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
                   <%= errors.confirmPassword %>
                 </p>
@@ -263,9 +263,11 @@
         value="<%= formData?.referralCode || '' %>">
 
     <% if(errors?.referralCode){ %>
+      <p id="referralCodeError" class="field-error">
         <small class="text-danger">
             <%= errors.referralCode %>
         </small>
+        </p>
     <% } %>
 </div>
 
@@ -361,15 +363,16 @@
       document.querySelectorAll('.field-input').forEach(el => el.classList.remove('is-error'));
 
       const showErr = (id, msg) => {
-        const input = document.getElementById(id);
-        if (!input) return;
-        input.classList.add('is-error');
-        const p = document.createElement('p');
-        p.className = 'field-error client-err';
-        p.innerHTML = `<i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> ${msg}`;
-        input.closest('div').appendChild(p);
-        valid = false;
-      };
+  const input = document.getElementById(id);
+  if (!input) return;
+  input.classList.add('is-error');
+  const p = document.createElement('p');
+  p.id = `${id}Error`;
+  p.className = 'field-error client-err';
+  p.innerHTML = `<i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> ${msg}`;
+  input.closest('div').appendChild(p);
+  valid = false;
+};
 
       const fn  = document.getElementById('firstName').value.trim();
       const ln  = document.getElementById('lastName').value.trim();
@@ -377,12 +380,20 @@
       const pw  = passInput.value;
       const cpw = confirmInput.value;
 
-   if (!fn) {
-  showErr('firstName', 'First name is required.');
+  if (!fn) {
+  showErr("firstName", "First name is required.");
+} else if (!/^[A-Za-z\s]+$/.test(fn)) {
+  showErr("firstName", "First name can only contain letters.");
+} else if (fn.length > 50) {
+  showErr("firstName", "First name must be under 50 characters.");
 }
 
 if (!ln) {
-  showErr('lastName', 'Last name is required.');
+  showErr("lastName", "Last name is required.");
+} else if (!/^[A-Za-z\s]+$/.test(ln)) {
+  showErr("lastName", "Last name can only contain letters.");
+} else if (ln.length > 50) {
+  showErr("lastName", "Last name must be under 50 characters.");
 }
 
 if (!em) {
@@ -391,26 +402,27 @@ if (!em) {
   showErr('email', 'Enter a valid email.');
 }
 
-if (!pw) {
-  showErr('password', 'Password is required.');
-} else {
-  
-  if (pw.length < 8) {
-    showErr('password', 'Password must be at least 8 characters.');
-  }
+const phone = document.getElementById("phone").value.trim();
 
-  if (!/[A-Z]/.test(pw)) {
-    showErr('password', 'Password must contain at least one uppercase letter.');
-  }
-
-  if (!/[0-9]/.test(pw)) {
-    showErr('password', 'Password must contain at least one number.');
-  }
-
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(pw)) {
-    showErr('password', 'Password must contain at least one special character.');
-  }
+if (phone && !/^[6-9]\d{9}$/.test(phone)) {
+  showErr("phone", "Please enter a valid Indian phone number.");
 }
+
+
+if (!pw) {
+  showErr("password", "Password is required.");
+} else if (pw.length < 8) {
+  showErr("password", "Password must be at least 8 characters.");
+} else if (!/[A-Z]/.test(pw)) {
+  showErr("password", "Password must contain at least one uppercase letter.");
+} else if (!/[a-z]/.test(pw)) {
+  showErr("password", "Password must contain at least one lowercase letter.");
+} else if (!/[0-9]/.test(pw)) {
+  showErr("password", "Password must contain at least one number.");
+} else if (!/[@$!%*?&#^]/.test(pw)) {
+  showErr("password", "Password must contain at least one special character.");
+}
+ 
 
 if (!cpw) {
   showErr('confirmPassword', 'Please confirm password.');
@@ -440,7 +452,58 @@ if (!cpw) {
     const toast = document.getElementById('flashToast');
     if (toast) setTimeout(() => toast.remove(), 5000);
   </script>
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const validators = {
+    firstName: value =>
+      value.trim() !== "" &&
+      /^[A-Za-z\s]+$/.test(value) &&
+      value.length <= 50,
+
+    lastName: value =>
+      value.trim() !== "" &&
+      /^[A-Za-z\s]+$/.test(value) &&
+      value.length <= 50,
+
+    email: value =>
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+
+    phone: value =>
+      value === "" || /^[6-9]\d{9}$/.test(value),
+
+    password: value =>
+      value.length >= 8 &&
+      /[A-Z]/.test(value) &&
+      /[a-z]/.test(value) &&
+      /[0-9]/.test(value) &&
+      /[@$!%*?&#^]/.test(value),
+
+    confirmPassword: value =>
+      value === document.getElementById("password").value
+  };
+
+  Object.keys(validators).forEach(id => {
+    const input = document.getElementById(id);
+    if (!input) return;
+
+    input.addEventListener("input", () => {
+      const error = document.getElementById(id + "Error");
+
+      if (validators[id](input.value)) {
+        input.classList.remove("is-error");
+
+        if (error) {
+          error.remove();      // or error.style.display = "none";
+        }
+      }
+    });
+  });
+
+});
+</script>
+ 
+
 
 </body>
 </html>
-

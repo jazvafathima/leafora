@@ -1,0 +1,32 @@
+<nav class="navbar">
+  <a href="/" class="nav-logo">
+    <img src="/images/leafora logo.png" alt="Leafora" onerror="this.style.display='none'" />
+    <span>Leafora</span>
+  </a>
+
+  <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600">
+    <a href="/" class="hover:text-leaf-700 transition-colors">Home</a>
+    <a href="/productlist" class="hover:text-leaf-700 transition-colors">products</a>
+    <a href="/about" class="hover:text-leaf-700 transition-colors">About</a>
+    <a href="/contact" class="hover:text-leaf-700 transition-colors">Contact</a>
+  </nav>
+
+  <div class="nav-icons" style="display:flex;align-items:center">
+    <a href="/profile" title="Account"><i class="fa-regular fa-user"></i></a>
+
+    <a href="/wishlist" class="hidden md:flex flex-col items-center gap-0.5 relative hover:text-leaf-500 transition-colors">
+      <i class="fa-regular fa-heart text-base"></i>
+      <span id="wishlistCount"
+        class="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold <%= wishlistCount > 0 ? '' : 'hidden' %>">
+        <%= wishlistCount || 0 %>
+      </span>
+    </a>
+
+    <a href="/cart" title="Cart" style="position:relative">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <span id="cartBadge" class="cart-badge" style="<%= (typeof cartCount !== 'undefined' && cartCount > 0) ? 'display:flex;' : 'display:none;' %>"><%= (typeof cartCount !== 'undefined') ? cartCount : 0 %></span>
+    </a>
+  </div>
+</nav>
+
+<script src="/js/navbar.js"></script>

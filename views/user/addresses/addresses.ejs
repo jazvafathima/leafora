@@ -53,9 +53,7 @@
     <a href="/wishlist" title="Wishlist"><i class="fa-regular fa-heart"></i></a>
     <a href="/cart" title="Cart" style="position:relative">
       <i class="fa-solid fa-bag-shopping"></i>
-      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
-        <span class="cart-badge"><%= cartCount %></span>
-      <% } %>
+      <span id="cartBadge" class="cart-badge" style="<%= (typeof cartCount !== 'undefined' && cartCount > 0) ? 'display:flex;' : 'display:none;' %>"><%= (typeof cartCount !== 'undefined') ? cartCount : 0 %></span>
     </a>
   </div>
 </nav>

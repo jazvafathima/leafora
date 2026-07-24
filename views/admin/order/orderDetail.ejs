@@ -201,7 +201,7 @@
         </div>
         <div class="flex gap-2">
           <span class="text-gray-400 w-28 flex-shrink-0">Total Amount</span>
-          <span class="font-bold text-[#1a5c1a]">₹<%= o.total ? Number(o.total).toLocaleString('en-IN') : '0' %></span>
+          <span class="font-bold text-[#1a5c1a]"> ₹<%= total.toLocaleString("en-IN") %></span>
         </div>
         <div class="flex gap-2">
           <span class="text-gray-400 w-28 flex-shrink-0">Payment Method</span>
@@ -235,7 +235,7 @@
             <th class="th">Products</th>
             <th class="th">Image</th>
             <th class="th">Quantity</th>
-            <th class="th">Unit Price</th>
+           
             <th class="th">Size</th>
             <th class="th">Status</th>
             <th class="th">Change Status</th>
@@ -274,7 +274,10 @@ const hasOffer = offerPrice < originalPrice;
                 <div class="prod-img">
                   <% const img = item.image || (typeof product === 'object' && product.images && product.images[0]); %>
                   <% if (img) { %>
-                    <img src="<%= img %>" alt="product"
+                   <img
+    src="/uploads/products/<%= item.image %>"
+    alt="<%= item.name %>"
+
                          onerror="this.parentNode.innerHTML='<i class=\'fa-solid fa-seedling\' style=\'color:#b8d4b8\'></i>'" />
                   <% } else { %>
                     <i class="fa-solid fa-seedling" style="color:#b8d4b8;font-size:.9rem"></i>
@@ -370,7 +373,9 @@ const allowedStatuses = statusFlow[itemStatus] || [itemStatus];
         <div class="flex justify-between">
           <span class="text-gray-400">Subtotal:</span>
           <span class="font-semibold text-gray-800">
-            ₹<%= o.subtotal ? Number(o.subtotal).toLocaleString('en-IN') : '0' %>
+         <span class="font-semibold text-gray-800">
+  ₹<%= originalSubtotal.toLocaleString("en-IN") %>
+</span>
           </span>
         </div>
         <% if (o.discount > 0) { %>
@@ -382,7 +387,7 @@ const allowedStatuses = statusFlow[itemStatus] || [itemStatus];
         <% if (o.shipping > 0) { %>
         <div class="flex justify-between">
           <span class="text-gray-400">Shipping:</span>
-          <span class="font-semibold text-gray-800">₹<%= Number(o.shipping).toLocaleString('en-IN') %></span>
+          <span class="font-semibold text-gray-800"></span>
         </div>
         <% } %>
         <% if (o.tax > 0) { %>
@@ -393,7 +398,7 @@ const allowedStatuses = statusFlow[itemStatus] || [itemStatus];
         <% } %>
         <div class="flex justify-between pt-2 border-t border-gray-100 font-bold text-sm">
           <span>Total:</span>
-          <span class="text-[#1a5c1a]">₹<%= o.total ? Number(o.total).toLocaleString('en-IN') : '0' %></span>
+          <span class="text-[#1a5c1a]">₹<%= total.toLocaleString("en-IN") %></span>
         </div>
       </div>
     </div>

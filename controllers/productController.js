@@ -9,9 +9,8 @@ const path = require("path");
 const { search } = require("../routes/userRoutes");
 const Offer = require("../models/Offer");
 const { getBestOffer } = require("../utils/offerHelper");
- const { calculateProductPrice } = require("../utils/priceHelper");
-
-
+const { calculateProductPrice } = require("../utils/priceHelper");
+const Wishlist = require("../models/wishlist");
 
 exports.getProducts = async (req, res) => {
   try {
@@ -29,14 +28,14 @@ exports.getProducts = async (req, res) => {
     const products = await Product.find()
       .populate("category")
       .populate("variants")
-      .sort({ createdAt: -1 })
+      .sort({ createdAt:-1 })
       .lean();
 
     // Add totalStock
     const enrichedProducts = products.map((product) => {
       const totalStock = (product.variants || []).reduce(
         (sum, variant) => sum + (variant.stockQuantity || 0),
-        0
+        0,
       );
 
       return {
@@ -48,44 +47,41 @@ exports.getProducts = async (req, res) => {
     let filteredProducts = enrichedProducts;
 
     if (search.trim()) {
-  filteredProducts = filteredProducts.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
-}
+      filteredProducts = filteredProducts.filter((p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()),
+      );
+    }
 
     // Category filter
     if (category) {
       filteredProducts = filteredProducts.filter(
-        (p) => p.category && p.category._id.toString() === category
+        (p) => p.category && p.category._id.toString() === category,
       );
     }
 
     // Stock filter
     if (stock === "instock") {
-      filteredProducts = filteredProducts.filter(
-        (p) => p.totalStock > 0
-      );
+      filteredProducts = filteredProducts.filter((p) => p.totalStock > 0);
     }
 
     if (stock === "outstock") {
-      filteredProducts = filteredProducts.filter(
-        (p) => p.totalStock === 0
-      );
+      filteredProducts = filteredProducts.filter((p) => p.totalStock === 0);
     }
 
     const total = filteredProducts.length;
 
     const paginatedProducts = filteredProducts.slice(
       (page - 1) * limit,
-      page * limit
+      page * limit,
     );
 
-    const indoorcategory=await Category.find({
-      name:"indoor"
+    const indoorcategory = await Category.find({
+      name: "indoor",
     });
 
 
-    
+ 
+
     res.render("admin/product/products", {
       products: paginatedProducts,
       categories,
@@ -95,17 +91,12 @@ exports.getProducts = async (req, res) => {
       selectedStock: stock,
       selectedCategory: category,
       search,
-      
-      
     });
-
   } catch (error) {
     console.log(error);
     res.redirect("/admin/dashboard");
   }
 };
-
-
 
 // Check if a product name already exists (used by add & edit forms via AJAX)
 exports.checkProductName = async (req, res) => {
@@ -113,7 +104,7 @@ exports.checkProductName = async (req, res) => {
     const { name, excludeId } = req.query;
     if (!name || !name.trim()) return res.json({ exists: false });
 
-    const query = { name: { $regex: new RegExp(`^${name.trim()}$`, 'i') } };
+    const query = { name: { $regex: new RegExp(`^${name.trim()}$`, "i") } };
     if (excludeId) query._id = { $ne: excludeId };
 
     const found = await Product.findOne(query);
@@ -126,12 +117,12 @@ exports.checkProductName = async (req, res) => {
 
 exports.getAddProduct = async (req, res) => {
   try {
-    const categories = await Category.find({isDeleted:false});
+    const categories = await Category.find({ isDeleted: false });
 
     res.render("admin/product/addproduct", {
       categories,
-      error:   req.flash ? req.flash('error')   : [],
-      success: req.flash ? req.flash('success') : [],
+      error: req.flash ? req.flash("error") : [],
+      success: req.flash ? req.flash("success") : [],
     });
   } catch (error) {
     console.log(error);
@@ -141,22 +132,17 @@ exports.getAddProduct = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   try {
-    const {
-      name,
-      category,
-      shortDescription,
-      fullDescription,
-      status
-    } = req.body;
+    const { name, category, shortDescription, fullDescription, status } =
+      req.body;
 
     // Duplicate product name check (case-insensitive)
     const existing = await Product.findOne({
-      name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }
+      name: { $regex: new RegExp(`^${name.trim()}$`, "i") },
     });
     if (existing) {
       return res.json({
         success: false,
-        message: `A product named "${name}" already exists. Please use a different name.`
+        message: `A product named "${name}" already exists. Please use a different name.`,
       });
     }
     const product = await Product.create({
@@ -165,19 +151,21 @@ exports.createProduct = async (req, res) => {
       shortDescription,
       fullDescription,
       status,
-      isDeleted: false
+      isDeleted: false,
     });
 
     // Handle Variants
     if (req.body.variantsData) {
       const variants = JSON.parse(req.body.variantsData);
-      
+
       for (const v of variants) {
         const variantImagesPrefix = `variant_${v.imageIndex}_images`;
         const vImages = [];
 
-        const vFiles = req.files.filter(f => f.fieldname === variantImagesPrefix);
-        
+        const vFiles = req.files.filter(
+          (f) => f.fieldname === variantImagesPrefix,
+        );
+
         for (const file of vFiles) {
           const filename = "variant-" + Date.now() + "-" + file.originalname;
           const outputPath = path.join("public/uploads/products", filename);
@@ -193,35 +181,31 @@ exports.createProduct = async (req, res) => {
           }
         }
 
-
-
         await ProductVariant.create({
           productId: product._id,
           size: v.size,
           price: v.price,
           stockQuantity: Number(v.stock) || 0,
           images: vImages,
-          status: "active"
+          status: "active",
         });
       }
     }
     await updateProductStock(product._id);
     async function updateProductStock(productId) {
-  const variants = await ProductVariant.find({ productId });
+      const variants = await ProductVariant.find({ productId });
 
-  const stock = variants.reduce(
-    (sum, v) => sum + (v.stockQuantity || 0),
-    0
-  );
+      const stock = variants.reduce(
+        (sum, v) => sum + (v.stockQuantity || 0),
+        0,
+      );
 
-  await Product.findByIdAndUpdate(productId, {
-    stock:stock
-  });
-}
-
+      await Product.findByIdAndUpdate(productId, {
+        stock: stock,
+      });
+    }
 
     res.redirect("/admin/products");
-
   } catch (err) {
     console.log(err);
     res.redirect("/admin/products/add");
@@ -230,36 +214,27 @@ exports.createProduct = async (req, res) => {
 
 exports.getEditProduct = async (req, res) => {
   try {
-
-    const product = await Product.findById(req.params.id)
-      .populate("variants");
+    const product = await Product.findById(req.params.id).populate("variants");
 
     const categories = await Category.find({
-      isDeleted: false
+      isDeleted: false,
     });
-
-  
 
     res.render("admin/product/editProduct", {
       product,
       categories,
-      error:   req.flash ? req.flash('error')   : [],
-      success: req.flash ? req.flash('success') : [],
+      error: req.flash ? req.flash("error") : [],
+      success: req.flash ? req.flash("success") : [],
     });
-
   } catch (err) {
     console.log(err);
     res.redirect("/admin/products");
   }
 };
 
-
 const updateProductStock = async (productId) => {
   const variants = await ProductVariant.find({ productId });
-  const stock = variants.reduce(
-    (sum, v) => sum + (v.stockQuantity || 0),
-    0
-  );
+  const stock = variants.reduce((sum, v) => sum + (v.stockQuantity || 0), 0);
   await Product.findByIdAndUpdate(productId, { stock });
 };
 
@@ -267,9 +242,7 @@ const processUploadedFile = async (file) => {
   const filename = "variant-" + Date.now() + "-" + file.originalname;
   const outputPath = path.join("public/uploads/products", filename);
 
-  await sharp(file.path)
-    .resize(800, 800, { fit: "cover" })
-    .toFile(outputPath);
+  await sharp(file.path).resize(800, 800, { fit: "cover" }).toFile(outputPath);
 
   // Remove the original uploaded file if sharp is used
   if (fs.existsSync(file.path)) {
@@ -286,7 +259,9 @@ const cleanUpRemainingFiles = (files) => {
   if (files && files.length > 0) {
     for (const file of files) {
       if (fs.existsSync(file.path)) {
-        try { fs.unlinkSync(file.path); } catch (e) {}
+        try {
+          fs.unlinkSync(file.path);
+        } catch (e) {}
       }
     }
   }
@@ -294,16 +269,20 @@ const cleanUpRemainingFiles = (files) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    const { name, category, shortDescription, fullDescription, status } = req.body;
+    const { name, category, shortDescription, fullDescription, status } =
+      req.body;
 
     // Duplicate product name check (excluding the current product)
     const duplicate = await Product.findOne({
-      name: { $regex: new RegExp(`^${name.trim()}$`, 'i') },
-      _id:  { $ne: req.params.id }
+      name: { $regex: new RegExp(`^${name.trim()}$`, "i") },
+      _id: { $ne: req.params.id },
     });
     if (duplicate) {
       cleanUpRemainingFiles(req.files);
-      req.flash('error', `A product named "${name}" already exists. Please use a different name.`);
+      req.flash(
+        "error",
+        `A product named "${name}" already exists. Please use a different name.`,
+      );
       return res.redirect(`/admin/products/${req.params.id}/edit`);
     }
 
@@ -317,7 +296,7 @@ exports.updateProduct = async (req, res) => {
         fullDescription,
         status: status || "active",
       },
-      { new: true }
+      { new: true },
     );
 
     if (!product) {
@@ -347,7 +326,9 @@ exports.updateProduct = async (req, res) => {
 
           // Process newly uploaded files for this existing variant
           const fieldName = `variantImages[${vi}]`;
-          const vFiles = (req.files || []).filter((f) => f.fieldname === fieldName);
+          const vFiles = (req.files || []).filter(
+            (f) => f.fieldname === fieldName,
+          );
           const newImages = [];
 
           for (const file of vFiles) {
@@ -358,7 +339,9 @@ exports.updateProduct = async (req, res) => {
           const finalImages = [...keepImages, ...newImages];
 
           // Delete removed images from disk
-          const removedImages = dbVariant.images.filter((img) => !keepImages.includes(img));
+          const removedImages = dbVariant.images.filter(
+            (img) => !keepImages.includes(img),
+          );
           for (const img of removedImages) {
             const imgPath = path.join("public/uploads/products", img);
             if (fs.existsSync(imgPath)) {
@@ -391,7 +374,9 @@ exports.updateProduct = async (req, res) => {
     for (let nvi = 0; nvi < newVariants.length; nvi++) {
       const nv = newVariants[nvi];
       const fieldName = `newVariantImages[${nvi}]`;
-      const nvFiles = (req.files || []).filter((f) => f.fieldname === fieldName);
+      const nvFiles = (req.files || []).filter(
+        (f) => f.fieldname === fieldName,
+      );
       const nvImages = [];
 
       for (const file of nvFiles) {
@@ -427,43 +412,33 @@ exports.updateProduct = async (req, res) => {
 
 exports.blockProduct = async (req, res) => {
   try {
-    await Product.findByIdAndUpdate(
-      req.params.id,
-      { status: 'inactive' }
-    );
-    res.redirect('/admin/products');
+    await Product.findByIdAndUpdate(req.params.id, { status: "inactive" });
+    res.redirect("/admin/products");
   } catch (err) {
     console.log(err);
-    res.redirect('/admin/products');
+    res.redirect("/admin/products");
   }
 };
 
 exports.unblockProduct = async (req, res) => {
   try {
-    await Product.findByIdAndUpdate(
-      req.params.id,
-      { status: 'active' }
-    );
-    res.redirect('/admin/products');
+    await Product.findByIdAndUpdate(req.params.id, { status: "active" });
+    res.redirect("/admin/products");
   } catch (err) {
     console.log(err);
-    res.redirect('/admin/products');
+    res.redirect("/admin/products");
   }
 };
 
 exports.deleteProduct = async (req, res) => {
   try {
-    await Product.findByIdAndUpdate(
-      req.params.id,
-      { isDeleted: true }
-    );
-    res.redirect('/admin/products');
+    await Product.findByIdAndUpdate(req.params.id, { isDeleted: true });
+    res.redirect("/admin/products");
   } catch (err) {
     console.log(err);
-    res.redirect('/admin/products');
+    res.redirect("/admin/products");
   }
 };
-
 
 exports.getVariants = async (req, res) => {
   try {
@@ -499,7 +474,7 @@ exports.addVariant = async (req, res) => {
           .toFile(outputPath);
 
         images.push(filename);
-        
+
         // Optionally remove the original uploaded file if sharp is used
         if (fs.existsSync(file.path)) {
           fs.unlinkSync(file.path);
@@ -518,20 +493,20 @@ exports.addVariant = async (req, res) => {
       status,
       images,
     });
-await updateProductStock(req.params.id);
+    await updateProductStock(req.params.id);
 
-async function updateProductStock(productId) {
-  const variants = await ProductVariant.find({ productId });
+    async function updateProductStock(productId) {
+      const variants = await ProductVariant.find({ productId });
 
-  const stock = variants.reduce(
-    (sum, v) => sum + (v.stockQuantity || 0),
-    0
-  );
+      const stock = variants.reduce(
+        (sum, v) => sum + (v.stockQuantity || 0),
+        0,
+      );
 
-  await Product.findByIdAndUpdate(productId, {
-    stock:stock
-  });
-}
+      await Product.findByIdAndUpdate(productId, {
+        stock: stock,
+      });
+    }
 
     res.redirect(`/admin/products/${req.params.id}/variants`);
   } catch (err) {
@@ -544,7 +519,7 @@ exports.updateVariant = async (req, res) => {
   try {
     await ProductVariant.findByIdAndUpdate(req.params.id, req.body);
 
-    res.redirect("/admin/products")
+    res.redirect("/admin/products");
   } catch (err) {
     console.log(err);
 
@@ -589,7 +564,6 @@ exports.deleteVariant = async (req, res) => {
     });
   }
 };
-      
 
 exports.getUserProducts = async (req, res) => {
   try {
@@ -600,14 +574,9 @@ exports.getUserProducts = async (req, res) => {
     const search = req.query.search || "";
     const sort = req.query.sort || "";
     const category = req.query.category || "";
-    const minPrice = req.query.minPrice
-      ? Number(req.query.minPrice)
-      : null;
-    const maxPrice = req.query.maxPrice
-      ? Number(req.query.maxPrice)
-      : null;
+    const minPrice = req.query.minPrice ? Number(req.query.minPrice) : null;
+    const maxPrice = req.query.maxPrice ? Number(req.query.maxPrice) : null;
 
-   
     const filter = {
       isDeleted: false,
       status: "active",
@@ -624,7 +593,6 @@ exports.getUserProducts = async (req, res) => {
       };
     }
 
-  
     let sortOption = { createdAt: -1 };
 
     switch (sort) {
@@ -648,12 +616,12 @@ exports.getUserProducts = async (req, res) => {
 
     const now = new Date();
 
-const offers = await Offer.find({
-  isActive: true,
-  isDeleted: false,
-  startDate: { $lte: now },
-  endDate: { $gte: now }
-}).lean();
+    const offers = await Offer.find({
+      isActive: true,
+      isDeleted: false,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    }).lean();
 
     let products = await Product.find(filter)
       .populate({
@@ -661,45 +629,37 @@ const offers = await Offer.find({
         match: { isActive: true },
       })
       .populate("variants")
-      .sort({createdAt:-1})
+      .sort({ createdAt: -1 })
       .lean();
 
     // Remove inactive categories
     products = products.filter((p) => p.category);
 
-   
+    products = products.map((product) => {
+      const variant = product.variants?.[0];
 
-products = products.map((product) => {
+      if (!variant) {
+        return {
+          ...product,
+          originalPrice: 0,
+          offerPrice: 0,
+          offerDiscount: 0,
+          hasOffer: false,
+        };
+      }
 
-  const variant = product.variants?.[0];
+      const price = calculateProductPrice(product, variant, offers);
 
-  if (!variant) {
-    return {
-      ...product,
-      originalPrice: 0,
-      offerPrice: 0,
-      offerDiscount: 0,
-      hasOffer: false,
-    };
-  }
-
-  const price = calculateProductPrice(
-    product,
-    variant,
-    offers
-  );
-
-  return {
-    ...product,
-    ...price,
-  };
-});
-
+      return {
+        ...product,
+        ...price,
+      };
+    });
 
     // Price Filter
     if (minPrice !== null || maxPrice !== null) {
       products = products.filter((p) => {
-      const price = p.offerPrice || 0;
+        const price = p.offerPrice || 0;
 
         if (minPrice !== null && price < minPrice) return false;
         if (maxPrice !== null && price > maxPrice) return false;
@@ -711,8 +671,8 @@ products = products.map((product) => {
     // Price Sorting
     if (sort === "price_asc") {
       products.sort((a, b) => {
-const pa = a.offerPrice || 0;
-const pb = b.offerPrice || 0;
+        const pa = a.offerPrice || 0;
+        const pb = b.offerPrice || 0;
 
         return pa - pb;
       });
@@ -721,7 +681,7 @@ const pb = b.offerPrice || 0;
     if (sort === "price_desc") {
       products.sort((a, b) => {
         const pa = a.offerPrice || 0;
-const pb = b.offerPrice || 0;
+        const pb = b.offerPrice || 0;
 
         return pb - pa;
       });
@@ -737,22 +697,18 @@ const pb = b.offerPrice || 0;
     const userId = req.session.userId || req.session.user?._id;
 
     if (userId) {
-      const user = await User.findById(userId)
-        .select("wishlist")
-        .lean();
+      const wishlist = await Wishlist.findOne({ user: userId }).lean();
 
-      wishlistIds = (user?.wishlist || []).map((id) =>
-        id.toString()
-      );
+      wishlistIds = wishlist
+        ? wishlist.items.map((item) => item.product.toString())
+        : [];
     }
-
     // Image
     const productsWithImages = pagedProducts.map((p) => {
       let image = null;
 
       if (p.variants?.length && p.variants[0].images?.length) {
-        image =
-          "/uploads/products/" + p.variants[0].images[0];
+        image = "/uploads/products/" + p.variants[0].images[0];
       }
 
       return {
@@ -760,8 +716,6 @@ const pb = b.offerPrice || 0;
         images: image ? [image] : [],
       };
     });
-
-
 
     res.render("user/productlist", {
       products: productsWithImages,
@@ -784,199 +738,186 @@ const pb = b.offerPrice || 0;
   }
 };
 
-
 exports.getProductDetail = async (req, res) => {
   try {
     const { id } = req.params;
 
     const product = await Product.findById(req.params.id)
-  .populate("category")
-  .populate("variants");
+      .populate("category")
+      .populate("variants");
 
-if (!product) {
-  return res.status(404).render("user/404");
-}
-  const variants = await ProductVariant.find({
-  productId: product._id
-}).lean();
-
-  const productObj = product.toObject();
-
-  const now = new Date();
-
-const offers = await Offer.find({
-  isActive: true,
-  isDeleted: false,
-  startDate: { $lte: now },
-  endDate: { $gte: now }
-}).lean();
-
-
-  productObj.variants = variants;
-
- const variant = variants[0] || null;
-
-const offer = getBestOffer(
-    productObj,
-    variant,
-    offers
-);
-  console.log(offer);
-
-productObj.offerPrice = offer.discountedPrice;
-productObj.originalPrice = offer.originalPrice;
-productObj.offerDiscount = offer.discountPercent;
-productObj.offerAmount = offer.discountAmount;
-productObj.offerName = offer.offerName;
-productObj.hasOffer = offer.hasOffer;
-
-  // Build images array from first variant
-  if (variants.length > 0 && variants[0].images.length > 0) {
-    productObj.images = variants[0].images.map(
-      img => `/uploads/products/${img}`
-    );
-  } else {
-    productObj.images = [];
-  }
-
-  // Attach return/cancel status for the logged-in user if any order items exist
-  const userId = req.session?.userId || req.session?.user?._id;
-  if (userId) {
-    const userOrders = await Order.find({
-      user: userId,
-      "items.product": product._id
-    }, "items").lean();
-    // Find the first matching item status (priority: approved > rejected > returned > requested > cancelled)
-    const statusPriority = {
-      approved: 5,
-      rejected: 4,
-      returned: 3,
-      requested: 2,
-      cancelled: 1
-    };
-    let bestStatus = null;
-    let bestScore = 0;
-    userOrders.forEach(o => {
-      o.items.forEach(it => {
-        if (String(it.product) === String(product._id) && it.returnStatus) {
-          const score = statusPriority[it.returnStatus] || 0;
-          if (score > bestScore) {
-            bestScore = score;
-            bestStatus = it.returnStatus;
-          }
-        }
-        if (String(it.product) === String(product._id) && it.itemStatus === 'cancelled') {
-          // treat cancelled as a status if no returnStatus
-          if (statusPriority['cancelled'] > bestScore) {
-            bestScore = statusPriority['cancelled'];
-            bestStatus = 'cancelled';
-          }
-        }
-      });
-    });
-    if (bestStatus) {
-      productObj.returnStatus = bestStatus;
+    if (!product) {
+      return res.status(404).render("user/404");
     }
-  }
+    const variants = await ProductVariant.find({
+      productId: product._id,
+    }).lean();
 
-const unavailable =
-  !product ||
-  product.isBlocked ||
-  product.status === "inactive" ||
-  product.status === "blocked";
-if (product.status !== "active" || product.isDeleted) {
+    const productObj = product.toObject();
 
-//   console.log({
-//     originalPrice: productObj.originalPrice,
-//     offerPrice: productObj.offerPrice,
-//     hasOffer: productObj.hasOffer
-// });
+    const now = new Date();
 
+    const offers = await Offer.find({
+      isActive: true,
+      isDeleted: false,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    }).lean();
 
-  return res.render("user/productdetail", {
-    product: productObj,
-    unavailable,
-    relatedProducts: [],
-    reviews: [],
-    coupons: [],
-    cartCount: 0,
-    inWishlist: false,
-       wishlistIds,
-    cartCount,
-    wishlistCount
-    
-  
-  });
-}
-  if (
-  product.category &&
-  (product.category.isDeleted || product.category.isActive === false)
-) {
-  return res.render("user/productdetail", {
-    product: product.toObject(),
-    unavailable: true,
-    relatedProducts: [],
-    reviews: [],
-    coupons: [],
-    cartCount: 0,
-    wishlistCount:0,
-    inWishlist: false
-  });
-}
+    productObj.variants = variants;
 
-  
-  variants.forEach(v => {
-  console.log("stockQuantity =", v.stockQuantity);
-  console.log("stock =", v.stock);
-});
+    const variant = variants[0] || null;
 
+    const offer = getBestOffer(productObj, variant, offers);
+    console.log(offer);
 
+    productObj.offerPrice = offer.discountedPrice;
+    productObj.originalPrice = offer.originalPrice;
+    productObj.offerDiscount = offer.discountPercent;
+    productObj.offerAmount = offer.discountAmount;
+    productObj.offerName = offer.offerName;
+    productObj.hasOffer = offer.hasOffer;
 
-variants.forEach(v => {
-  if ((!v.stockQuantity || v.stockQuantity === 0) && v.stock) {
-    v.stockQuantity = v.stock;
-  }
-});
+    // Build images array from first variant
+    if (variants.length > 0 && variants[0].images.length > 0) {
+      productObj.images = variants[0].images.map(
+        (img) => `/uploads/products/${img}`,
+      );
+    } else {
+      productObj.images = [];
+    }
 
-productObj.variants = variants;
+    // Attach return/cancel status for the logged-in user if any order items exist
+    const userId = req.session?.userId || req.session?.user?._id;
+    if (userId) {
+      const userOrders = await Order.find(
+        {
+          user: userId,
+          "items.product": product._id,
+        },
+        "items",
+      ).lean();
+      // Find the first matching item status (priority: approved > rejected > returned > requested > cancelled)
+      const statusPriority = {
+        approved: 5,
+        rejected: 4,
+        returned: 3,
+        requested: 2,
+        cancelled: 1,
+      };
+      let bestStatus = null;
+      let bestScore = 0;
+      userOrders.forEach((o) => {
+        o.items.forEach((it) => {
+          if (String(it.product) === String(product._id) && it.returnStatus) {
+            const score = statusPriority[it.returnStatus] || 0;
+            if (score > bestScore) {
+              bestScore = score;
+              bestStatus = it.returnStatus;
+            }
+          }
+          if (
+            String(it.product) === String(product._id) &&
+            it.itemStatus === "cancelled"
+          ) {
+            // treat cancelled as a status if no returnStatus
+            if (statusPriority["cancelled"] > bestScore) {
+              bestScore = statusPriority["cancelled"];
+              bestStatus = "cancelled";
+            }
+          }
+        });
+      });
+      if (bestStatus) {
+        productObj.returnStatus = bestStatus;
+      }
+    }
 
-productObj.stock = variants.reduce((sum, v) => {
-  return sum + Number(v.stockQuantity || 0);
-}, 0);
+    const unavailable =
+      !product ||
+      product.isBlocked ||
+      product.status === "inactive" ||
+      product.status === "blocked";
+    if (product.status !== "active" || product.isDeleted) {
+      //   console.log({
+      //     originalPrice: productObj.originalPrice,
+      //     offerPrice: productObj.offerPrice,
+      //     hasOffer: productObj.hasOffer
+      // });
 
+      return res.render("user/productdetail", {
+        product: productObj,
+        unavailable,
+        relatedProducts: [],
+        reviews: [],
+        coupons: [],
+        cartCount: 0,
+        inWishlist: false,
+        wishlistIds,
+        cartCount,
+        wishlistCount,
+      });
+    }
+    if (
+      product.category &&
+      (product.category.isDeleted || product.category.isActive === false)
+    ) {
+      return res.render("user/productdetail", {
+        product: product.toObject(),
+        unavailable: true,
+        relatedProducts: [],
+        reviews: [],
+        coupons: [],
+        cartCount: 0,
+        wishlistCount: 0,
+        inWishlist: false,
+      });
+    }
 
+    variants.forEach((v) => {
+      console.log("stockQuantity =", v.stockQuantity);
+      console.log("stock =", v.stock);
+    });
 
-const relatedProducts = await Product.find({
-  category: product.category._id,
-  _id: { $ne: product._id }, // exclude current product
-  isDeleted: false,
-  status: "active"
-})
-.limit(4)
-.lean();
+    variants.forEach((v) => {
+      if ((!v.stockQuantity || v.stockQuantity === 0) && v.stock) {
+        v.stockQuantity = v.stock;
+      }
+    });
 
+    productObj.variants = variants;
 
-for (let rp of relatedProducts) {
-  const variant = await ProductVariant.findOne({
-    productId: rp._id
-  }).lean();
+    productObj.stock = variants.reduce((sum, v) => {
+      return sum + Number(v.stockQuantity || 0);
+    }, 0);
 
-  rp.image =
-    variant?.images?.length > 0
-      ? `/uploads/products/${variant.images[0]}`
-      : "/images/no-image.png";
-}
+    const relatedProducts = await Product.find({
+      category: product.category._id,
+      _id: { $ne: product._id }, // exclude current product
+      isDeleted: false,
+      status: "active",
+    })
+      .limit(4)
+      .lean();
 
+    for (let rp of relatedProducts) {
+      const variant = await ProductVariant.findOne({
+        productId: rp._id,
+      }).lean();
 
-let wishlistIds = [];
+      rp.image =
+        variant?.images?.length > 0
+          ? `/uploads/products/${variant.images[0]}`
+          : "/images/no-image.png";
+    }
 
-if (userId) {
-  const user = await User.findById(userId).select("wishlist");
+    let wishlistIds = [];
 
-  wishlistIds = user?.wishlist?.map(id => id.toString()) || [];
-}
+    if (userId) {
+      const user = await User.findById(userId).select("wishlist");
 
-
+      wishlistIds = user?.wishlist?.map((id) => id.toString()) || [];
+    }
 
     res.render("user/productdetail", {
       product: productObj,
@@ -985,14 +926,11 @@ if (userId) {
       reviews: [],
       coupons: [],
       cartCount: 0,
-       wishlistCount:0,
-      wishlistIds
+      wishlistCount: 0,
+      wishlistIds,
     });
-
-  
   } catch (error) {
     console.error(error);
     res.redirect("/products");
   }
 };
-

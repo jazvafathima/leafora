@@ -1,11 +1,10 @@
 const mongoose = require("mongoose");
 
-
 const variantSchema = new mongoose.Schema({
   productId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Product",
-    required: true
+    required: true,
   },
 
   color: String,
@@ -22,8 +21,8 @@ const variantSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ["active", "inactive"],
-    default: "active"
-  }
+    default: "active",
+  },
 });
 
 module.exports = mongoose.model("ProductVariant", variantSchema);

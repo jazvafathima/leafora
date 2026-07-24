@@ -102,9 +102,7 @@
 </a>
     <a href="/cart" title="Cart" style="position:relative">
       <i class="fa-solid fa-bag-shopping"></i>
-      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
-        <span class="cart-badge"><%= cartCount %></span>
-      <% } %>
+      <span id="cartBadge" class="cart-badge" style="<%= (typeof cartCount !== 'undefined' && cartCount > 0) ? 'display:flex;' : 'display:none;' %>"><%= (typeof cartCount !== 'undefined') ? cartCount : 0 %></span>
     </a>
   </div>
 </nav>
@@ -368,15 +366,8 @@ const isBlocked =
         const badge = document.querySelector('.cart-badge');
         if (badge && data.cartCount !== undefined) {
           badge.textContent = data.cartCount;
-          badge.style.display = 'flex';
-        } else if (!badge && data.cartCount > 0) {
-          const cartIcon = document.querySelector('a[href="/cart"]');
-          if (cartIcon) {
-            const span = document.createElement('span');
-            span.className    = 'cart-badge';
-            span.textContent  = data.cartCount;
-            cartIcon.appendChild(span);
-          }
+          badge.style.display = data.cartCount > 0 ? 'flex' : 'none';
+        }
         }
 
         // Fade and remove the wishlist card
@@ -411,7 +402,7 @@ const isBlocked =
               refreshWishlistBadge();
             }
           }, 360);
-        }
+        
 
         showToast('"' + productName + '" added to cart!', 'success');
       } else {
@@ -424,11 +415,12 @@ const isBlocked =
       btn.disabled  = false;
       btn.innerHTML = 'Order Now';
     }
+  
   }
-
   /* ─────────────────────────────────────────────────
      Remove from Wishlist
   ───────────────────────────────────────────────── */
+  
   async function removeFromWishlist(productId, btn) {
     btn.disabled = true;
     try {

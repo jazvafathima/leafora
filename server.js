@@ -15,9 +15,9 @@ const connectDB = require("./config/db");
 const userRoutes = require("./routes/userRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const checkUserBlocked = require("./middleware/checkUserBlocked");
-const methodOverride = require('method-override');
+const methodOverride = require("method-override");
 const navbarCounts = require("./middleware/navbarCounts");
-
+const authController = require("./controllers/userController");
 
 const { error } = require("console");
 
@@ -37,7 +37,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/uploads", express.static("public/uploads"));
 app.use(express.static("public"));
-app.use(methodOverride('_method'));
+app.use(methodOverride("_method"));
 
 // ─── Session (MUST COME BEFORE PASSPORT) ────────
 app.use(
@@ -67,12 +67,6 @@ app.use(checkUserBlocked);
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ─── Navbar Counts Middleware ───────────────────
-app.use(navbarCounts);
-
-// ─── Flash Messages ─────────────────────────────
-app.use(flash());
-
 // ─── Global Template Variables ──────────────────
 app.use((req, res, next) => {
   res.locals.success = req.flash("success");
@@ -81,15 +75,19 @@ app.use((req, res, next) => {
   next();
 });
 
+const navbarData = require("./middleware/navbarData");
+app.use(navbarData); // now every render() has cartCount & wishlistCount available
+
 // ─── ROUTES (ONLY ONCE) ─────────────────────────
 app.use("/", userRoutes);
 app.use("/admin", adminRoutes);
 console.log("ADMIN ROUTES CONNECTED");
 
-// ─── 404 Handler (MUST BE AFTER ROUTES) ─────────
-app.use((req, res) => {
-  res.status(404).send("Page Not Found");
-});
+// 404 - catches any request that didn't match a route above
+app.use(authController.getNotFound);
+
+// 500 - catches errors passed via next(err) anywhere in the app
+app.use(authController.getServerError);
 
 // ─── Global Error Handler ───────────────────────
 app.use((err, req, res, next) => {
@@ -103,5 +101,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🌿 Leafora running on http://localhost:${PORT}`);
 });
-
-

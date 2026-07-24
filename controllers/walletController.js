@@ -1,5 +1,5 @@
-const Wallet = require('../models/wallet');
-const crypto = require('crypto');
+const Wallet = require("../models/wallet");
+const crypto = require("crypto");
 const razorpay = require("../utils/razorpay");
 const walletService = require("../services/walletService");
 // ─── Get or Create Wallet ───────────────────────────────────────────────────
@@ -22,17 +22,17 @@ exports.getOrCreateWallet = async (userId) => {
 
 exports.creditWallet = async (userId, amount, reason, orderId = null) => {
   if (!amount || amount <= 0) {
-    throw new Error('Credit amount must be positive');
+    throw new Error("Credit amount must be positive");
   }
 
-  const txnId = 'TXN-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+  const txnId = "TXN-" + crypto.randomBytes(4).toString("hex").toUpperCase();
 
   const wallet = await walletService.getOrCreateWallet(userId);
 
   wallet.balance = Math.round((wallet.balance + amount) * 100) / 100;
 
   wallet.transactions.unshift({
-    type: 'credit',
+    type: "credit",
     amount,
     reason,
     orderId,
@@ -49,21 +49,21 @@ exports.creditWallet = async (userId, amount, reason, orderId = null) => {
 
 exports.debitWallet = async (userId, amount, reason, orderId = null) => {
   if (!amount || amount <= 0) {
-    throw new Error('Debit amount must be positive');
+    throw new Error("Debit amount must be positive");
   }
 
   const wallet = await walletService.getOrCreateWallet(userId);
 
   if (wallet.balance < amount) {
-    throw new Error('Insufficient wallet balance');
+    throw new Error("Insufficient wallet balance");
   }
 
-  const txnId = 'TXN-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+  const txnId = "TXN-" + crypto.randomBytes(4).toString("hex").toUpperCase();
 
   wallet.balance = Math.round((wallet.balance - amount) * 100) / 100;
 
   wallet.transactions.unshift({
-    type: 'debit',
+    type: "debit",
     amount,
     reason,
     orderId,
@@ -83,14 +83,14 @@ exports.getWalletPage = async (req, res) => {
     const wallet = await walletService.getOrCreateWallet(req.user._id);
 
     const totalCredits = wallet.transactions
-      .filter((t) => t.type === 'credit')
+      .filter((t) => t.type === "credit")
       .reduce((sum, t) => sum + t.amount, 0);
 
     const totalDebits = wallet.transactions
-      .filter((t) => t.type === 'debit')
+      .filter((t) => t.type === "debit")
       .reduce((sum, t) => sum + t.amount, 0);
 
-    res.render('user/wallet', {
+    res.render("user/wallet", {
       user: req.user,
       wallet,
       transactions: wallet.transactions,
@@ -98,8 +98,8 @@ exports.getWalletPage = async (req, res) => {
       totalDebits,
     });
   } catch (err) {
-    console.error('Wallet page error:', err);
-    res.redirect('/');
+    console.error("Wallet page error:", err);
+    res.redirect("/");
   }
 };
 
@@ -112,7 +112,7 @@ exports.createRazorpayOrder = async (req, res) => {
     const options = {
       amount,
       currency: "INR",
-      receipt: `receipt_${Date.now()}`
+      receipt: `receipt_${Date.now()}`,
     };
 
     const razorpayOrder = await razorpay.orders.create(options);
@@ -120,15 +120,14 @@ exports.createRazorpayOrder = async (req, res) => {
     res.json({
       success: true,
       keyId: process.env.RAZORPAY_KEY_ID,
-      razorpayOrder
+      razorpayOrder,
     });
-
   } catch (err) {
     console.error(err);
 
     res.status(500).json({
       success: false,
-      message: "Unable to create Razorpay order"
+      message: "Unable to create Razorpay order",
     });
   }
 };
@@ -145,34 +144,34 @@ exports.verifyAddFundsPayment = async (req, res) => {
     } = req.body;
 
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-      .digest('hex');
+      .digest("hex");
 
     if (expectedSignature !== razorpay_signature) {
       return res.status(400).json({
         success: false,
-        message: 'Payment verification failed',
+        message: "Payment verification failed",
       });
     }
 
     await walletService.creditWallet(
       req.user._id,
       Number(amount),
-      'Added via Razorpay',
-      null
+      "Added via Razorpay",
+      null,
     );
 
     res.json({
       success: true,
-      message: 'Funds added successfully',
+      message: "Funds added successfully",
     });
   } catch (err) {
-    console.error('Verify add-funds error:', err);
+    console.error("Verify add-funds error:", err);
 
     res.status(500).json({
       success: false,
-      message: 'Server error during verification',
+      message: "Server error during verification",
     });
   }
 };

@@ -1,11 +1,9 @@
-const User = require('../models/User');
+const User = require("../models/User");
 
 const checkUserBlocked = async (req, res, next) => {
-
   try {
-
     // ✅ Skip admin routes
-    if (req.originalUrl.startsWith('/admin')) {
+    if (req.originalUrl.startsWith("/admin")) {
       return next();
     }
 
@@ -18,32 +16,26 @@ const checkUserBlocked = async (req, res, next) => {
 
     // ✅ User deleted
     if (!user) {
-
       return req.session.destroy(() => {
+        res.clearCookie("connect.sid");
 
-        res.clearCookie('connect.sid');
-
-        return res.redirect('/login');
+        return res.redirect("/login");
       });
     }
 
     // ✅ User blocked
     if (user.isBlocked) {
-
       return req.session.destroy(() => {
+        res.clearCookie("connect.sid");
 
-        res.clearCookie('connect.sid');
-
-        return res.render('user/login', {
-          error: "Your account has been blocked by admin"
+        return res.render("user/login", {
+          error: "Your account has been blocked by admin",
         });
       });
     }
 
     next();
-
   } catch (err) {
-
     console.log(err);
 
     next();

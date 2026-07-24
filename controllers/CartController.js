@@ -4,15 +4,12 @@ const User = require("../models/User");
 const Offer = require("../models/Offer");
 const productvariant = require("../models/productvariant");
 const ProductVariant = require("../models/productvariant");
+const Category=require("../models/Category")
 const { getBestOffer } = require("../utils/offerHelper");
 const {
   getActiveOffers,
   calculateProductPrice,
 } = require("../utils/priceHelper");
-
-
-
-
 
 const MAX_QTY_PER_ITEM = 5; // maximum quantity per cart item
 
@@ -28,30 +25,33 @@ async function getOrCreateCart(userId) {
 // ─────────────────────────────────────────────────────────────
 //  Helper: calculate cart subtotal (only valid items)
 // ─────────────────────────────────────────────────────────────
-
-
 async function calcSubtotal(items) {
+  const offers = await Offer.find({
+    isActive: true,
+    isDeleted: false,
+  }).lean();
 
-    const offers = await getActiveOffers();
+  let subtotal = 0;
 
-    let subtotal = 0;
+  for (const item of items) {
+    if (!item.product) continue;
+    const offer = getBestOffer(item.product, offers);
 
-    for (const item of items) {
+    const price = item.variant?.discountPrice || item.variant?.price || 0;
 
-        if (!item.product || !item.variant) continue;
+    const finalPrice = offer.hasOffer
+      ? price - Math.round((price * offer.discountPercent) / 100)
+      : price;
 
-        const price = calculateProductPrice(
-            item.product,
-            item.variant,
-            offers
-        );
-
-        subtotal += price.offerPrice * item.quantity;
-    }
-
-    return subtotal;
+    subtotal += finalPrice * item.quantity;
+  }
+  for (const item of items) {
+    console.log("Product:", item.product);
+    console.log("Variant:", item.variant);
+  }
+  return subtotal;
 }
- 
+
 // ─────────────────────────────────────────────────────────────
 //  GET /cart  — Render cart page
 // ─────────────────────────────────────────────────────────────
@@ -64,13 +64,10 @@ exports.getCart = async (req, res) => {
       .populate({
         path: "items.product",
         populate: { path: "category", select: "name" },
-      
       })
       .lean();
 
-
-
-const offers = await getActiveOffers();
+    const offers = await getActiveOffers();
 
     // Filter out items where product was deleted from DB entirely
     const cartItems = cart
@@ -82,38 +79,31 @@ const offers = await getActiveOffers();
       cartItems.map(async (item) => {
         const product = item.product;
 
-          const variant = item.variant
+        const variant = item.variant
           ? await ProductVariant.findById(item.variant).lean()
           : null;
-          
-       const stock = variant?.stockQuantity || 0;
 
-const price = calculateProductPrice(
-    product,
-    variant,
-    offers
-);
+        const stock = variant?.stockQuantity || 0;
 
+        const price = calculateProductPrice(product, variant, offers);
 
-      
+        return {
+          ...item,
+          product,
+          variant,
+          stock,
 
-return {
-    ...item,
-    product,
-    variant,
-    stock,
+          hasOffer: offers.hasOffer,
+          offerPercent: offers.discountPercent,
 
+          ...price,
 
-    ...price,
-    
-    finalPrice: price.offerPrice,
-    itemTotal: price.offerPrice * item.quantity
-};
-
+          finalPrice: price.offerPrice,
+          itemTotal: price.offerPrice * item.quantity,
+        };
       }),
     );
 
-  
     console.log(enriched);
 
     res.render("user/cart", {
@@ -142,24 +132,30 @@ exports.addToCart = async (req, res) => {
 
     // ── Fetch & validate product ──
     const product = await Product.findById(productId).lean();
+    const category = await Category.findById(product.category);
 
     if (!product) {
       return res
         .status(404)
+        .render("user/404")
         .json({ success: false, message: "Product not found." });
     }
 
     // i. Block check
     if (
-      product.isBlocked ||
-      product.status === "inactive" ||
-      product.status === "blocked"
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "This product is currently unavailable.",
-      });
-    }
+  product.isBlocked ||
+  product.status === "inactive" ||
+  product.status === "blocked" ||
+  !product.category?.isActive ||
+  product.category?.isDeleted
+) {
+  return res.status(400).json({
+    success: false,
+    message: "This product is currently unavailable.",
+  });
+}
+
+
 
     // Resolve variant
     let variant = null;
@@ -292,6 +288,7 @@ exports.updateCartItem = async (req, res) => {
     if (!cart)
       return res
         .status(404)
+        .render("user/404")
         .json({ success: false, message: "Cart not found." });
 
     const item = cart.items.id(itemId);
@@ -299,6 +296,7 @@ exports.updateCartItem = async (req, res) => {
     if (!item)
       return res
         .status(404)
+        .render("user/404")
         .json({ success: false, message: "Item not found in cart." });
 
     const product = item.product;
@@ -339,22 +337,19 @@ exports.updateCartItem = async (req, res) => {
     item.quantity = newQty;
     await cart.save();
 
-   const offers = await Offer.find({
-    isActive: true,
-    isDeleted: false
-}).lean();
-
-
-
+    const offers = await Offer.find({
+      isActive: true,
+      isDeleted: false,
+    }).lean();
 
     // Recalculate totals
-   const offer = getBestOffer(product, variant, offers);
+    const offer = getBestOffer(product, variant, offers);
 
-const unitPrice = offer.hasOffer
-    ? offer.discountedPrice
-    : offer.originalPrice;
+    const unitPrice = offer.hasOffer
+      ? offer.discountedPrice
+      : offer.originalPrice;
 
-const itemTotal = unitPrice * quantity;
+    const itemTotal = unitPrice * quantity;
     // Full subtotal
     const populated = await Cart.findOne({ user: userId }).populate([
       { path: "items.product" },
@@ -390,7 +385,9 @@ exports.removeCartItem = async (req, res) => {
 
     const { itemId } = req.body;
 
-    const cart = await Cart.findOne({ user: userId }).populate("items.product");
+    const cart = await Cart.findOne({ user: userId })
+      .populate("items.product")
+      .populate("items.variant");
 
     if (!cart)
       return res
@@ -400,7 +397,7 @@ exports.removeCartItem = async (req, res) => {
     cart.items = cart.items.filter((item) => item._id.toString() !== itemId);
     await cart.save();
 
-    const subtotal = await  calcSubtotal(cart.items);
+    const subtotal = await calcSubtotal(cart.items);
     req.session.cartCount = cart.items.length;
 
     return res.json({
@@ -427,6 +424,7 @@ exports.clearCart = async (req, res) => {
 
     await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [] } });
     req.session.cartCount = 0;
+    delete req.session.appliedCoupon;
 
     res.json({ success: true, message: "Cart cleared." });
   } catch (err) {
@@ -446,13 +444,13 @@ exports.getCartCount = async (req, res) => {
       return res.json({ count: 0 });
     }
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await Cart.findOne({ user: userId });
 
     if (!cart) {
       return res.json({ count: 0 });
     }
 
-    const count = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+    const count = cart.items.length;
 
     res.json({ count });
   } catch (err) {

@@ -55,7 +55,7 @@ const walletSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports =

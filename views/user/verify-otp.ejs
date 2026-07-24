@@ -133,18 +133,12 @@
         <input type="text" maxlength="1" class="otp-input" id="otp6" inputmode="numeric" pattern="[0-9]" />
       </div>
 
-      <%# Timer row %>
-      <div class="flex items-center justify-center gap-2 mb-5">
-        <div class="timer-square"></div>
-        <span class="text-sm font-semibold text-gray-700" id="timerDisplay">
-          <% if (typeof timerSeconds !== 'undefined' && timerSeconds) { %>
-            <%= Math.floor(timerSeconds/60) %>:<%= String(timerSeconds%60).padStart(2,'0') %>
-          <% } else { %>
-            00:45
-          <% } %>
-        </span>
-        <span class="text-sm text-gray-500">remaining</span>
-      </div>
+<%# Timer row %>
+<div class="flex items-center justify-center gap-2 mb-5">
+  <div class="timer-square"></div>
+  <span class="text-sm font-semibold text-gray-700" id="timerDisplay"></span>
+  <span class="text-sm text-gray-500">remaining</span>
+</div>
 
       <%# Verify button %>
       <button type="submit" id="verifyBtn" class="verify-btn mb-4">
@@ -238,29 +232,45 @@
     }
 
     <%# ── Countdown timer ── %>
-    var seconds = <% if (typeof timerSeconds !== 'undefined' && timerSeconds) { %><%= timerSeconds %><% } else { %>45<% } %>;
-    var timerEl  = document.getElementById('timerDisplay');
+    // Initialize timer: use persisted remaining time if available, else server-provided value
+    var timerEl = document.getElementById('timerDisplay');
     var resendBtn = document.getElementById('resendBtn');
     var countdown;
-
+    // Retrieve stored expiry timestamp (ms since epoch)
+    var storedExpire = sessionStorage.getItem('otpExpireAt');
+    var seconds;
+    if (storedExpire !== null) {
+      var remaining = Math.floor((parseInt(storedExpire, 10) - Date.now()) / 1000);
+      seconds = remaining > 0 ? remaining : 0;
+    } else {
+      // Use server-provided seconds as initial duration
+      var initSeconds = (<% if (typeof timerSeconds !== 'undefined' && timerSeconds) { %><%= timerSeconds %><% } else { %>45<% } %>);
+      seconds = initSeconds;
+      // Set expiry timestamp based on initial seconds
+      sessionStorage.setItem('otpExpireAt', Date.now() + initSeconds * 1000);
+    }
     function startTimer(secs) {
       seconds = secs;
       resendBtn.disabled = true;
       clearInterval(countdown);
+      // Do NOT reset expiry timestamp here; keep existing stored expiry
       countdown = setInterval(function() {
         if (seconds <= 0) {
           clearInterval(countdown);
           timerEl.textContent = '00:00';
           resendBtn.disabled = false;
+          sessionStorage.removeItem('otpExpireAt');
           return;
         }
         seconds--;
+        // Update stored expiry each tick to keep it in sync
+        sessionStorage.setItem('otpExpireAt', Date.now() + seconds * 1000);
         var m = Math.floor(seconds / 60);
         var s = seconds % 60;
-        timerEl.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+        timerEl.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
       }, 1000);
     }
-
+    // Start the timer with calculated seconds
     startTimer(seconds);
 
     function resendOtp() {
@@ -289,7 +299,7 @@
 
   document.getElementById('otpHidden').value = '';
 
-  startTimer(60);
+  startTimer(45);
 
 } else {
 
@@ -303,26 +313,18 @@
         resendBtn.disabled = false;
       });
     }
+document.getElementById("otpForm").addEventListener("submit", function(e) {
 
-    <%# ── Form submit validation ── %>
-    document.getElementById('otpForm').addEventListener('submit', function(e) {
-      var otp = document.getElementById('otpHidden').value;
-      var allFilled = true;
+  var otp = document.getElementById("otpHidden").value;
 
-      boxes.forEach(function(b) {
-        if (!b.value) { b.classList.add('is-error'); allFilled = false; }
-        else          { b.classList.remove('is-error'); }
-      });
+  if (otp.length < 6) {
+    e.preventDefault();
+    alert("Enter complete OTP");
+    return;
+  }
 
-      if (!allFilled || otp.length < 6) {
-        e.preventDefault();
-        return;
-      }
-
-      var btn = document.getElementById('verifyBtn');
-      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2 text-sm"></i>Verifying...';
-      btn.disabled = true;
-    });
+  document.getElementById("verifyBtn").disabled = true;
+});
 
     <%# Focus first box on load %>
     window.addEventListener('DOMContentLoaded', function() {

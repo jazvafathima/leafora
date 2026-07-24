@@ -160,9 +160,7 @@
 
  <a href="/cart" title="Cart" style="position:relative">
       <i class="fa-solid fa-bag-shopping"></i>
-      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
-        <span class="cart-badge"><%= cartCount %></span>
-      <% } %>
+      <span id="cartBadge" class="cart-badge" style="<%= (typeof cartCount !== 'undefined' && cartCount > 0) ? 'display:flex;' : 'display:none;' %>"><%= (typeof cartCount !== 'undefined') ? cartCount : 0 %></span>
     </a>
   </div>
 </nav>
@@ -245,10 +243,13 @@ const badgeClass = {
 
 
     <!-- vi. Download Invoice -->
-    <a href="/orders/<%= o._id %>/invoice"
-       class="flex items-center gap-2 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors flex-shrink-0">
-      <i class="fa-solid fa-download text-xs"></i> Download invoice
-    </a>
+<% if (o.items.some(item => item.itemStatus === "delivered")) { %>
+  <a href="/orders/<%= o._id %>/invoice"
+     class="flex items-center gap-2 bg-[#1a5c1a] hover:bg-[#144d14] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors flex-shrink-0">
+    <i class="fa-solid fa-download text-xs"></i>
+    Download Invoice
+  </a>
+<% } %>
   </div>
 
   <!-- ── Tracking stepper (hidden when cancelled/returned) ── -->
@@ -306,31 +307,43 @@ const badgeClass = {
             </div>
           <div class="flex flex-col items-end gap-1">
 
-  <% if (item.offerDiscount > 0) { %>
+<div class="flex flex-col items-end gap-1">
 
-    <div class="flex flex-col items-end">
+  <% if (item.originalPrice > item.price) { %>
 
-      <span class="font-semibold text-green-700 text-sm">
-        ₹<%= Number(item.price * qty).toLocaleString('en-IN') %>
-      </span>
+    <!-- Original Price -->
+    <span class="text-xs text-gray-400 line-through">
+      ₹<%= Number(item.originalPrice).toLocaleString("en-IN") %>
+    </span>
 
-      <span class="line-through text-gray-400 text-xs">
-        ₹<%= Number(item.originalPrice * qty).toLocaleString('en-IN') %>
-      </span>
-
-      <span class="text-red-600 text-[11px] font-medium">
-        Save ₹<%= Number(item.savings * qty).toLocaleString('en-IN') %>
-      </span>
-
-    </div>
+    <!-- Offer Price -->
+    <span class="font-semibold text-green-700 text-sm">
+      ₹<%= Number(item.price).toLocaleString("en-IN") %>
+    </span>
 
   <% } else { %>
 
     <span class="font-semibold text-gray-800 text-sm">
-      ₹<%= Number(item.price * qty).toLocaleString('en-IN') %>
+      ₹<%= Number(item.price).toLocaleString("en-IN") %>
     </span>
 
   <% } %>
+
+  <% if (item.couponDiscount > 0) { %>
+    <span class="text-red-500 text-xs">
+      Coupon: -₹<%= Number(item.couponDiscount).toFixed(2) %>
+    </span>
+  <% } %>
+
+  
+
+  <span class="font-bold text-gray-900">
+    Total ₹<%= Number(item.finalPrice).toLocaleString("en-IN") %>
+  </span>
+
+</div>
+
+
 <%
 const itemStatusKey = (item.itemStatus || 'pending')
   .toLowerCase()
@@ -441,7 +454,7 @@ const itemStatusKey = (item.itemStatus || 'pending')
   </span>
 
   <span class="font-medium text-gray-800">
-    ₹<%= originalSubtotal.toLocaleString("en-IN") %>
+   ₹<%= originalSubtotal.toLocaleString("en-IN") %>
   </span>
 </div>
 
@@ -450,7 +463,7 @@ const itemStatusKey = (item.itemStatus || 'pending')
   <span class="text-gray-500">Offer Discount</span>
 
   <span class="font-semibold text-green-600">
-    -₹<%= offerDiscount.toLocaleString("en-IN") %>
+   -₹<%= offerDiscount.toLocaleString("en-IN") %>
   </span>
 </div>
 <% } %>
@@ -465,7 +478,7 @@ const itemStatusKey = (item.itemStatus || 'pending')
   </span>
 
   <span class="font-semibold text-red-500">
-    -₹<%= couponDiscount.toLocaleString("en-IN") %>
+   -₹<%= couponDiscount.toLocaleString("en-IN") %>
   </span>
 </div>
 <% } %>
@@ -482,7 +495,7 @@ const itemStatusKey = (item.itemStatus || 'pending')
   <span class="text-gray-500">Shipping Fee</span>
 
   <span class="font-medium <%= shipping === 0 ? 'text-green-600' : 'text-gray-800' %>">
-    <%= shipping === 0 ? 'Free' : '₹' + shipping.toLocaleString('en-IN') %>
+    <%= shipping === 0 ? "Free" : "₹" + shipping.toLocaleString("en-IN") %>
   </span>
 </div>
 
@@ -490,7 +503,7 @@ const itemStatusKey = (item.itemStatus || 'pending')
   <span>Order Total</span>
 
   <span class="text-gray-900">
-    ₹<%= total.toLocaleString("en-IN") %>
+   ₹<%= total.toLocaleString("en-IN") %>
   </span>
 </div>
 
@@ -554,21 +567,27 @@ const itemStatusKey = (item.itemStatus || 'pending')
               Return order
             </button>
           <% } %>
+          <%
+const hasDeliveredOrCancelled = o.items.some(item =>
+  item.itemStatus === "delivered" ||
+  item.itemStatus === "cancelled"
+);
+%>
 
         
-          <% if (canCancel) { %>
-            <button onclick="openCancelModal('<%= o._id %>')" class="action-btn red">
-              <i class="fa-solid fa-circle-xmark" style="width:14px;text-align:center"></i>
-              Cancel Order
-            </button>
-          <% } %>
-
+         <% if (canCancel && !hasDeliveredOrCancelled) { %>
+  <button onclick="openCancelModal('<%= o._id %>')" class="action-btn red">
+    <i class="fa-solid fa-circle-xmark" style="width:14px;text-align:center"></i>
+    Cancel Order
+  </button>
+<% } %>
           
-          <% if (statusKey === 'shipped') { %>
-              <i class="fa-solid fa-circle-xmark" style="width:14px;text-align:center"></i>
-              shipped can't cancel
-            </button>
-          <% } %>
+        <% if (statusKey === 'shipped') { %>
+  <p class="text-red-600">
+    <i class="fa-solid fa-circle-xmark"></i>
+    Shipped orders can't be cancelled.
+  </p>
+<% } %>
 
           
          

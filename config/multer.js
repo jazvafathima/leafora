@@ -10,44 +10,28 @@ if (!fs.existsSync(uploadPath)) {
 }
 
 const storage = multer.diskStorage({
-
   destination: (req, file, cb) => {
     cb(null, uploadPath);
   },
 
   filename: (req, file, cb) => {
+    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
 
-    const uniqueName =
-      Date.now() +
-      "-" +
-      Math.round(Math.random() * 1E9);
-
-    cb(
-      null,
-      uniqueName + path.extname(file.originalname)
-    );
-  }
+    cb(null, uniqueName + path.extname(file.originalname));
+  },
 });
 
 const fileFilter = (req, file, cb) => {
-
-  const allowed = [
-    "image/jpeg",
-    "image/png",
-    "image/webp"
-  ];
+  const allowed = ["image/jpeg", "image/png", "image/webp"];
 
   if (allowed.includes(file.mimetype)) {
-
     cb(null, true);
-
   } else {
-
     cb(new Error("Only images allowed"));
   }
 };
 
 module.exports = multer({
   storage,
-  fileFilter
+  fileFilter,
 });

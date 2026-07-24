@@ -3,10 +3,7 @@ const path = require("path");
 const fs = require("fs");
 
 // create folder automatically
-const uploadPath = path.join(
-  __dirname,
-  "../public/uploads/profile"
-);
+const uploadPath = path.join(__dirname, "../public/uploads/profile");
 
 if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath, { recursive: true });
@@ -18,19 +15,14 @@ const storage = multer.diskStorage({
   },
 
   filename: (req, file, cb) => {
-    const uniqueName =
-      Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const uniqueName = Date.now() + "-" + Math.round(Math.random() * 1e9);
 
     cb(null, uniqueName + path.extname(file.originalname));
   },
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowed = [
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-  ];
+  const allowed = ["image/jpeg", "image/png", "image/webp"];
 
   if (allowed.includes(file.mimetype)) {
     cb(null, true);

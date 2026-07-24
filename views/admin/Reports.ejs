@@ -157,6 +157,11 @@
         class="border rounded-lg px-3 py-2">
 
 </div>
+<button
+    type="submit"
+    class="bg-[#1a5c1a] text-white px-4 py-2 rounded-lg">
+    Apply
+</button>
 
 
 <a
@@ -326,12 +331,12 @@ border:"border-indigo-300"
                         </td>
 
                         <td class="px-5 py-3">
-
-                            <%= order.user.firstName %>
-
-                            <%= order.user.lastName %>
-
-                        </td>
+    <% if (order.user) { %>
+        <%= order.user.firstName %> <%= order.user.lastName %>
+    <% } else { %>
+        Deleted User
+    <% } %>
+</td>
 
                         <td class="px-5 py-3">
 
@@ -461,17 +466,17 @@ new Chart(categoryCtx, {
 
   <script>
 
-const filter = document.getElementById("filter");
-const customDates = document.getElementById("customDates");
+const form = document.querySelector('form');
+const filter = document.getElementById('filter');
+const customDates = document.getElementById('customDates');
 
-filter.addEventListener("change", function(){
+filter.addEventListener('change', function () {
 
-    if(this.value==="custom"){
-        customDates.classList.remove("hidden");
-        customDates.classList.add("flex");
-    }else{
-        customDates.classList.remove("flex");
-        customDates.classList.add("hidden");
+    if (this.value === 'custom') {
+        customDates.classList.remove('hidden');
+        customDates.classList.add('flex');
+    } else {
+        form.submit(); // Daily, Weekly, Yearly
     }
 
 });

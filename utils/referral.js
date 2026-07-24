@@ -1,7 +1,5 @@
 function generateReferralCode(name) {
-  const prefix = (name || "USR")
-    .substring(0, 3)
-    .toUpperCase();
+  const prefix = (name || "USR").substring(0, 3).toUpperCase();
 
   const random = Math.random().toString(36).substring(2, 8).toUpperCase();
 

@@ -177,33 +177,23 @@
 
   <script>
     document.getElementById('addAddressForm').addEventListener('submit', function(e) {
-      var valid = true;
-      document.querySelectorAll('.client-err').forEach(function(el) { el.remove(); });
-      document.querySelectorAll('.field-input').forEach(function(el) { el.classList.remove('is-error'); });
+      const btn = document.getElementById('saveBtn');
+      const requiredFields = ['name', 'label', 'street', 'city', 'state', 'zip', 'country', 'phone'];
+      let isValid = true;
 
-      function showErr(id, msg) {
-        var input = document.getElementById(id);
-        if (!input) return;
-        input.classList.add('is-error');
-        var p = document.createElement('p');
-        p.className = 'field-error client-err';
-        p.innerHTML = '<i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i> ' + msg;
-        input.parentElement.appendChild(p);
-        valid = false;
-      }
+      requiredFields.forEach(field => {
+        const input = document.getElementById(field);
+        if (!input.value.trim()) {
+          isValid = false;
+          input.classList.add('is-error');
+        } else {
+          input.classList.remove('is-error');
+        }
+      });
 
-      if (!document.getElementById('label').value.trim())   showErr('label',  'Address label is required.');
-      if (!document.getElementById('street').value.trim())  showErr('street', 'Street address is required.');
-      if (!document.getElementById('city').value.trim())    showErr('city',   'City is required.');
-      if (!document.getElementById('state').value.trim())   showErr('state',  'State is required.');
-      if (!document.getElementById('zip').value.trim())     showErr('zip',    'ZIP code is required.');
-      if (!document.getElementById('country').value.trim()) showErr('country','Country is required.');
-      if (!document.getElementById('phone').value.trim())   showErr('phone',  'Phone is required.');
-
-      if (!valid) {
+      if (!isValid) {
         e.preventDefault();
       } else {
-        var btn = document.getElementById('saveBtn');
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xs"></i> Saving...';
         btn.disabled = true;
       }

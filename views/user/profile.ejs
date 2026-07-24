@@ -103,9 +103,7 @@
     <a href="/wishlist" title="Wishlist"><i class="fa-regular fa-heart"></i></a>
     <a href="/cart" title="Cart" style="position:relative">
       <i class="fa-solid fa-bag-shopping"></i>
-      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
-        <span class="cart-badge"><%= cartCount %></span>
-      <% } %>
+      <span id="cartBadge" class="cart-badge" style="<%= (typeof cartCount !== 'undefined' && cartCount > 0) ? 'display:flex;' : 'display:none;' %>"><%= (typeof cartCount !== 'undefined') ? cartCount : 0 %></span>
     </a>
   </div>
     </div>
@@ -159,10 +157,19 @@
            class="bg-leaf-700 hover:bg-leaf-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
           Edit Profile
         </a>
-        <a href="/change-password"
-           class="border border-gray-300 hover:border-gray-400 bg-white text-gray-600 text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
-          Change Password
-        </a>
+        <% if (!user.googleId) { %>
+  <a href="/change-password"
+     class="border border-gray-300 hover:border-gray-400 bg-white text-gray-600 text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
+    Change Password
+  </a>
+<% } else { %>
+  <button
+    disabled
+    title="Google account users cannot change password here"
+    class="border border-gray-300 bg-gray-100 text-gray-400 text-xs font-semibold px-4 py-2 rounded-lg cursor-not-allowed">
+    Change Password
+  </button>
+<% } %>
 
 
         <a href="/logout"

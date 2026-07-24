@@ -1,4 +1,5 @@
-const Address = require('../models/address');
+const Address = require("../models/address");
+const Product = require("../models/Product");
 
 // ── GET ALL ADDRESSES ─────────────────────
 exports.getAddresses = async (req, res) => {
@@ -9,30 +10,29 @@ exports.getAddresses = async (req, res) => {
     const limit = 5;
 
     const totalAddresses = await Address.countDocuments({
-      user: userId
+      user: userId,
     });
 
     const totalPages = Math.ceil(totalAddresses / limit);
 
     const addresses = await Address.find({
-      user: userId
+      user: userId,
     })
       .sort({ isDefault: -1, createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
 
-      console.log({
-  page,
-  totalPages,
-  addressesCount: addresses.length
-});
-
-    res.render('user/addresses/addresses', {
-      addresses,
-      currentPage: page,
-      totalPages
+    console.log({
+      page,
+      totalPages,
+      addressesCount: addresses.length,
     });
 
+    res.render("user/addresses/addresses", {
+      addresses,
+      currentPage: page,
+      totalPages,
+    });
   } catch (err) {
     console.log(err);
     res.send("Error loading addresses");
@@ -45,41 +45,81 @@ exports.getAddresses = async (req, res) => {
 // };
 exports.getAddAddress = (req, res) => {
   console.log("Add page hit"); // 🔥 debug
-  res.render('user/addresses/addAddress');
+  res.render("user/addresses/addAddress");
 };
 
 // Save Address
 
-
 // ── EDIT ADDRESS ──────────────────────────
+// Load Edit Address Page
+exports.loadEditAddress = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const address = await Address.findOne({
+      _id: id,
+      userId: req.session.userId, // or user: req.session.userId
+    });
+
+    if (!address) {
+      res.status(404).render("user/404");
+    }
+
+    res.render("user/addresses/editaddress", { address });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Error loading address");
+  }
+};
+
+// Edit Address
 exports.editAddress = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await Address.findByIdAndUpdate(id, req.body);
+    const address = await Address.findOneAndUpdate(
+      {
+        _id: id,
+        userId: req.session.userId,
+      },
+      req.body,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
 
-    res.redirect('/addresses'); // IMPORTANT FIX
+    if (!address) {
+      res.status(404).render("user/404");
+    }
+
+    res.redirect("/addresses");
   } catch (err) {
     console.log(err);
-    res.send("Error editing address");
+    res.status(500).send("Error editing address");
   }
 };
-
 
 // ── DELETE ADDRESS ────────────────────────
 exports.deleteAddress = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await Address.findByIdAndDelete(id);
+    const address = await Address.findOneAndDelete({
+      _id: id,
+      userId: req.session.userId,
+    });
 
-    res.redirect('/addresses');
+    if (!address) {
+      res.status(404).render("user/404");
+    }
+
+    res.redirect("/addresses");
   } catch (err) {
     console.log(err);
-    res.send("Error deleting address");
+    res.status(500).send("Error deleting address");
   }
 };
-
 
 // ── SET DEFAULT ADDRESS ───────────────────
 exports.setDefaultAddress = async (req, res) => {
@@ -88,17 +128,14 @@ exports.setDefaultAddress = async (req, res) => {
     const { id } = req.params;
 
     // remove old default
-    await Address.updateMany(
-      { user: userId },
-      { isDefault: false }
-    );
+    await Address.updateMany({ user: userId }, { isDefault: false });
 
     // set new default
     await Address.findByIdAndUpdate(id, {
-      isDefault: true
+      isDefault: true,
     });
 
-    res.redirect('/addresses');
+    res.redirect("/addresses");
   } catch (err) {
     console.log(err);
     res.send("Error setting default");
@@ -114,8 +151,7 @@ exports.getEditAddress = async (req, res) => {
       return res.send("Address not found");
     }
 
-    res.render('user/addresses/editAddress', { address });
-
+    res.render("user/addresses/editAddress", { address });
   } catch (err) {
     console.log(err);
     res.send("Error loading edit page");

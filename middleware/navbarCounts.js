@@ -1,5 +1,3 @@
-
-
 const Cart = require("../models/Cart");
 const User = require("../models/User");
 
@@ -20,10 +18,7 @@ module.exports = async (req, res, next) => {
       ? cart.items.reduce((sum, item) => sum + (item.quantity || 0), 0)
       : 0;
 
-    const user = await User.findById(userId)
-      .select("wishlist")
-      .lean();
-
+    const user = await User.findById(userId).select("wishlist").lean();
 
     res.locals.wishlistCount = user?.wishlist?.length || 0;
 

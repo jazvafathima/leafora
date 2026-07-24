@@ -171,23 +171,37 @@
             </div>
 
             <%# Email %>
-            <div class="mb-4">
-              <label for="email" class="field-label">Email Address</label>
-              <input type="email" id="email" name="email"
-                placeholder="Enter your email"
-                value="<% if (typeof user !== 'undefined' && user) { %><%= user.email %><% } %>"
-                class="field-input <% if (typeof errors !== 'undefined' && errors && errors.email) { %>is-error<% } %>" />
-              <p class="text-[10px] text-gray-400 mt-1">
-                <i class="fa-solid fa-circle-info" style="font-size:9px"></i>
-                Email changes require OTP verification
-              </p>
-              <% if (typeof errors !== 'undefined' && errors && typeof errors === 'object' && errors.email) { %>
-                <p class="field-error">
-                  <i class="fa-solid fa-circle-exclamation" style="font-size:10px"></i>
-                  <%= errors.email %>
-                </p>
-              <% } %>
-            </div>
+          <% if (user.googleId) { %>
+  <input
+    type="email"
+    id="email"
+    name="email"
+    value="<%= user.email %>"
+    class="field-input"
+    readonly
+  />
+
+  <p class="text-[10px] text-gray-400 mt-1">
+    <i class="fa-solid fa-lock" style="font-size:9px"></i>
+    Email cannot be changed for Google accounts.
+  </p>
+
+<% } else { %>
+
+  <input
+    type="email"
+    id="email"
+    name="email"
+    value="<%= user.email %>"
+    class="field-input"
+  />
+
+  <p class="text-[10px] text-gray-400 mt-1">
+    <i class="fa-solid fa-circle-info" style="font-size:9px"></i>
+    Email changes require OTP verification.
+  </p>
+
+<% } %>
 
             <%# Phone %>
             <div class="mb-2">

@@ -230,13 +230,11 @@
 
 </a>
 
- <a href="/cart" title="Cart" style="position:relative">
-      <i class="fa-solid fa-bag-shopping"></i>
-      <% if (typeof cartCount !== 'undefined' && cartCount > 0) { %>
-        <span class="cart-badge"><%= cartCount %></span>
-      <% } %>
-    </a>
+<a href="/cart" title="Cart" style="position:relative">
+    <i class="fa-solid fa-bag-shopping"></i>
 
+    <span id="cartBadge" class="cart-badge" style="<%= (typeof cartCount !== 'undefined' && cartCount > 0) ? 'display:flex;' : 'display:none;' %>"><%= (typeof cartCount !== 'undefined') ? cartCount : 0 %></span>
+</a>
 
 
         <button class="md:hidden text-gray-600"><i class="fa-solid fa-bars text-lg"></i></button>
@@ -313,7 +311,7 @@
 
       <!-- Badge: Discount % or "New Arrival" -->
 <span class="absolute top-3 left-3 text-white text-[10px] font-bold px-2 py-1 rounded-full z-10 <%= p.hasOffer ? 'bg-orange-500' : 'bg-leaf-600' %>">
-  <%= p.hasOffer ? p.offerDiscount + '% OFF' : 'New Arrival' %>
+  <%= p.hasOffer ? p.offerDiscount + '₹ OFF' : 'New Arrival' %>
 </span>
 
       
@@ -351,7 +349,7 @@
 
   <% if (p.hasOffer) { %>
 
-    <span class="font-bold text-lg text-green-700">
+    <span class="font-bold text-lg text-white-700">
       ₹<%= p.offerPrice.toLocaleString("en-IN") %>
     </span>
 
@@ -360,7 +358,7 @@
     </span>
 
     <span class="text-sm text-red-600 font-semibold">
-      <%= p.offerDiscount %>% OFF
+      <%= p.offerDiscount %>₹ OFF
     </span>
 
   <% } else { %>
@@ -621,20 +619,14 @@ async function addToCart(event, productId, variantId) {
 
 function updateCartBadge(count) {
 
-    const badge = document.getElementById("cartCount");
+    let badge = document.getElementById("cartBadge");
+    const cartLink = document.querySelector('a[href="/cart"]');
 
-    if(!badge) return;
-
-    badge.textContent = count;
-
-    if(count > 0){
-        badge.classList.remove("hidden");
-    }else{
-        badge.classList.add("hidden");
+    if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'flex' : 'none';
     }
-
 }
-
 
 </script>
 <script>
@@ -739,7 +731,7 @@ searchInput.addEventListener("input", toggleClearButton);
 
 clearBtn.addEventListener("click", () => {
   searchInput.value = "";
-  window.location.href = "/dashboard"; // Clears search and reloads page
+  window.location.href = "/"; // Clears search and reloads page
 });
 </script>
 

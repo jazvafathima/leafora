@@ -30,17 +30,17 @@ const productSchema = new mongoose.Schema(
       default: false,
     },
     stock: {
-    type: Number,
-    default: 0
-  },
+      type: Number,
+      default: 0,
+    },
   },
 
-{
+  {
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  }
-)
+  },
+);
 productSchema.virtual("variants", {
   ref: "ProductVariant",
   localField: "_id",
