@@ -26,6 +26,8 @@ connectDB();
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 // ─── View Engine ────────────────────────────────
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -49,9 +51,10 @@ app.use(
       mongoUrl: process.env.MONGO_URI,
     }),
     cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    },
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  maxAge: 1000 * 60 * 60 * 24 // 1 day
+},
   }),
 );
 app.use(flash());
