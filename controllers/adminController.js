@@ -810,7 +810,7 @@ exports.getReports = async (req, res) => {
       });
     });
 
-    res.render("admin/reports", {
+    res.render("admin/Reports", {
       filter,
       startDate,
       endDate,
