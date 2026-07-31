@@ -834,7 +834,11 @@ exports.getReports = async (req, res) => {
       totalProductsSold,
     });
   } catch (err) {
-    console.log(err);
+        console.error("REPORT ERROR:");
+    console.error(err);
+    console.error(err.stack);
+
+    throw err;
     res.redirect("/admin/dashboard");
   }
 };
