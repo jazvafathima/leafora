@@ -141,21 +141,29 @@ exports.addToCart = async (req, res) => {
         .json({ success: false, message: "Product not found." });
     }
 
+
     // i. Block check
-    if (
+console.log({
+  productBlocked: product.isBlocked,
+  productStatus: product.status,
+  categoryExists: !!category,
+  categoryActive: category?.isActive,
+  categoryDeleted: category?.isDeleted,
+});
+
+if (
   product.isBlocked ||
   product.status === "inactive" ||
   product.status === "blocked" ||
-  !product.category?.isActive ||
-  product.category?.isDeleted
+  !category ||
+  !category.isActive ||
+  category.isDeleted
 ) {
   return res.status(400).json({
     success: false,
     message: "This product is currently unavailable.",
   });
 }
-
-
 
     // Resolve variant
     let variant = null;
