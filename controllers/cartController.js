@@ -141,40 +141,20 @@ exports.addToCart = async (req, res) => {
         .json({ success: false, message: "Product not found." });
     }
 
-    console.log("Product:", {
-  isBlocked: product.isBlocked,
-  status: product.status,
-});
-
-console.log("Category:", category);
-
     // i. Block check
-console.log("======== ADD TO CART DEBUG ========");
-
-console.log({
-  productStatus: product.status,
-  productBlocked: product.isBlocked,
-  categoryActive: category?.isActive,
-  categoryDeleted: category?.isDeleted,
-  categoryFound: !!category,
-});
-
-if (
+    if (
   product.isBlocked ||
   product.status === "inactive" ||
   product.status === "blocked" ||
-  !category?.isActive ||
-  category?.isDeleted
+  !product.category?.isActive ||
+  product.category?.isDeleted
 ) {
-  console.log("❌ Product unavailable condition matched");
-
   return res.status(400).json({
     success: false,
     message: "This product is currently unavailable.",
   });
 }
 
-console.log("✅ Product passed validation");
 
 
     // Resolve variant

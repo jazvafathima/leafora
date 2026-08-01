@@ -107,7 +107,7 @@ router.get("/logout", (req, res) => {
 router.get("/", authController.getDashboard);
 
 // ── Profile ─────────────────────────────────────────────────
-const Address = require("../models/address");
+const Address = require("../models/Address");
 const Order = require("../models/Order");
 
 router.get("/profile", isAuthenticated, authController.getProfile);

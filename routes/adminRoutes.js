@@ -7,7 +7,7 @@ const categoryController = require("../controllers/categoryController");
 const productController = require("../controllers/productController");
 const orderCtrl = require("../controllers/orderController");
 const offerController = require("../controllers/offerController");
-const couponController = require("../controllers/CouponController");
+const couponController = require("../controllers/couponController");
 
 const upload = require("../config/multer");
 
