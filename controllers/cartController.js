@@ -143,13 +143,6 @@ exports.addToCart = async (req, res) => {
 
 
     // i. Block check
-console.log({
-  productBlocked: product.isBlocked,
-  productStatus: product.status,
-  categoryExists: !!category,
-  categoryActive: category?.isActive,
-  categoryDeleted: category?.isDeleted,
-});
 
 if (
   product.isBlocked ||
