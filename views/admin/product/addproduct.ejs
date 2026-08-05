@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <script>tailwind.config={theme:{extend:{fontFamily:{body:['Poppins','sans-serif']}}}}</script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+  <link rel="stylesheet" href="/css/global.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
   <style>
     *{box-sizing:border-box}
@@ -695,5 +696,10 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
   }
 });
 </script>
+<div id="pageLoader" class="hidden">
+    <div class="loader"></div>
+</div>
+
+<script src="/js/globalLoader.js"></script>
 </body>
 </html>

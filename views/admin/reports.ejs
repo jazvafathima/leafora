@@ -9,6 +9,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="/css/global.css">
   <!-- Chart.js for the two report charts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 
@@ -482,6 +483,12 @@ filter.addEventListener('change', function () {
 });
 
 </script>
+
+<div id="pageLoader" class="hidden">
+    <div class="loader"></div>
+</div>
+
+<script src="/js/globalLoader.js"></script>
 
 </body>
 </html>

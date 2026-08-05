@@ -8,6 +8,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/global.css">
 
   <script>
     tailwind.config = {
@@ -424,7 +425,7 @@
   </button>
 <% } else { %>
 <button
-
+data-no-loader
   id="addToCartBtn"
   class="w-full bg-green-600 text-white py-3 rounded">
   Add to Cart
@@ -813,39 +814,55 @@ const inStock = stockQty > 0;
 document.getElementById("addToCartForm").addEventListener("submit", async function(e) {
     e.preventDefault(); // Prevent normal form submit
 
-    const data = {
-    productId: this.productId.value,
-    variantId: document.getElementById('cartVariantId').value,
-    quantity: document.getElementById('qtyInput').value
-};
+    const btn = document.getElementById('addToCartBtn');
+    const originalHTML = btn ? btn.innerHTML : '';
 
-    const res = await fetch("/cart/add", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        },
-        body: JSON.stringify(data)
-    });
-
-    const result = await res.json();
-if (result.success) {
-    showToast(result.message, "success");
-    loadCartCount();      // Refresh cart badge
-   // Refresh wishlist badge if needed
-    // Unfill wishlist heart
-    const wishIcon = document.querySelector(
-      'button[onclick*="toggleWishlist"] i'
-    );
-
-    if (wishIcon) {
-      wishIcon.classList.remove('fa-solid', 'text-red-500');
-      wishIcon.classList.add('fa-regular', 'text-gray-500');
+    // Show loading state
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `
+          <span class="flex items-center justify-center gap-2">
+            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            Adding to Cart...
+          </span>
+        `;
     }
 
-    showToast(result.message, "success");
-} else {
-        showToast(result.message, "error");
+    const data = {
+        productId: this.productId.value,
+        variantId: document.getElementById('cartVariantId').value,
+        quantity: document.getElementById('qtyInput').value
+    };
+
+    try {
+        const res = await fetch("/cart/add", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+            showToast(result.message, "success");
+            loadCartCount(); // Refresh cart badge
+        } else {
+            showToast(result.message, "error");
+        }
+    } catch (err) {
+        showToast("Something went wrong. Please try again.", "error");
+    } finally {
+        // Always reset the button after request completes
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
     }
 });
 </script>
@@ -1154,8 +1171,78 @@ if (data.count > 0) {
 }
 
 loadCartCount();
+
+// Duplicate submit listener removed — loading state is now handled in the fetch handler above
+
+async function addToCart(event, productId, variantId) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const overlay = document.getElementById("pageLoader");
+
+  // Show loader
+  overlay.classList.remove("hidden");
+
+  // Optional: change button text
+  const btn = event.currentTarget;
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = "Adding to cart...";
+
+  try {
+    const res = await fetch("/cart/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        productId,
+        variantId,
+        quantity: 1,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Added to cart",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      updateCartBadge(data.cartCount);
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: data.message,
+      });
+    }
+  } catch (err) {
+    console.error(err);
+
+    Swal.fire({
+      icon: "error",
+      title: "Something went wrong",
+    });
+  } finally {
+    // Hide loader again because fetch doesn't reload the page
+    overlay.classList.add("hidden");
+
+    // Restore button
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
+}
 </script>
 
+<div id="pageLoader" class="hidden">
+    <div class="loader"></div>
+</div>
 
+<script src="/js/globalLoader.js"></script>
 </body>
 </html>

@@ -1,35 +1,29 @@
-document.addEventListener("DOMContentLoaded", () => {
-  // Create overlay
-  const overlay = document.createElement("div");
-  overlay.id = "pageLoader";
+const overlay = document.getElementById("pageLoader");
 
-  overlay.innerHTML = `
-    <div class="loader"></div>
-  `;
+// Hide loader when page has finished loading
+window.addEventListener("load", () => {
+  overlay.classList.add("hidden");
+});
 
-  document.body.appendChild(overlay);
+// Show loader only for normal page navigation
+document.addEventListener("click", (e) => {
+  const link = e.target.closest("a");
 
-  // Hide loader when page finishes loading
-  window.addEventListener("load", () => {
-    overlay.classList.add("hidden");
-  });
+  if (!link) return;
 
-  // Show loader whenever a link is clicked
-  document.addEventListener("click", (e) => {
-    const link = e.target.closest("a");
+  // Ignore anchors, javascript links, downloads, new tabs
+  if (
+    link.target === "_blank" ||
+    link.hasAttribute("download") ||
+    link.href.startsWith("javascript:") ||
+    link.href.startsWith("#")
+  ) {
+    return;
+  }
 
-    if (
-      link &&
-      link.href &&
-      !link.target &&
-      !link.href.startsWith("javascript:")
-    ) {
-      overlay.classList.remove("hidden");
-    }
-  });
+  // Only show loader for same-origin page navigation
+  const url = new URL(link.href, window.location.href);
+  if (url.origin !== window.location.origin) return;
 
-  // Show loader when any form is submitted
-  document.addEventListener("submit", () => {
-    overlay.classList.remove("hidden");
-  });
+  overlay.classList.remove("hidden");
 });
