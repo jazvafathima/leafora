@@ -69,6 +69,7 @@ const UserSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
     },
+     
 
     referredBy: {
       type: mongoose.Schema.Types.ObjectId,

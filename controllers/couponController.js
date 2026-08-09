@@ -147,6 +147,22 @@ const addCoupon = async (req, res) => {
       req.flash("error", "Percentage discount cannot exceed 100%");
       return res.redirect("/admin/coupons");
     }
+    const parsedMinPurchase = parseFloat(minPurchase);
+    if (minPurchase !== undefined && minPurchase !== "" && (isNaN(parsedMinPurchase) || parsedMinPurchase < 0)) {
+      req.flash("error", "Minimum purchase amount cannot be negative");
+      return res.redirect("/admin/coupons");
+    }
+    if (
+      discountType === "flat" &&
+      parsedMinPurchase > 0 &&
+      parseFloat(discountValue) >= parsedMinPurchase
+    ) {
+      req.flash(
+        "error",
+        `Cannot create this coupon — flat discount (₹${parseFloat(discountValue)}) must be less than the minimum purchase amount (₹${parsedMinPurchase})`
+      );
+      return res.redirect("/admin/coupons");
+    }
 
     // Check duplicate code
     const existing = await Coupon.findOne({ code: code.toUpperCase() });
@@ -203,6 +219,22 @@ const editCoupon = async (req, res) => {
     }
     if (parseFloat(discountValue) <= 0) {
       req.flash("error", "Discount value must be greater than 0");
+      return res.redirect("/admin/coupons");
+    }
+    const parsedMinPurchase = parseFloat(minPurchase);
+    if (minPurchase !== undefined && minPurchase !== "" && (isNaN(parsedMinPurchase) || parsedMinPurchase < 0)) {
+      req.flash("error", "Minimum purchase amount cannot be negative");
+      return res.redirect("/admin/coupons");
+    }
+    if (
+      discountType === "flat" &&
+      parsedMinPurchase > 0 &&
+      parseFloat(discountValue) >= parsedMinPurchase
+    ) {
+      req.flash(
+        "error",
+        `Cannot update this coupon — flat discount (₹${parseFloat(discountValue)}) must be less than the minimum purchase amount (₹${parsedMinPurchase})`
+      );
       return res.redirect("/admin/coupons");
     }
 

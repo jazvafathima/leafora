@@ -482,7 +482,7 @@
             <input type="number" name="minPurchase" id="add_minPurchase"
               placeholder="e.g. 500" min="0"
               class="modal-input" />
-            <p class="err" id="err_add_min">Enter minimum purchase amount</p>
+            <p class="err" id="err_add_min">Minimum purchase amount cannot be negative</p>
           </div>
           <div id="add_maxDiscountRow">
             <label class="modal-label">Max Discount (₹)</label>
@@ -586,7 +586,7 @@
           <div>
             <label class="modal-label">Min Purchase (₹) <span class="text-red-500">*</span></label>
             <input type="number" name="minPurchase" id="edit_minPurchase" min="0" class="modal-input" />
-            <p class="err" id="err_edit_min">Required</p>
+            <p class="err" id="err_edit_min">Minimum purchase amount cannot be negative</p>
           </div>
           <div>
             <label class="modal-label">Max Discount (₹)</label>
@@ -709,12 +709,32 @@
     else                                          showErr('err_add_code',   false);
 
     const dv = num('add_discountValue');
-    if (!dv || dv <= 0)                         { showErr('err_add_value',  true); valid = false; }
-    else                                          showErr('err_add_value',  false);
+    const discType = document.getElementById('add_discountType').value;
+    if (!dv || dv <= 0) {
+      document.getElementById('err_add_value').textContent = 'Enter a valid discount value greater than 0';
+      showErr('err_add_value', true); valid = false;
+    } else if (discType === 'percentage' && dv > 100) {
+      document.getElementById('err_add_value').textContent = 'Percentage discount cannot exceed 100%';
+      showErr('err_add_value', true); valid = false;
+    } else {
+      showErr('err_add_value', false);
+    }
 
-    const mp = document.getElementById('add_minPurchase').value;
-    if (mp === '' || isNaN(Number(mp)))          { showErr('err_add_min',   true); valid = false; }
-    else                                          showErr('err_add_min',   false);
+    const mpRaw = document.getElementById('add_minPurchase').value;
+    const mp = parseFloat(mpRaw);
+    const errMinEl = document.getElementById('err_add_min');
+    if (mpRaw === '' || isNaN(mp)) {
+      errMinEl.textContent = 'Enter a valid minimum purchase amount (use 0 for no minimum)';
+      showErr('err_add_min', true); valid = false;
+    } else if (mp < 0) {
+      errMinEl.textContent = 'Minimum purchase amount cannot be negative';
+      showErr('err_add_min', true); valid = false;
+    } else if (discType === 'flat' && mp > 0 && dv >= mp) {
+      errMinEl.textContent = `Flat discount (₹${dv}) must be less than the min purchase (₹${mp})`;
+      showErr('err_add_min', true); valid = false;
+    } else {
+      showErr('err_add_min', false);
+    }
 
     const ul = num('add_usageLimit');
     if (!ul || ul < 1)                          { showErr('err_add_usage',  true); valid = false; }
@@ -753,12 +773,32 @@
     let valid = true;
 
     const dv = num('edit_discountValue');
-    if (!dv || dv <= 0)                       { showErr('err_edit_value',  true); valid = false; }
-    else                                        showErr('err_edit_value',  false);
+    const discType = document.getElementById('edit_discountType').value;
+    if (!dv || dv <= 0) {
+      document.getElementById('err_edit_value').textContent = 'Enter a valid discount value greater than 0';
+      showErr('err_edit_value', true); valid = false;
+    } else if (discType === 'percentage' && dv > 100) {
+      document.getElementById('err_edit_value').textContent = 'Percentage discount cannot exceed 100%';
+      showErr('err_edit_value', true); valid = false;
+    } else {
+      showErr('err_edit_value', false);
+    }
 
-    const mp = document.getElementById('edit_minPurchase').value;
-    if (mp === '' || isNaN(Number(mp)))        { showErr('err_edit_min',   true); valid = false; }
-    else                                        showErr('err_edit_min',   false);
+    const mpRaw = document.getElementById('edit_minPurchase').value;
+    const mp = parseFloat(mpRaw);
+    const errMinEl = document.getElementById('err_edit_min');
+    if (mpRaw === '' || isNaN(mp)) {
+      errMinEl.textContent = 'Enter a valid minimum purchase amount (use 0 for no minimum)';
+      showErr('err_edit_min', true); valid = false;
+    } else if (mp < 0) {
+      errMinEl.textContent = 'Minimum purchase amount cannot be negative';
+      showErr('err_edit_min', true); valid = false;
+    } else if (discType === 'flat' && mp > 0 && dv >= mp) {
+      errMinEl.textContent = `Flat discount (₹${dv}) must be less than the min purchase (₹${mp})`;
+      showErr('err_edit_min', true); valid = false;
+    } else {
+      showErr('err_edit_min', false);
+    }
 
     const ul = num('edit_usageLimit');
     if (!ul || ul < 1)                        { showErr('err_edit_usage',  true); valid = false; }

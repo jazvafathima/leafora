@@ -28,7 +28,7 @@ exports.getProducts = async (req, res) => {
     const products = await Product.find()
       .populate("category")
       .populate("variants")
-      .sort({ createdAt:-1 })
+      .sort({createdAt:-1} )
       .lean();
 
     // Add totalStock

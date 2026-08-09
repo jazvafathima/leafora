@@ -525,7 +525,6 @@ else if (delta > 0) {
         body:    JSON.stringify({ itemId, quantity: newQty }),
       });
       const data = await res.json();
- window.location.reload();
 
       if (data.success) {
         qtyEl.textContent = newQty;
