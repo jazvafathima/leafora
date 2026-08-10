@@ -8,6 +8,7 @@ const fs = require("fs");
 const path = require("path");
 const { search } = require("../routes/userRoutes");
 const Offer = require("../models/Offer");
+const HttpStatus = require("../utils/httpStatus");
 const { getBestOffer } = require("../utils/offerHelper");
 const { calculateProductPrice } = require("../utils/priceHelper");
 const Wishlist = require("../models/wishlist");
@@ -734,7 +735,7 @@ exports.getUserProducts = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).send("Server Error");
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send("Server Error");
   }
 };
 
@@ -747,7 +748,7 @@ exports.getProductDetail = async (req, res) => {
       .populate("variants");
 
     if (!product) {
-      return res.status(404).render("user/404");
+      return res.status(HttpStatus.NOT_FOUND).render("user/404");
     }
     const variants = await ProductVariant.find({
       productId: product._id,

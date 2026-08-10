@@ -4,6 +4,7 @@ const User = require("../models/User");
 const Offer = require("../models/Offer");
 const productvariant = require("../models/productvariant");
 const ProductVariant = require("../models/productvariant");
+const HttpStatus = require("../utils/httpStatus");
 const Category=require("../models/Category")
 const { getBestOffer } = require("../utils/offerHelper");
 const {
@@ -113,7 +114,7 @@ exports.getCart = async (req, res) => {
     });
   } catch (err) {
     console.error("cartController.getCart:", err);
-    res.status(500).render("error", { message: "Could not load cart." });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render("error", { message: "Could not load cart." });
   }
 };
 
@@ -121,7 +122,7 @@ exports.addToCart = async (req, res) => {
   try {
     const userId = req.session.userId || req.session.user?._id;
     if (!userId) {
-      return res.status(401).json({
+      return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
         message: "Please login to add items to cart.",
       });
@@ -136,7 +137,7 @@ exports.addToCart = async (req, res) => {
 
     if (!product) {
       return res
-        .status(404)
+        .status(HttpStatus.NOT_FOUND)
         .render("user/404")
         .json({ success: false, message: "Product not found." });
     }
@@ -152,7 +153,7 @@ if (
   !category.isActive ||
   category.isDeleted
 ) {
-  return res.status(400).json({
+  return res.status(HttpStatus.BAD_REQUEST).json({
     success: false,
     message: "This product is currently unavailable.",
   });
@@ -169,7 +170,7 @@ if (
 
     if (stock <= 0) {
       console.log("OUT OF STOCK CHECK FAILED");
-      return res.status(400).json({
+      return res.status(HttpStatus.BAD_REQUEST).json({
         success: false,
         message: "This product is out of stock.",
       });
@@ -193,7 +194,7 @@ if (
 
       // Stock validation
       if (newQty > stock) {
-        return res.status(400).json({
+        return res.status(HttpStatus.BAD_REQUEST).json({
           success: false,
           message: `Only ${stock} units available. You already have ${cart.items[existingItemIndex].quantity} in cart.`,
         });
@@ -201,7 +202,7 @@ if (
 
       // Max qty cap
       if (newQty > MAX_QTY_PER_ITEM) {
-        return res.status(400).json({
+        return res.status(HttpStatus.BAD_REQUEST).json({
           success: false,
           message: `Maximum ${MAX_QTY_PER_ITEM} units per item allowed.`,
         });
@@ -212,11 +213,11 @@ if (
       // Validate requested quantity
       if (qty > stock) {
         return res
-          .status(400)
+          .status(HttpStatus.BAD_REQUEST)
           .json({ success: false, message: `Only ${stock} units available.` });
       }
       if (qty > MAX_QTY_PER_ITEM) {
-        return res.status(400).json({
+        return res.status(HttpStatus.BAD_REQUEST).json({
           success: false,
           message: `Maximum ${MAX_QTY_PER_ITEM} units per item allowed.`,
         });
@@ -256,7 +257,7 @@ if (
   } catch (err) {
     console.error("cartController.addToCart:", err);
     res
-      .status(500)
+      .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .json({ success: false, message: "Server error. Please try again." });
   }
 };
@@ -266,7 +267,7 @@ exports.updateCartItem = async (req, res) => {
     const userId = req.session.userId || req.session.user?._id;
     if (!userId)
       return res
-        .status(401)
+        .status(HttpStatus.UNAUTHORIZED)
         .json({ success: false, message: "Not authenticated." });
 
     const { itemId, quantity } = req.body;
@@ -274,11 +275,11 @@ exports.updateCartItem = async (req, res) => {
 
     if (!newQty || newQty < 1) {
       return res
-        .status(400)
+        .status(HttpStatus.BAD_REQUEST)
         .json({ success: false, message: "Invalid quantity." });
     }
     if (newQty > MAX_QTY_PER_ITEM) {
-      return res.status(400).json({
+      return res.status(HttpStatus.BAD_REQUEST).json({
         success: false,
         message: `Maximum ${MAX_QTY_PER_ITEM} units per item allowed.`,
       });
@@ -288,7 +289,7 @@ exports.updateCartItem = async (req, res) => {
 
     if (!cart)
       return res
-        .status(404)
+        .status(HttpStatus.NOT_FOUND)
         .render("user/404")
         .json({ success: false, message: "Cart not found." });
 
@@ -296,7 +297,7 @@ exports.updateCartItem = async (req, res) => {
     console.log(item);
     if (!item)
       return res
-        .status(404)
+        .status(HttpStatus.NOT_FOUND)
         .render("user/404")
         .json({ success: false, message: "Item not found in cart." });
 
@@ -305,7 +306,7 @@ exports.updateCartItem = async (req, res) => {
     // Re-check product is still available
     if (!product || product.isBlocked || product.status === "inactive") {
       return res
-        .status(400)
+        .status(HttpStatus.BAD_REQUEST)
         .json({ success: false, message: "Product is no longer available." });
     }
 
@@ -319,7 +320,7 @@ exports.updateCartItem = async (req, res) => {
 
     if (stock === 0) {
       return res
-        .status(400)
+        .status(HttpStatus.BAD_REQUEST)
         .json({ success: false, message: "Product is out of stock." });
     }
 
@@ -328,7 +329,7 @@ exports.updateCartItem = async (req, res) => {
 
     // Allow reductions even when cart quantity exceeds stock
     if (newQty > stock && newQty > currentQty) {
-      return res.status(400).json({
+      return res.status(HttpStatus.BAD_REQUEST).json({
         success: false,
         message: `Only ${stock} units available.`,
       });
@@ -369,7 +370,7 @@ exports.updateCartItem = async (req, res) => {
     });
   } catch (err) {
     console.error("cartController.updateCartItem:", err);
-    res.status(500).json({ success: false, message: "Server error." });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error." });
   }
 };
 
@@ -381,7 +382,7 @@ exports.removeCartItem = async (req, res) => {
     const userId = req.session.userId || req.session.user?._id;
     if (!userId)
       return res
-        .status(401)
+        .status(HttpStatus.UNAUTHORIZED)
         .json({ success: false, message: "Not authenticated." });
 
     const { itemId } = req.body;
@@ -392,7 +393,7 @@ exports.removeCartItem = async (req, res) => {
 
     if (!cart)
       return res
-        .status(404)
+        .status(HttpStatus.NOT_FOUND)
         .json({ success: false, message: "Cart not found." });
 
     cart.items = cart.items.filter((item) => item._id.toString() !== itemId);
@@ -408,7 +409,7 @@ exports.removeCartItem = async (req, res) => {
     });
   } catch (err) {
     console.error("cartController.removeCartItem:", err);
-    res.status(500).json({ success: false, message: "Server error." });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error." });
   }
 };
 
@@ -420,7 +421,7 @@ exports.clearCart = async (req, res) => {
     const userId = req.session.userId || req.session.user?._id;
     if (!userId)
       return res
-        .status(401)
+        .status(HttpStatus.UNAUTHORIZED)
         .json({ success: false, message: "Not authenticated." });
 
     await Cart.findOneAndUpdate({ user: userId }, { $set: { items: [] } });
@@ -430,7 +431,7 @@ exports.clearCart = async (req, res) => {
     res.json({ success: true, message: "Cart cleared." });
   } catch (err) {
     console.error("cartController.clearCart:", err);
-    res.status(500).json({ success: false, message: "Server error." });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error." });
   }
 };
 

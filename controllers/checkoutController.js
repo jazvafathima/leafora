@@ -8,6 +8,7 @@ const ProductVariant = require("../models/productvariant");
 const Wallet = require("../models/wallet");
 const { getBestOffer } = require("../utils/offerHelper");
 const calculateCheckout = require("../utils/checkoutCalculator");
+const HttpStatus = require("../utils/httpStatus");
 const { validateCoupon } = require("./couponController");
 const Coupon = require("../models/Coupon");
 const crypto = require("crypto");
@@ -157,7 +158,7 @@ exports.getCheckout = async (req, res) => {
     });
   } catch (err) {
     console.error("checkoutController.getCheckout:", err);
-    res.status(500).send(err.message);
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(err.message);
   }
 };
 /* ═══════════════════════════════════════════
@@ -323,7 +324,7 @@ exports.checkCartStatus = async (req, res) => {
   try {
     const userId = getUserId(req);
     if (!userId)
-      return res.status(401).json({ issues: ["User not logged in"] });
+      return res.status(HttpStatus.UNAUTHORIZED).json({ issues: ["User not logged in"] });
     const cart = await Cart.findOne({ user: userId })
       .populate({
         path: "items.product",
@@ -336,7 +337,7 @@ exports.checkCartStatus = async (req, res) => {
     return res.json({ issues });
   } catch (err) {
     console.error("checkoutController.checkCartStatus:", err);
-    return res.status(500).json({ issues: ["Server error"] });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ issues: ["Server error"] });
   }
 };
 
@@ -634,7 +635,7 @@ exports.orderFailed = async (req, res) => {
   } catch (err) {
     console.error("checkoutController.orderFailed:", err);
     res
-      .status(500)
+      .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .render("error", { message: "Could not load order failure page." });
   }
 };
@@ -701,7 +702,7 @@ exports.addAddress = async (req, res) => {
     const userId = getUserId(req);
 
     if (!userId) {
-      return res.status(401).json({
+      return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
         message: "Not authenticated",
       });
@@ -721,7 +722,7 @@ exports.addAddress = async (req, res) => {
     } = req.body;
 
     if (!fullName || !phone || !addressLine1 || !city || !state || !pincode) {
-      return res.status(400).json({
+      return res.status(HttpStatus.BAD_REQUEST).json({
         success: false,
         message: "Please fill all required fields",
       });
@@ -757,7 +758,7 @@ exports.addAddress = async (req, res) => {
   } catch (err) {
     console.error("addAddress error:", err);
 
-    res.status(500).json({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: err.message,
     });
@@ -783,7 +784,7 @@ exports.editAddress = async (req, res) => {
     } = req.body;
 
     if (!fullName || !phone || !addressLine1 || !city || !state || !pincode) {
-      return res.status(400).json({
+      return res.status(HttpStatus.BAD_REQUEST).json({
         success: false,
         message: "Please fill all required fields",
       });
@@ -811,7 +812,7 @@ exports.editAddress = async (req, res) => {
     res.json({ success: true, message: "Address updated successfully" });
   } catch (err) {
     console.error("editAddress error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: err.message });
   }
 };
 
@@ -820,7 +821,7 @@ exports.createRazorpayOrder = async (req, res) => {
     const userId = req.session.userId;
 
     if (!userId) {
-      return res.status(401).json({
+      return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
         message: "Please login first.",
       });
@@ -880,7 +881,7 @@ exports.createRazorpayOrder = async (req, res) => {
   } catch (err) {
     console.error(err);
 
-    res.status(500).json({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Unable to create Razorpay order.",
     });
@@ -892,7 +893,7 @@ exports.verifyRazorpayPayment = async (req, res) => {
     const userId = getUserId(req);
 
     if (!userId) {
-      return res.status(401).json({
+      return res.status(HttpStatus.UNAUTHORIZED).json({
         success: false,
         message: "Please login first.",
       });
@@ -962,7 +963,7 @@ exports.verifyRazorpayPayment = async (req, res) => {
   } catch (err) {
     console.error(err);
 
-    res.status(500).json({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
     });
   }

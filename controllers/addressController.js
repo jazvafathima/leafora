@@ -1,5 +1,6 @@
 const Address = require("../models/Address");
 const Product = require("../models/Product");
+const HttpStatus = require("../utils/httpStatus");
 
 // ── GET ALL ADDRESSES ─────────────────────
 exports.getAddresses = async (req, res) => {
@@ -62,13 +63,13 @@ exports.loadEditAddress = async (req, res) => {
     });
 
     if (!address) {
-      res.status(404).render("user/404");
+      res.status(HttpStatus.NOT_FOUND).render("user/404");
     }
 
     res.render("user/addresses/editaddress", { address });
   } catch (err) {
     console.log(err);
-    res.status(500).send("Error loading address");
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send("Error loading address");
   }
 };
 
@@ -90,13 +91,13 @@ exports.editAddress = async (req, res) => {
     );
 
     if (!address) {
-      res.status(404).render("user/404");
+      res.status(HttpStatus.NOT_FOUND).render("user/404");
     }
 
     res.redirect("/addresses");
   } catch (err) {
     console.log(err);
-    res.status(500).send("Error editing address");
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send("Error editing address");
   }
 };
 
@@ -111,13 +112,13 @@ exports.deleteAddress = async (req, res) => {
     });
 
     if (!address) {
-      res.status(404).render("user/404");
+      res.status(HttpStatus.NOT_FOUND).render("user/404");
     }
 
     res.redirect("/addresses");
   } catch (err) {
     console.log(err);
-    res.status(500).send("Error deleting address");
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send("Error deleting address");
   }
 };
 

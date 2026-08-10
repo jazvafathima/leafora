@@ -5,6 +5,7 @@ const puppeteer = require("puppeteer");
 const path = require("path");
 const { query } = require("express-validator");
 const walletService = require("../services/walletService");
+const HttpStatus = require("../utils/httpStatus");
 
 const updateProductStock = async (productId) => {
   const variants = await ProductVariant.find({ productId });
@@ -84,7 +85,7 @@ exports.getOrders = async (req, res) => {
     });
   } catch (err) {
     console.error("orderController.getOrders:", err);
-    res.status(500).render("error", { message: "Could not load orders." });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).render("error", { message: "Could not load orders." });
   }
 };
 
@@ -128,7 +129,7 @@ exports.getadminOrderDetail = async (req, res) => {
   } catch (err) {
     console.error("orderController.getOrderDetail:", err);
     res
-      .status(500)
+      .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .render("error", { message: "Could not load order details." });
   }
 };
@@ -552,14 +553,14 @@ exports.cancelOrder = async (req, res) => {
     });
 
     if (!order) {
-      return res.status(404).json({
+      return res.status(HttpStatus.NOT_FOUND).json({
         success: false,
         message: "Order not found",
       });
     }
 
     if (["delivered", "cancelled"].includes(order.orderStatus)) {
-      return res.status(400).json({
+      return res.status(HttpStatus.BAD_REQUEST).json({
         success: false,
         message: "Order cannot be cancelled",
       });
@@ -617,7 +618,7 @@ exports.cancelOrder = async (req, res) => {
   } catch (err) {
     console.error(err);
 
-    return res.status(500).json({
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Something went wrong",
     });
@@ -629,13 +630,13 @@ exports.cancelItem = async (req, res) => {
     const order = await Order.findById(req.params.orderId);
     if (!order) {
       return res
-        .status(404)
+        .status(HttpStatus.NOT_FOUND)
         .json({ success: false, message: "Order not found" });
     }
     const item = order.items.id(req.params.itemId);
     if (!item) {
       return res
-        .status(404)
+        .status(HttpStatus.NOT_FOUND)
         .json({ success: false, message: "Item not found" });
     }
     // Update status fields
@@ -678,7 +679,7 @@ exports.cancelItem = async (req, res) => {
     return res.json({ success: true, message: "Item cancelled" });
   } catch (err) {
     console.error("CANCEL ITEM ERROR:", err);
-    return res.status(500).json({ success: false, message: err.message });
+    return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: err.message });
   }
 };
 
@@ -728,14 +729,14 @@ exports.returnItem = async (req, res) => {
     const order = await Order.findById(orderId);
     if (!order) {
       return res
-        .status(404)
+        .status(HttpStatus.NOT_FOUND)
         .json({ success: false, message: "Order not found" });
     }
 
     const item = order.items.id(itemId);
     if (!item) {
       return res
-        .status(404)
+        .status(HttpStatus.NOT_FOUND)
         .json({ success: false, message: "Item not found" });
     }
 
@@ -749,7 +750,7 @@ exports.returnItem = async (req, res) => {
     res.json({ success: true, message: "Return request submitted" });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: "Server error" });
   }
 };
 
@@ -768,7 +769,7 @@ exports.submitReview = async (req, res) => {
   } catch (err) {
     console.error("REVIEW ERROR:", err);
 
-    res.status(500).json({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: "Failed to submit review",
     });
@@ -806,7 +807,7 @@ exports.downloadInvoice = async (req, res) => {
       async (err, html) => {
         if (err) {
           console.error(err);
-          return res.status(500).send("Invoice render error");
+          return res.status(HttpStatus.INTERNAL_SERVER_ERROR).send("Invoice render error");
         }
 
         const browser = await puppeteer.launch({
@@ -836,6 +837,6 @@ exports.downloadInvoice = async (req, res) => {
     );
   } catch (err) {
     console.error(err);
-    res.status(500).send("Invoice generation failed");
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send("Invoice generation failed");
   }
 };

@@ -4,6 +4,7 @@ const User = require("../models/User");
 const Order = require("../models/Order");
 const PDFDocument = require("pdfkit");
 const ExcelJS = require("exceljs");
+const HttpStatus = require("../utils/httpStatus");
 
 exports.loadLogin = (req, res) => {
   res.render("admin/login");
@@ -324,7 +325,7 @@ exports.getUsers = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.status(500).send("Server Error");
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).send("Server Error");
   }
 };
 
@@ -550,7 +551,7 @@ exports.getChartData = async (req, res) => {
     });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server Error" });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ error: "Server Error" });
   }
 };
 
