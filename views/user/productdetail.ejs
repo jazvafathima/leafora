@@ -511,72 +511,7 @@ data-no-loader
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════
-       REVIEWS SECTION
-  ════════════════════════════════════════ -->
-  <div class="mt-12">
-    <h2 class="font-display text-xl font-semibold text-gray-900 mb-6 text-center">From Happy Plant Parents</h2>
-    <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-
-      <% if (typeof reviews !== 'undefined' && reviews && reviews.length > 0) { %>
-        <% reviews.forEach(function(r){ %>
-          <div class="review-card">
-            <div class="flex items-center gap-1 mb-2">
-              <% for(let s=1;s<=5;s++){ %>
-                <i class="fa-solid fa-star" style="font-size:.65rem;color:<%= s<=r.rating ? '#f59e0b' : '#e5e7eb' %>"></i>
-              <% } %>
-            </div>
-            <p class="text-xs text-gray-600 leading-relaxed mb-3 line-clamp-4"><%= r.comment %></p>
-            <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                <% if (r.user && r.user.avatar) { %>
-                  <img src="<%= r.user.avatar %>" class="w-full h-full object-cover" />
-                <% } else { %>
-                  <i class="fa-regular fa-user text-gray-400" style="font-size:.65rem"></i>
-                <% } %>
-              </div>
-              <div>
-                <p class="text-xs font-semibold text-gray-700"><%= r.user ? (r.user.firstName + ' ' + (r.user.lastName||'')) : 'Anonymous' %></p>
-                <p class="text-gray-400" style="font-size:0.62rem"><%= r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) : '' %></p>
-              </div>
-            </div>
-          </div>
-        <% }) %>
-      <% } else { %>
-        <!-- Placeholder review cards when no reviews -->
-        <% for(let i=0;i<3;i++){ %>
-          <div class="review-card opacity-60">
-            <div class="flex items-center gap-1 mb-2">
-              <% for(let s=1;s<=5;s++){ %>
-                <i class="fa-solid fa-star" style="font-size:.65rem;color:#f59e0b"></i>
-              <% } %>
-            </div>
-            <p class="text-xs text-gray-500 leading-relaxed mb-3">Absolutely love this plant! It arrived healthy and has been growing beautifully. The packaging was excellent and care guide was helpful.</p>
-            <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center">
-                <i class="fa-regular fa-user text-gray-400" style="font-size:.65rem"></i>
-              </div>
-              <p class="text-xs font-semibold text-gray-700">Happy Customer</p>
-            </div>
-          </div>
-        <% } %>
-      <% } %>
-
-    </div>
-
-    <!-- Write a review link -->
-    <div class="flex items-center justify-center gap-4 mt-4">
-      <a href="/products/<%= p ? p._id : '' %>/review"
-         class="text-xs text-[#1a5c1a] font-medium hover:underline flex items-center gap-1">
-        <i class="fa-regular fa-pen-to-square"></i> Write a Review
-      </a>
-      <span class="text-gray-200">|</span>
-      <a href="/products/<%= p ? p._id : '' %>#reviews"
-         class="text-xs text-gray-500 hover:text-gray-700">
-        View all <%= reviewCount %> reviews
-      </a>
-    </div>
-  </div>
+ 
 
   <!-- ════════════════════════════════════════
        PRODUCT DESCRIPTION
@@ -586,7 +521,9 @@ data-no-loader
       The Importance of the <%= p ? p.name : 'This Plant' %>:
     </h3>
     <p class="text-sm text-gray-600 leading-relaxed">
-      <%= p && p.description ? p.description : 'A beautiful and meaningful houseplant that brings life and joy to your home. Easy to care for and perfect for all spaces.' %>
+      <%= p && (p.description || p.fullDescription || p.shortDescription)
+            ? (p.description || p.fullDescription || p.shortDescription)
+            : 'A beautiful and meaningful houseplant that brings life and joy to your home. Easy to care for and perfect for all spaces.' %>
     </p>
 
     <!-- Specs if available -->

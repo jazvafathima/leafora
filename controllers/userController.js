@@ -165,6 +165,15 @@ exports.verifyOtp = async (req, res) => {
 
     const user = result.user;
 
+    if (req.session.otpPurpose === "forgot-password") {
+  req.session.resetUserId = user._id;
+  req.session.tempUser = null;
+  req.session.otpPurpose = null;
+
+  return res.redirect("/reset-password");
+}
+
+
     // EMAIL CHANGE FLOW
     if (req.session.otpPurpose === "email-change") {
       await userService.completeEmailChange({
@@ -207,6 +216,7 @@ exports.forgotPassword = async (req, res) => {
     }
 
     req.session.tempUser = result.user._id;
+    req.session.otpPurpose = "forgot-password";
 
     res.redirect("/verify-otp");
   } catch (err) {
@@ -419,47 +429,34 @@ exports.getDashboard = async (req, res) => {
     });
   }
 };
-exports.getProfile = async (req, res) => {
-  try {
-    const userId = req.session.userId;
+// exports.getProfile = async (req, res) => {
+//   try {
+//     const userId = req.session.userId;
 
-    const [user, defaultAddress, orders, wallet] = await Promise.all([
-      User.findById(userId).lean(),
-      Address.findOne({ user: userId, isDefault: true }).lean(),
-      Order.find({ user: userId }).sort({ createdAt: -1 }).lean(),
-      Wallet.findOne({ user: userId }).lean(),
-    ]);
+//     const [user, defaultAddress, orders, wallet] = await Promise.all([
+//       User.findById(userId).lean(),
+//       Address.findOne({ user: userId, isDefault: true }).lean(),
+//       Order.find({ user: userId }).sort({ createdAt: -1 }).lean(),
+//       Wallet.findOne({ user: userId }).lean(),
+//     ]);
 
-    const transactions = wallet?.transactions || [];
+//     const transactions = wallet?.transactions || [];
 
-    const totalCredits = transactions
-      .filter((t) => t.type === "credit")
-      .reduce((sum, t) => sum + t.amount, 0);
+//     const totalCredits = transactions
+//       .filter((t) => t.type === "credit")
+//       .reduce((sum, t) => sum + t.amount, 0);
 
-    const totalDebits = transactions
-      .filter((t) => t.type === "debit")
-      .reduce((sum, t) => sum + t.amount, 0);
+//     const totalDebits = transactions
+//       .filter((t) => t.type === "debit")
+//       .reduce((sum, t) => sum + t.amount, 0);
 
-    // Users referred by the current user
-    const referrals = await User.find({
-      referredBy: userId,
-    })
-      .select("firstName lastName email createdAt")
-      .lean();
-const userService = require("../services/userService");
-const Product = require("../models/Product");
-const ProductVariant = require("../models/productvariant");
-const User = require("../models/User");
-const Order = require("../models/Order");
-const Address = require("../models/Address");
-const Wallet = require("../models/wallet");
-const Wishlist = require("../models/wishlist"); 
-const HttpStatus = require("../utils/httpStatus");
-const {
-  getActiveOffers,
-  calculateProductPrice,
-} = require("../utils/priceHelper");
-const nodemailer = require("nodemailer");
+//     // Users referred by the current user
+//     const referrals = await User.find({
+//       referredBy: userId,
+//     })
+//       .select("firstName lastName email createdAt")
+//       .lean();
+
 
 // ── GET SIGNUP ─────────────────────────────
 
@@ -643,28 +640,6 @@ exports.verifyOtp = async (req, res) => {
   }
 };
 
-// ── FORGOT PASSWORD ───────────────────────
-exports.forgotPassword = async (req, res) => {
-  try {
-    const result = await userService.forgotPassword(req.body.email);
-
-    if (result.error) {
-      return res.render("user/forgot-password", {
-        error: result.error,
-      });
-    }
-
-    req.session.tempUser = result.user._id;
-
-    res.redirect("/verify-otp");
-  } catch (err) {
-    console.log(err);
-
-    res.render("user/forgot-password", {
-      error: "Something went wrong",
-    });
-  }
-};
 
 // ── VERIFY RESET OTP ──────────────────────
 exports.verifyResetOtp = async (req, res) => {
@@ -866,7 +841,11 @@ exports.getDashboard = async (req, res) => {
       search: "",
     });
   }
-};
+ };
+
+
+   
+
 exports.getProfile = async (req, res) => {
   try {
     const userId = req.session.userId;
@@ -877,6 +856,10 @@ exports.getProfile = async (req, res) => {
       Order.find({ user: userId }).sort({ createdAt: -1 }).lean(),
       Wallet.findOne({ user: userId }).lean(),
     ]);
+
+    if (!user) {
+      return res.redirect("/login");
+    }
 
     const transactions = wallet?.transactions || [];
 
@@ -1147,251 +1130,7 @@ exports.getServerError = (err, req, res, next) => {
   });
 };
 
-// Optional: 403 — forbidden/unauthorized access (e.g. admin routes, blocked users)
-exports.getForbidden = async (req, res) => {
-  res.status(HttpStatus.FORBIDDEN).render("user/403", {
-    year: new Date().getFullYear(),
-  });
-};
 
-    res.render("user/profile", {
-      user,
-      defaultAddress,
-      orders,
-      wallet,
-      transactions,
-      totalCredits,
-      totalDebits,
-      referralStats,
-      referrals: referralHistory,
-      siteUrl: process.env.SITE_URL,
-    });
-  } catch (err) {
-    console.error("Profile Error:", err);
-    res.redirect("/");
-  }
-};
-
-exports.profileEdit = async (req, res) => {
-  try {
-    const user = await User.findById(req.session.userId);
-
-    res.render("user/profileEdit", { user });
-  } catch (err) {
-    console.log("PROFILE EDIT ERROR:", err);
-    res.redirect("/profile");
-  }
-};
-
-exports.getUserProducts = async (req, res) => {
-  const products = await Product.find({
-    isDeleted: false,
-  }).populate("category");
-  let wishlistIds = [];
-
-  if (req.session.userId) {
-    const wishlist = await Wishlist.findOne({
-      userId: req.session.userId,
-    });
-
-    if (wishlist) {
-      wishlistIds = wishlist.products.map((id) => id.toString());
-    }
-  }
-
-  res.render("user/productlist", {
-    products: [],
-    wishlistIds: [],
-  });
-};
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-exports.getconctact = async (req, res) => {
-  try {
-    res.render("user/contact", {
-      formAction: "/contact/submit",
-      infoCards: [
-        {
-          icon: "fa-location-dot",
-          title: "Address",
-          lines: ["123 Commerce Street", "New York, NY 10001", "United States"],
-        },
-        {
-          icon: "fa-envelope",
-          title: "Support Email",
-          lines: ["support@leaforamail.com"],
-        },
-        {
-          icon: "fa-phone",
-          title: "Phone Number",
-          lines: ["+1 (555) 123-4567", "Toll-free 1-800-445BLE"],
-        },
-        {
-          icon: "fa-clock",
-          title: "Support Hours",
-          lines: [
-            "Monday - Friday: 8am - 8pm EST",
-            "Saturday: 9am - 6pm EST",
-            "Sunday: Closed",
-          ],
-        },
-      ],
-      mapImageUrl: null,
-      storeAddress: "123 Commerce Street, New York, NY 10001",
-      qrCodeUrl: null,
-      phone: "+91 9090000000",
-      email: "support@leafora.com",
-      year: new Date().getFullYear(),
-    });
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-exports.postContact = async (req, res) => {
-  try {
-    const { fullName, email, phone, subject, message } = req.body;
-
-    if (!fullName || !email || !message) {
-      return res.status(HttpStatus.BAD_REQUEST).render("user/contact", {
-        // ✅ updated
-        error: "Please fill in your name, email, and message.",
-        formAction: "/contact/submit",
-      });
-    }
-
-    if (message.trim().length < 10) {
-      return res.status(HttpStatus.BAD_REQUEST).render("user/contact", {
-        // ✅ updated
-        error: "Your message must be at least 10 characters long.",
-        formAction: "/contact/submit",
-      });
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(HttpStatus.BAD_REQUEST).render("user/contact", {
-        // ✅ updated
-        error: "Please enter a valid email address.",
-        formAction: "/contact/submit",
-      });
-    }
-
-    const adminEmail = process.env.ADMIN_EMAIL;
-
-    await transporter.sendMail({
-      from: `"Leafora Contact Form" < ${ process.env.EMAIL }> `,
-      to: process.env.ADMIN_EMAIL,
-      replyTo: email,
-      subject: `New Contact Message: ${ subject || "General Inquiry" } `,
-      html: `
-  < h2 > New Contact Form Submission</h2 >
-
-    <p><strong>Name:</strong> ${fullName}</p>
-    <p><strong>Email:</strong> ${email}</p>
-    <p><strong>Phone:</strong> ${phone || "N/A"}</p>
-    <p><strong>Subject:</strong> ${subject || "N/A"}</p>
-
-    <p><strong>Message:</strong></p>
-    <p>${message.replace(/\n/g, "<br>")}</p>
-`,
-    });
-
-    req.flash("success", "Your message has been sent successfully!");
-    res.redirect("/contact");
-  } catch (err) {
-    req.flash("error", "Could not send your message. Please try again later.");
-    res.redirect("/contact");
-  }
-};
-
-exports.getAbout = async (req, res) => {
-  try {
-    res.render("user/about", {
-      founded: 2019,
-      storyImageUrl: null,
-      values: [
-        {
-          icon: "fa-seedling",
-          title: "Sustainably Grown",
-          text: "Every plant is sourced from growers who share our commitment to the environment.",
-        },
-        {
-          icon: "fa-truck-fast",
-          title: "Reliable Delivery",
-          text: "Carefully packaged and shipped so your plants arrive healthy, every time.",
-        },
-        {
-          icon: "fa-hand-holding-heart",
-          title: "Real Plant Care",
-          text: "Our team offers genuine advice to help your plants — and your space — flourish.",
-        },
-        {
-          icon: "fa-users",
-          title: "Community First",
-          text: "We support local growers, small makers, and green initiatives in every city we serve.",
-        },
-      ],
-      aboutStats: [
-        { value: "50K+", label: "Happy Customers" },
-        { value: "1,200+", label: "Plant Varieties" },
-        { value: "35+", label: "Cities Served" },
-        { value: "6", label: "Years of Growth" },
-      ],
-      team: [
-        { name: "Ava Thompson", role: "Founder & CEO", image: null },
-        { name: "Noah Bennett", role: "Head of Sourcing", image: null },
-        { name: "Maya Patel", role: "Plant Care Lead", image: null },
-        { name: "Liam Carter", role: "Operations Manager", image: null },
-      ],
-      qrCodeUrl: null,
-      phone: "+91 9090000000",
-      email: "support@leafora.com",
-      year: new Date().getFullYear(),
-    });
-  } catch (err) {
-    console.error("Error loading about page:", err);
-    res
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .render("error", {
-        message: "Something went wrong. Please try again later.",
-      });
-  }
-};
-
-exports.getNotFound = async (req, res) => {
-  res.status(HttpStatus.NOT_FOUND).render("user/404", {
-    searchAction: "/shop",
-    quickLinks: [
-      { label: "Track Order", href: "/orders/track" },
-      { label: "Contact Us", href: "/contact" },
-    ],
-    qrCodeUrl: null,
-    phone: "+91 9090000000",
-    email: "support@leafora.com",
-    year: new Date().getFullYear(),
-  });
-};
-
-exports.getServerError = (err, req, res, next) => {
-  console.error("Server Error:", err);
-
-  res.status(err.status || HttpStatus.INTERNAL_SERVER_ERROR).render("user/500", {
-    message:
-      process.env.NODE_ENV === "production"
-        ? "Something went wrong on our end. Please try again shortly."
-        : err.message, // show real error in dev, generic message in prod
-    year: new Date().getFullYear(),
-  });
-};
-
-// Optional: 403 — forbidden/unauthorized access (e.g. admin routes, blocked users)
 exports.getForbidden = async (req, res) => {
   res.status(HttpStatus.FORBIDDEN).render("user/403", {
     year: new Date().getFullYear(),

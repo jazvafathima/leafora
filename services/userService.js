@@ -11,6 +11,7 @@ exports.signupUser = async ({
   firstName,
   lastName,
   email,
+  phone,
   password,
   referralCode,
 }) => {
@@ -60,6 +61,7 @@ exports.signupUser = async ({
     firstName,
     lastName,
     email,
+    phone: phone || null,
     password,
     isVerified: false,
 
@@ -127,31 +129,33 @@ exports.loginUser = async ({ email, password }) => {
 };
 
 // ── RESEND OTP ─────────────────────────
-exports.resendOtp = async (req, res) => {
-  try {
-    const result = await userService.resendOtp(req.session.tempUser);
-
-    if (result.error) {
-      return res.status(400).json({
-        success: false,
-        message: result.error,
-      });
-    }
-
-    req.session.resendAvailableAt = Date.now() + 45 * 1000;
-
-    return res.json({
-      success: true,
-      message: "OTP resent successfully",
-    });
-  } catch (err) {
-    console.log(err);
-
-    return res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
+exports.resendOtp = async (userId) => {
+  if (!userId) {
+    return {
+      error: "User session expired",
+    };
   }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    return {
+      error: "User not found",
+    };
+  }
+
+  const otp = generateOTP().toString();
+
+  user.otp = otp;
+  user.otpExpiry = Date.now() + 5 * 60 * 1000;
+
+  await user.save();
+
+  await sendOTP(user.email, otp);
+
+  return {
+    success: true,
+  };
 };
 
 // ── GET VERIFY OTP ─────────────────────

@@ -88,12 +88,10 @@ exports.addCategory = async (req, res) => {
       isDeleted: false,
     });
 
-    if (existing) {
-      return res.status(409).json({
-        success: false,
-        message: "Category already exists",
-      });
-    }
+   if (existing) {
+  req.flash("error", "Category already exists");
+  return res.redirect("/admin/categories");
+}
 
     // image
     let image = "";

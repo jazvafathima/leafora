@@ -756,6 +756,9 @@ exports.getProductDetail = async (req, res) => {
 
     const productObj = product.toObject();
 
+    // Expose a unified description field (model uses shortDescription / fullDescription)
+    productObj.description = productObj.fullDescription || productObj.shortDescription || '';
+
     const now = new Date();
 
     const offers = await Offer.find({
@@ -902,13 +905,17 @@ exports.getProductDetail = async (req, res) => {
       .lean();
 
     for (let rp of relatedProducts) {
-      const variant = await ProductVariant.findOne({
+      const rpVariants = await ProductVariant.find({
         productId: rp._id,
       }).lean();
 
+      // Attach full variants so the EJS can read stock and price
+      rp.variants = rpVariants;
+
+      const firstRpVariant = rpVariants[0];
       rp.image =
-        variant?.images?.length > 0
-          ? `/uploads/products/${variant.images[0]}`
+        firstRpVariant?.images?.length > 0
+          ? `/uploads/products/${firstRpVariant.images[0]}`
           : "/images/no-image.png";
     }
 

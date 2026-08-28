@@ -19,6 +19,9 @@ const wishlistController = require("../controllers/wishlistController");
 const checkoutCtrl = require("../controllers/checkoutController");
 const orderController = require("../controllers/orderController");
 const walletController = require("../controllers/walletController");
+const Address = require("../models/Address");
+const Order = require("../models/Order");
+
 
 const { generateOTP, sendOTP, createAndSendOTP } = require("../utils/otp");
 
@@ -77,7 +80,7 @@ router.get("/forgot-password", (req, res) => {
   res.render("user/forgot-password");
 });
 
-// router.post("/forgot-password", authController.forgotPassword);
+router.post("/forgot-password", authController.forgotPassword);
 
 // Reset password
 router.get("/reset-password", (req, res) => {
@@ -103,12 +106,11 @@ router.get("/logout", (req, res) => {
 });
 
 // ── Dashboard ────────────────────────────────────────────────
-// router.get('/', isAuthenticated, authController.getDashboard);
+
 router.get("/", authController.getDashboard);
 
 // ── Profile ─────────────────────────────────────────────────
-const Address = require("../models/Address");
-const Order = require("../models/Order");
+
 
 router.get("/profile", isAuthenticated, authController.getProfile);
 

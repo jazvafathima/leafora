@@ -464,101 +464,94 @@
    
   </section>
 
-  <!-- ═══════════════════════════════════════════════════════════════════════
-       NEWSLETTER
-  ════════════════════════════════════════════════════════════════════════ -->
-  <section class="bg-leaf-700 text-white py-10">
-    <div class="max-w-xl mx-auto px-4 text-center">
-      <i class="fa-solid fa-envelope-open-text text-leaf-300 text-3xl mb-3"></i>
-      <h3 class="font-display text-2xl font-bold mb-2">Get Plant Care Tips</h3>
-      <p class="text-leaf-200 text-sm mb-5">Subscribe for weekly plant care guides, exclusive deals & seasonal offers.</p>
-      <div class="flex gap-2 bg-white rounded-full p-1 overflow-hidden max-w-md mx-auto">
-        <input type="email" placeholder="Enter your email address"
-          class="flex-1 px-4 py-2 text-sm text-gray-700 bg-transparent outline-none" />
-        <button class="bg-leaf-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:bg-leaf-500 transition-colors flex-shrink-0">
-          Subscribe
-        </button>
-      </div>
-    </div>
-  </section>
+ 
 
   <!-- ═══════════════════════════════════════════════════════════════════════
        FOOTER
   ════════════════════════════════════════════════════════════════════════ -->
-  <footer class="bg-leaf-900 text-white">
-    <div class="max-w-7xl mx-auto px-4 py-12">
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-8 mb-8">
-
-        <!-- Brand column -->
-        <div class="col-span-2 md:col-span-2">
-          <div class="flex items-center gap-2 mb-4">
-            <i class="fa-solid fa-leaf text-leaf-400 text-xl"></i>
-            <span class="font-display text-xl font-bold tracking-tight">Leafora</span>
-          </div>
-          <p class="text-gray-400 text-sm leading-relaxed mb-5">
-            Bringing nature closer to you. Ethically sourced plants delivered fresh to your home.
-          </p>
-
-          <!-- ── IMAGE SLOT — QR Code ─────────────────────────────────────
-               File: /images/qr-code.png   |   Size: 80 × 80 px
-               Should be a real QR linking to your app / website
-          ──────────────────────────────────────────────────────────── -->
-          <div class="bg-white rounded-xl p-2 inline-block w-20 h-20 mb-3">
-            <!-- <div class="img-box w-full h-full">
-              <img src="/images/qr-code.png" alt="Scan to download the Leafora app" class="object-contain" />
-            </div> -->
-          </div>
-          <p class="text-xs text-gray-500 mb-3">Scan to download the app</p>
-
-          <div class="flex gap-3">
-            <a href="#" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors">
-              <i class="fa-brands fa-apple"></i> App Store
-            </a>
-            <a href="#" class="bg-gray-800 hover:bg-gray-700 text-white text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors">
-              <i class="fa-brands fa-google-play"></i> Play Store
-            </a>
-          </div>
+ <footer style="background-color:#1a2e1a;font-family:'Poppins',sans-serif">
+  <div class="max-w-6xl mx-auto px-6 pt-10 pb-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
+      <div>
+        <p class="text-white text-2xl font-bold mb-4" style="font-family:'Playfair Display',serif">Leafora</p>
+        <p class="text-xs text-gray-300 mb-3">Download the Leafora App Now</p>
+        <div class="w-24 h-24 bg-white rounded-lg mb-4 flex items-center justify-center">
+          <i class="fa-solid fa-qrcode text-3xl text-gray-400"></i>
         </div>
-
-        <!-- Footer link columns -->
-        <% const footerLinks = [
-          {heading:'Company', links:['About Us','Careers','Press','Blog','Contact']},
-          {heading:'Shop',    links:['Indoor Plants','Outdoor Plants','Pots','Seeds','Fertilizers']},
-          {heading:'Support', links:['FAQ','Track Order','Returns','Plant Care','Bulk Orders']},
-        ]; %>
-        <% footerLinks.forEach(col => { %>
-          <div>
-            <h4 class="font-semibold text-sm mb-4 text-leaf-300 tracking-wide uppercase"><%= col.heading %></h4>
-            <ul class="space-y-2">
-              <% col.links.forEach(link => { %>
-                <li><a href="#" class="text-gray-400 hover:text-white text-sm transition-colors"><%= link %></a></li>
-              <% }) %>
-            </ul>
-          </div>
-        <% }) %>
+        <div class="flex gap-2">
+          <a href="#" class="flex items-center gap-1.5 bg-black text-white text-[10px] px-3 py-2 rounded-lg">
+            <i class="fa-brands fa-google-play text-sm"></i>
+            <span><span class="block text-[8px] text-gray-400">Get it on</span>Play Store</span>
+          </a>
+          <a href="#" class="flex items-center gap-1.5 bg-black text-white text-[10px] px-3 py-2 rounded-lg">
+            <i class="fa-brands fa-apple text-sm"></i>
+            <span><span class="block text-[8px] text-gray-400">Download on</span>App Store</span>
+          </a>
+        </div>
       </div>
-
-      <!-- Bottom bar -->
-      <div class="border-t border-leaf-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
-        <p class="text-gray-500 text-xs">© 2026 Leafora. All rights reserved.</p>
-        <div class="flex items-center gap-4">
-          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-instagram text-lg"></i></a>
-          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-facebook text-lg"></i></a>
-          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-twitter text-lg"></i></a>
-          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-youtube text-lg"></i></a>
-          <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fa-brands fa-pinterest text-lg"></i></a>
-        </div>
-        <div class="flex items-center gap-3 text-xs text-gray-500">
-          <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
-          <span>·</span>
-          <a href="#" class="hover:text-white transition-colors">Terms of Service</a>
-          <span>·</span>
-          <a href="#" class="hover:text-white transition-colors">Sitemap</a>
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Helpful Links</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Care Guide</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Shipping Policy</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Returns &amp; Refunds</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Track Order</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Locate Stores</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Information</h4>
+        <ul class="space-y-2">
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Blog</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">Plant Care Tips</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">FAQs</a></li>
+          <li><a href="#" class="text-gray-300 text-xs hover:text-white transition-colors">About Us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="text-white text-sm font-semibold mb-4">Contact Us</h4>
+        <ul class="space-y-2 mb-4">
+          <li class="text-gray-300 text-xs">+91 9000000000</li>
+          <li><a href="mailto:support@leafora.com" class="text-gray-300 text-xs hover:text-white">support@leafora.com</a></li>
+        </ul>
+        <div class="flex gap-2">
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-brands fa-whatsapp text-sm"></i></a>
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-regular fa-envelope text-sm"></i></a>
+          <a href="#" class="w-8 h-8 rounded-full border border-gray-500 flex items-center justify-center text-gray-300 hover:text-white hover:border-white transition-colors"><i class="fa-brands fa-telegram text-sm"></i></a>
         </div>
       </div>
     </div>
-  </footer>
-
+  </div>
+  <div class="border-t border-gray-600 mx-6"></div>
+  <div class="max-w-6xl mx-auto px-6 py-5">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="text-gray-300 text-xs font-medium mr-1">Social</span>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-instagram text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-x-twitter text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-facebook-f text-white text-xs"></i></a>
+        <a href="#" class="w-7 h-7 rounded-full bg-gray-600 hover:bg-gray-500 flex items-center justify-center transition-colors"><i class="fa-brands fa-youtube text-white text-xs"></i></a>
+      </div>
+      <div class="flex items-center gap-2">
+        <i class="fa-brands fa-cc-visa text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-mastercard text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-amex text-gray-300 text-xl"></i>
+        <i class="fa-brands fa-cc-paypal text-gray-300 text-xl"></i>
+        <span class="text-[9px] font-bold text-gray-300 border border-gray-500 px-1.5 py-0.5 rounded">RuPay</span>
+      </div>
+    </div>
+    <div class="border-t border-gray-600 mt-4 mb-4"></div>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+      <p class="text-gray-400 text-[11px]">© 2026 Leafora – All Rights Reserved.</p>
+      <div class="flex gap-4">
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Terms &amp; Conditions</a>
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Privacy Policy</a>
+        <a href="#" class="text-gray-400 text-[11px] hover:text-white">Disclaimer</a>
+      </div>
+    </div>
+    <p class="text-right mt-3 text-sm font-medium" style="color:#6aaa6a;font-family:'Playfair Display',serif">Grow Green, Live Fresh 🌿</p>
+  </div>
+</footer>
   <!-- Back to Top -->
   <button onclick="window.scrollTo({top:0,behavior:'smooth'})"
     class="fixed bottom-6 right-6 bg-leaf-600 text-white w-10 h-10 rounded-full shadow-lg flex items-center justify-center hover:bg-leaf-700 transition-colors z-50">
@@ -747,3 +740,6 @@ clearBtn.addEventListener("click", () => {
 
 </body>
 </html>
+
+
+

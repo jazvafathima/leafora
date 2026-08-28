@@ -157,7 +157,7 @@
            class="bg-leaf-700 hover:bg-leaf-800 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
           Edit Profile
         </a>
-        <% if (!user.googleId) { %>
+        <% if (user && !user.googleId) { %>
   <a href="/change-password"
      class="border border-gray-300 hover:border-gray-400 bg-white text-gray-600 text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
     Change Password
@@ -286,9 +286,9 @@
     <div class="border border-gray-100 rounded-xl px-4 py-3">
       <div class="flex items-center justify-between">
         <div>
-          <p class="text-sm font-semibold text-gray-800">
-            #<%= recentOrder._id %>
-          </p>
+         <p class="text-sm font-semibold text-gray-800">
+  <%= recentOrder.orderId || ('#ORD-' + recentOrder._id.toString().slice(-6).toUpperCase()) %>
+</p>
 
           <p class="text-xs text-gray-400 mt-0.5">
             <%= new Date(recentOrder.createdAt).toLocaleDateString('en-US',{
@@ -611,8 +611,8 @@
           }
         },
         prefill: {
-          name: '<%= user.name %>',
-          email: '<%= user.email %>'
+          name: '<%= user ? (user.firstName || '') + ' ' + (user.lastName || '') : '' %>',
+          email: '<%= user ? user.email : '' %>'
         },
         theme: { color: '#111827' }
       };
@@ -637,7 +637,7 @@
 
   <%
     
-    const refCode = user.referralCode || 'REF-XXXXXXX';
+    const refCode = (user && user.referralCode) ? user.referralCode : 'REF-XXXXXXX';
   
 
 const baseUrl = siteUrl;
